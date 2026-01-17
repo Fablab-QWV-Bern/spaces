@@ -27,8 +27,32 @@ components:
           type: string
         permissions:
           type: object
-          additionalProperties:
-            type: boolean
+          properties:
+            viewBookings:
+              type: boolean
+              description: View bookings without name and contact details
+            viewBookingsDetails:
+              type: boolean
+              description: View bookings with name and contact details
+            manageBookings:
+              type: boolean
+              description: Manage bookings
+            manageWorkplaces:
+              type: boolean
+              description: Manage workplaces
+            manageAreas:
+              type: boolean
+              description: Manage areas
+            manageRoles:
+              type: boolean
+              description: Manage user roles
+          required:
+            - viewBookings
+            - viewBookingsDetails
+            - manageBookings
+            - manageWorkplaces
+            - manageAreas
+            - manageRoles
       required:
         - name
         - permissions
@@ -107,8 +131,10 @@ components:
           type: string
         name:
           type: string
+          description: Visible only with viewBookingsDetails permission
         contact:
           type: string
+          description: Visible only with viewBookingsDetails permission
         startTime:
           type: string
           format: date-time
@@ -135,7 +161,7 @@ components:
           type: string
         interval:
           type: string
-          enum: [DAYLY, WEEKLY, MONTHLY]
+          enum: [DAILY, WEEKLY, MONTHLY]
         intervalCount:
           type: integer
           minimum: 1
@@ -168,6 +194,7 @@ paths:
   /roles:
     get:
       summary: List roles
+      x-permissions: ["manageRoles"]
       responses:
         '200':
           description: List of roles
@@ -180,6 +207,7 @@ paths:
 
     post:
       summary: Create role
+      x-permissions: ["manageRoles"]
       requestBody:
         required: true
         content:
@@ -199,6 +227,7 @@ paths:
           type: string
     put:
       summary: Update role
+      x-permissions: ["manageRoles"]
       requestBody:
         required: true
         content:
@@ -211,6 +240,7 @@ paths:
 
     delete:
       summary: Delete role
+      x-permissions: ["manageRoles"]
       responses:
         '204':
           description: Role deleted
@@ -230,6 +260,7 @@ paths:
 
     post:
       summary: Create area
+      x-permissions: ["manageAreas"]
       requestBody:
         required: true
         content:
@@ -249,6 +280,7 @@ paths:
           type: string
     put:
       summary: Update area
+      x-permissions: ["manageAreas"]
       requestBody:
         required: true
         content:
@@ -261,6 +293,7 @@ paths:
 
     delete:
       summary: Delete area
+      x-permissions: ["manageAreas"]
       responses:
         '204':
           description: Area deleted
@@ -286,6 +319,7 @@ paths:
 
     post:
       summary: Create workplace
+      x-permissions: ["manageWorkplaces"]
       requestBody:
         required: true
         content:
@@ -305,6 +339,7 @@ paths:
           type: string
     put:
       summary: Update workplace
+      x-permissions: ["manageWorkplaces"]
       requestBody:
         required: true
         content:
@@ -317,6 +352,7 @@ paths:
 
     delete:
       summary: Delete workplace
+      x-permissions: ["manageWorkplaces"]
       responses:
         '204':
           description: Workplace deleted
@@ -324,6 +360,7 @@ paths:
   /bookings:
     get:
       summary: List bookings
+      x-permissions: ["viewBookings"]
       parameters:
         - name: from
           in: query
@@ -351,6 +388,7 @@ paths:
 
     post:
       summary: Create booking
+      x-permissions: ["manageBookings"]
       requestBody:
         required: true
         content:
@@ -374,8 +412,19 @@ paths:
         required: true
         schema:
           type: string
+    get:
+      summary: Get booking details
+      x-permissions: ["viewBookingsDetails"]
+      responses:
+        '200':
+          description: Booking details including name and contact
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
     put:
       summary: Update booking
+      x-permissions: ["manageBookings"]
       requestBody:
         required: true
         content:
@@ -394,6 +443,7 @@ paths:
 
     delete:
       summary: Delete booking
+      x-permissions: ["manageBookings"]
       responses:
         '204':
           description: Booking deleted
@@ -401,6 +451,7 @@ paths:
   /booking-series:
     get:
       summary: List booking series
+      x-permissions: ["viewBookings"]
       responses:
         '200':
           description: List of booking series
@@ -413,6 +464,7 @@ paths:
 
     post:
       summary: Create booking series
+      x-permissions: ["manageBookings"]
       requestBody:
         required: true
         content:
@@ -443,6 +495,7 @@ paths:
           type: string
     put:
       summary: Update booking series
+      x-permissions: ["manageBookings"]
       requestBody:
         required: true
         content:
@@ -455,6 +508,7 @@ paths:
 
     delete:
       summary: Delete booking series
+      x-permissions: ["manageBookings"]
       responses:
         '204':
           description: Booking series deleted

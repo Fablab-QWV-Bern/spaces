@@ -37,12 +37,12 @@ Anonyme Benutzer erhalten die Rolle "Anonym", bis sie sich einloggen.
 - Name (string)
 - Kennwort (gespeichert mit Salt und gehasht)
 - Berechtigungen:
-  - Buchungen ohne Name + Kontakt anzeigen (boolean)
-  - Buchungen mit Name + Kontakt anzeigen (boolean)
-  - Buchungen ändern (boolean) (egal von welchem anderen Benutzer, es gibt ja nur "Benutzerrollen")
-  - Arbeitsplätze ändern (boolean)
-  - Bereiche ändern (boolean)
-  - Benutzerrolen ändern (boolean)
+  - Buchungen ohne Name + Kontakt anzeigen (boolean, `viewBookings`)
+  - Buchungen mit Name + Kontakt anzeigen (boolean, `viewBookingsDetails`)
+  - Buchungen ändern (boolean, `manageBookings`) (egal von welchem anderen Benutzer, es gibt ja nur "Benutzerrollen")
+  - Arbeitsplätze ändern (boolean, `manageWorkplaces`)
+  - Bereiche ändern (boolean, `manageAreas`)
+  - Benutzerrolen ändern (boolean, `manageRoles`)
   - ...
 
 ### Arbeitsplatz
@@ -50,18 +50,19 @@ Anonyme Benutzer erhalten die Rolle "Anonym", bis sie sich einloggen.
 - ID (string)
 - Name (string)
 - Beschrieb (string)
-- Status (string, "Defekt", "OK", "Deaktiviert")
+- Status (string, Enum: "OK", "DEFECT", "DISABLED")
 - Ort (string, "Raum 3")
-- Referenz auf Bereich (string)
-- Link auf Wiki (string)
-- Maximale Buchungsdauer (optional, überschreibt diese des Bereichs falls gesetzt)
-- Blockiert ebenfalls (Referenzen auf andere Arbeitsplätze oder Tags, string[])
-- Liste von tags (string[], "#lärmig")
+- Referenz auf Bereich (string, areaId)
+- Link auf Wiki (string, format: uri)
+- Maximale Buchungsdauer (int, optional, überschreibt diese des Bereichs falls gesetzt)
+- Blockiert Arbeitsplätze (Liste von IDs, `blocksWorkplaceIds`)
+- Blockiert Arbeitsplätze via Tag (Liste von Tags, `blocksWorkplacesWithTag`, Arbeitsplätze mit diesen Tags werden blockiert)
+- Liste von Tags (`tags`, z.B. "#lärmig")
 - Reihenfolge (int)
 
-Defekte Arbeitsplätze werden angezeigt, sind aber nicht buchbar
+Defekte Arbeitsplätze werden angezeigt, sind aber nicht buchbar (`status` = DEFECT).
 
-Deaktivierte Arbeitsplätze sind nicht buchbar und werden nur angezeigt, wenn die Benutzerrolle "Arbeitsplätze ändern" darf
+Deaktivierte Arbeitsplätze (`status` = DISABLED) sind nicht buchbar und werden nur angezeigt, wenn die Benutzerrolle "Arbeitsplätze ändern" darf ("manageWorkplaces").
 
 
 
@@ -70,8 +71,8 @@ Deaktivierte Arbeitsplätze sind nicht buchbar und werden nur angezeigt, wenn di
 - ID
 - Name (string)
 - Farbe (string)
-- Maximale Buchungsdauer (erforderlich)
-- Maximale Buchung in der Zukunft (bezogen auf Endzeitpunkt einer Buchung)
+- Maximale Buchungsdauer (Minuten, integer)
+- Maximale Buchung in der Zukunft (Tage, `maxBookingEndOffsetDays`)
 - Reihenfolge (int)
 
 
@@ -83,22 +84,23 @@ Deaktivierte Arbeitsplätze sind nicht buchbar und werden nur angezeigt, wenn di
 - Referenz auf Arbeitsplatz (string)
 - Name (string, als Cookie gespeichert)
 - Kontakt (string, als Cookie gespeichert)
-- Starttag/zeit
-- Endtag/zeit
+- Starttag/zeit (DateTime)
+- Endtag/zeit (DateTime)
 - Serien-ID (optional, falls teil einer Serienbuchung)
 
-Eine neue Buchung darf nicht mit einer bestehenden Buchung überlappen. Dh, eine existierende Buchung im selben Zeitfenster hat:
+Eine neue Buchung darf nicht mit einer bestehenden Buchung überlappen. D.h., eine Kollision liegt vor, wenn eine existierende Buchung im selben Zeitfenster liegt UND:
 
-- denselben Arbeitsplatz wie die neue Buchung
-- einen Arbeitsplatz, der unter "Blockiert ebenfalls" den Arbeitsplatz der neue Buchung referenziert
-- einen Arbeitsplatz, der beim Arbeitsplatz der neuen Buchung als "Blockiert ebenfalls" geführt wird
-- "Blockiert ebenfalls" darf neben Arbeitsplatz-IDs auch Tags beinhalten
+- sie denselben Arbeitsplatz (`workplaceId`) hat wie die neue Buchung
+- ihr Arbeitsplatz in der Liste `blocksWorkplaceIds` der neuen Buchung steht
+- ihr Arbeitsplatz einen Tag besitzt, der in der Liste `blocksWorkplacesWithTag` der neuen Buchung steht
+- der Arbeitsplatz der neuen Buchung in der Liste `blocksWorkplaceIds` der existierenden Buchung steht
+- der Arbeitsplatz der neuen Buchung einen Tag besitzt, der in der Liste `blocksWorkplacesWithTag` der existierenden Buchung steht
 
 Ausserdem:
 
 - Blockierungen sind nicht transitiv (A blockiert B, B blockiert C -> A blockiert nicht implizit auch C)
 - Änderung der Blockierungen haben keinen Einfluss auf bestehende Buchungen
-- Tags werden erst beim Erstellen einer neuen Buchung aufgelöst auf eine Liste von Arbeitsplätzen, die diesen Tag tragen, um Kollisionen zu erkennen
+- Tags werden dynamisch (beim Erstellen oder Ändern einer Buchung) ausgewertet, um Kollisionen zu erkennen
 
 Buchungen können viertelstündlich genau gebucht werden und allenfals auch über mehrere Tage (vgl. maximale Buchungsdauer).
 
@@ -109,10 +111,12 @@ Zeiten werden als UTC gespeichert und in schweizer Zeit angezeigt (globale konfi
 ### Buchungsserie
 
 - Serien-ID
-- Interval (n-wöchtentlich / n-monatlich)
-- Starttag 
-- Endtag (optional)
-- Instanziert bis (Tag)
+- Interval (DAILY, WEEKLY, MONTHLY)
+- Interval-Anzahl (int, z.B. alle 2 Wochen)
+- Startzeit + Datum der ersten Instanz (Datetime)
+- Endzeit + Datum der ersten Instanz (Datetime)
+- Endtag (Date, optional)
+- Instanziert bis (Date)
 
 Beim Erzeugen einer Buchungsserie werden alle Instanzen als "Buchung"en generiert bis zu 1 Jahr im Voraus, was im "Instanziert Bis"-Feld gespeichert wird. Falls bereits existierende Buchungen mit der neuen Serie kollidieren, wird dies als Warnung angezeigt, die serie trotzdem erstellt, und die kollidierenden Instanzen ausgelassen.
 
@@ -132,4 +136,3 @@ Beim Erzeugen einer Buchungsserie werden alle Instanzen als "Buchung"en generier
 - Buchen im Voraus
 - Vor Ort am tablet
 - Per QR-Code und smartphone
-
