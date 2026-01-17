@@ -16,8 +16,25 @@
 ### Übersichtskarte mit Jetzt-Belegung
 - basierend auf .svg mit attributes (z.B. id="tisch-4")
 - Farbige Markierung der Arbeitsplätze (frei/belegt/defekt/deaktiviert)
-- Hover auf Arbeitsplatz zeigt Details an und link zum Buchen (sofern berechtigt)
+- Hover auf Arbeitsplatz zeigt Details an und Link zum Buchen (sofern berechtigt)
 - Auto-Refresh alle 60 Sekunden
+
+### Buchung erstellen
+- Auswahl des Arbeitsplatzes (Dropdown mit Suchfunktion)
+- Anzeige der Arbeitsplatz-Details (Name, Beschrieb (markdown, formatiert), Ort, Link auf Wiki, Status, Tags)
+- Datumsauswahl (Kalender-Picker)
+- Zeit-Auswahl als horizontale Zeitleiste (inital zwischen 8 Uhr und 21 Uhr)
+  - mit 15-Minuten-Intervallen
+  - scrollbar falls nötig
+  - bestehende Buchungen werden als farbige Blöcke angezeigt
+  - zu erstellende Buchung wird als hervorgehobener Block angezeigt
+- Dauer-Auswahl (Dropdown mit erlaubten Dauern, basierend auf Arbeitsplatz + Bereich)
+- Kollisionen werden in Echtzeit geprüft und angezeigt
+- Eingabefelder für Infos über "Buchenden":
+  - Name (Textfeld, als Cookie speichern)
+  - Kontakt (Textfeld, als Cookie speichern, z.B. E-Mail oder Telefon)
+- Button "Buchung erstellen"
+- Falls alles klappt, wird die Buchung erstellt und der Benutzer zur Kalenderansicht "Alle Arbeitsplätze" weitergeleitet
 
 ### Kalenderansicht "Alle Arbeitsplätze"
 - Zeigt alle Arbeitsplätze in der ersten Spalte (fixierte Spalte)
@@ -30,6 +47,7 @@
 - Blockierungen durch andere Buchungen werden als graue Blöcke angezeigt
 - Die Blöcke zeigen Name + Kontakt des Buchenden an (sofern berechtigt)
 - Hover auf Block zeigt Details an und link zum Bearbeiten (Bleistift-Icon) (sofern berechtigt)
+- Leere Zeiten sind als weiße Flächen dargestellt und können angeklickt werden, um eine neue Buchung zu erstellen
 - Eine vertikale Linie zeigt die aktuelle Zeit an (sofern im sichtbaren Bereich)
 
 ### Kalenderansicht "Einzelner Arbeitsplatz"
