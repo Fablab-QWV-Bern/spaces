@@ -1,0 +1,310 @@
+openapi: 3.0.3
+info:
+  title: Reservation System API
+  description: API for managing workplaces, areas, bookings, and booking series.
+  version: 1.0.0
+
+servers:
+  - url: https://api.example.com
+
+security:
+  - RoleAuth: []
+
+components:
+  securitySchemes:
+    RoleAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+
+    Role:
+      type: object
+      properties:
+        name:
+          type: string
+        permissions:
+          type: object
+          additionalProperties:
+            type: boolean
+      required: [name, permissions]
+
+    Area:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        color:
+          type: string
+        maxBookingDurationMinutes:
+          type: integer
+        maxBookingEndOffsetDays:
+          type: integer
+        sortOrder:
+          type: integer
+      required:
+        - id
+        - name
+        - color
+        - maxBookingDurationMinutes
+
+    Workplace:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [OK, DEFECT, DISABLED]
+        location:
+          type: string
+        areaId:
+          type: string
+        wikiUrl:
+          type: string
+          format: uri
+        maxBookingDurationMinutes:
+          type: integer
+          nullable: true
+        blocksWorkplaceIds:
+          type: array
+          items:
+            type: string
+        blocksWorkplacesWithTag:
+          type: array
+          items:
+            type: string
+        tags:
+          type: array
+          items:
+            type: string
+        sortOrder:
+          type: integer
+      required:
+        - id
+        - name
+        - status
+        - areaId
+
+    Booking:
+      type: object
+      properties:
+        id:
+          type: string
+        creatorRole:
+          type: string
+        workplaceId:
+          type: string
+        name:
+          type: string
+        contact:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        bookingSeriesId:
+          type: string
+          nullable: true
+      required:
+        - id
+        - creatorRole
+        - workplaceId
+        - startTime
+        - endTime
+
+    BookingSeries:
+      type: object
+      properties:
+        id:
+          type: string
+        interval:
+          type: string
+          enum:
+            - WEEKLY
+            - MONTHLY
+        intervalCount:
+          type: integer
+          minimum: 1
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          nullable: true
+        instantiatedUntil:
+          type: string
+          format: date
+      required:
+        - id
+        - interval
+        - intervalCount
+        - startDate
+        - instantiatedUntil
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+
+paths:
+
+  /roles:
+    get:
+      summary: List roles
+      responses:
+        '200':
+          description: List of roles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Role'
+
+    post:
+      summary: Create or update a role
+      responses:
+        '200':
+          description: Role saved
+
+  /areas:
+    get:
+      summary: List areas
+      responses:
+        '200':
+          description: List of areas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Area'
+
+    post:
+      summary: Create or update an area
+      responses:
+        '200':
+          description: Area saved
+
+  /workplaces:
+    get:
+      summary: List workplaces
+      parameters:
+        - name: includeDisabled
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: List of workplaces
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Workplace'
+
+    post:
+      summary: Create or update a workplace
+      responses:
+        '200':
+          description: Workplace saved
+        '400':
+          description: Blocking cycle detected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /bookings:
+    get:
+      summary: List bookings
+      parameters:
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: workplaceId
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Booking'
+
+    post:
+      summary: Create a booking
+      responses:
+        '201':
+          description: Booking created
+        '409':
+          description: Booking conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /bookings/{id}:
+    delete:
+      summary: Delete a booking
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Booking deleted
+
+  /booking-series:
+    get:
+      summary: List booking series
+      responses:
+        '200':
+          description: List of booking series
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BookingSeries'
+
+    post:
+      summary: Create a booking series
+      responses:
+        '201':
+          description: Booking series created
+        '200':
+          description: Created with warnings (conflicting instances skipped)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  warnings:
+                    type: array
+                    items:
+                      type: string
