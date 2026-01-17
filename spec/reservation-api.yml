@@ -34,6 +34,12 @@ components:
             viewBookingsDetails:
               type: boolean
               description: View bookings with name and contact details
+            createBookings:
+              type: boolean
+              description: Create bookings
+            noTimeRestrictions:
+              type: boolean
+              description: Ignore time-based booking restrictions when creating or managing bookings
             manageBookings:
               type: boolean
               description: Manage bookings

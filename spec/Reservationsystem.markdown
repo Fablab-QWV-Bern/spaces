@@ -2,11 +2,11 @@
 
 ## Stack
 
-- Angular 21 mit signal
+- Latest Angular mit signal
 - SCSS
 - Backend: PHP with laravel
 - Persistence: MySQL
-- Validierung im Backend
+- Validierung im Backend + im Frontend
 - OpenAPI für API-Spec
 
 
@@ -14,7 +14,7 @@
 ## Ansichten
 
 ### Übersichtskarte mit Jetzt-Belegung
-- basierend auf .svg mit tags (z.B. id="workplace-42")
+- basierend auf .svg mit attributes (z.B. id="tisch-4")
 - Farbige Markierung der Arbeitsplätze (frei/belegt/defekt/deaktiviert)
 - Hover auf Arbeitsplatz zeigt Details an und link zum Buchen (sofern berechtigt)
 - Auto-Refresh alle 60 Sekunden
@@ -30,6 +30,7 @@
 - Blockierungen durch andere Buchungen werden als graue Blöcke angezeigt
 - Die Blöcke zeigen Name + Kontakt des Buchenden an (sofern berechtigt)
 - Hover auf Block zeigt Details an und link zum Bearbeiten (Bleistift-Icon) (sofern berechtigt)
+- Eine vertikale Linie zeigt die aktuelle Zeit an (sofern im sichtbaren Bereich)
 
 ### Kalenderansicht "Einzelner Arbeitsplatz"
 - Zeigt einen Kalender für einen einzelnen Arbeitsplatz
@@ -65,10 +66,12 @@ Anonyme Benutzer erhalten die Rolle "Anonym", bis sie sich einloggen.
 - Berechtigungen:
   - Buchungen ohne Name + Kontakt anzeigen (boolean, `viewBookings`)
   - Buchungen mit Name + Kontakt anzeigen (boolean, `viewBookingsDetails`)
+  - Buchungen erstellen (boolean, `createBookings`)
+  - Keine zeitlichen Beschränkungen bei Buchungen (boolean, `noTimeRestrictions`)
   - Buchungen ändern (boolean, `manageBookings`) (egal von welchem anderen Benutzer, es gibt ja nur "Benutzerrollen")
   - Arbeitsplätze ändern (boolean, `manageWorkplaces`)
   - Bereiche ändern (boolean, `manageAreas`)
-  - Benutzerrolen ändern (boolean, `manageRoles`)
+  - Benutzerrollen ändern (boolean, `manageRoles`)
   - ...
 
 ### Arbeitsplatz
@@ -107,6 +110,7 @@ Deaktivierte Arbeitsplätze (`status` = DISABLED) sind nicht buchbar und werden 
 
 - ID
 - Benutzerrolle des Erstellers
+- IP-Adresse des Erstellers
 - Referenz auf Arbeitsplatz (string)
 - Blockiert ebenfalls (Liste von Arbeitsplatz-IDs, `blocksWorkplaceIds`)
 - Name (string, als Cookie gespeichert)
@@ -147,7 +151,7 @@ Zeiten werden als UTC gespeichert und in schweizer Zeit angezeigt (globale konfi
 
 Beim Erzeugen einer Buchungsserie werden alle Instanzen als "Buchung"en generiert bis zu 1 Jahr im Voraus, was im "Instanziert Bis"-Feld gespeichert wird. Falls bereits existierende Buchungen mit der neuen Serie kollidieren, wird dies als Warnung angezeigt, die serie trotzdem erstellt, und die kollidierenden Instanzen ausgelassen.
 
-1-mal monatlich werden alle Buchungsserien überprüft und alle Instanzen erstellt, die zwischen "Instanziert Bis" und "Heute + 1 Jahr" liegen. Danach wird "Instanziert bis" aktualisiert auf "Heute + 1 Jahr"
+1-mal täglich werden alle Buchungsserien überprüft und alle Instanzen erstellt, die zwischen "Instanziert Bis" und "Heute + 1 Jahr" liegen. Danach wird "Instanziert bis" aktualisiert auf "Heute + 1 Jahr"
 
 ## Integrationen
 
