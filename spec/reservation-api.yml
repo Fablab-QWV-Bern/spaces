@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Reservation System API
-  description: API for managing workplaces, areas, bookings, and booking series.
+  description: API for managing areas, workplaces, bookings, booking series, and roles.
   version: 1.0.0
 
 servers:
@@ -23,11 +23,15 @@ components:
       properties:
         name:
           type: string
+        passwordHash:
+          type: string
         permissions:
           type: object
           additionalProperties:
             type: boolean
-      required: [name, permissions]
+      required:
+        - name
+        - permissions
 
     Area:
       type: object
@@ -118,8 +122,11 @@ components:
         - id
         - creatorRole
         - workplaceId
+        - name
+        - contact
         - startTime
         - endTime
+        - bookingSeriesId
 
     BookingSeries:
       type: object
@@ -128,9 +135,7 @@ components:
           type: string
         interval:
           type: string
-          enum:
-            - WEEKLY
-            - MONTHLY
+          enum: [DAYLY, WEEKLY, MONTHLY]
         intervalCount:
           type: integer
           minimum: 1
@@ -139,6 +144,7 @@ components:
           format: date
         endDate:
           type: string
+          format: date
           nullable: true
         instantiatedUntil:
           type: string
@@ -148,6 +154,7 @@ components:
         - interval
         - intervalCount
         - startDate
+        - endDate
         - instantiatedUntil
 
     Error:
@@ -172,10 +179,41 @@ paths:
                   $ref: '#/components/schemas/Role'
 
     post:
-      summary: Create or update a role
+      summary: Create role
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Role'
+      responses:
+        '201':
+          description: Role created
+
+  /roles/{name}:
+    parameters:
+      - name: name
+        in: path
+        required: true
+        schema:
+          type: string
+    put:
+      summary: Update role
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Role'
       responses:
         '200':
-          description: Role saved
+          description: Role updated
+
+    delete:
+      summary: Delete role
+      responses:
+        '204':
+          description: Role deleted
 
   /areas:
     get:
@@ -191,10 +229,41 @@ paths:
                   $ref: '#/components/schemas/Area'
 
     post:
-      summary: Create or update an area
+      summary: Create area
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Area'
+      responses:
+        '201':
+          description: Area created
+
+  /areas/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    put:
+      summary: Update area
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Area'
       responses:
         '200':
-          description: Area saved
+          description: Area updated
+
+    delete:
+      summary: Delete area
+      responses:
+        '204':
+          description: Area deleted
 
   /workplaces:
     get:
@@ -204,6 +273,7 @@ paths:
           in: query
           schema:
             type: boolean
+            default: false
       responses:
         '200':
           description: List of workplaces
@@ -215,16 +285,41 @@ paths:
                   $ref: '#/components/schemas/Workplace'
 
     post:
-      summary: Create or update a workplace
+      summary: Create workplace
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Workplace'
+      responses:
+        '201':
+          description: Workplace created
+
+  /workplaces/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    put:
+      summary: Update workplace
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Workplace'
       responses:
         '200':
-          description: Workplace saved
-        '400':
-          description: Blocking cycle detected
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          description: Workplace updated
+
+    delete:
+      summary: Delete workplace
+      responses:
+        '204':
+          description: Workplace deleted
 
   /bookings:
     get:
@@ -255,7 +350,13 @@ paths:
                   $ref: '#/components/schemas/Booking'
 
     post:
-      summary: Create a booking
+      summary: Create booking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Booking'
       responses:
         '201':
           description: Booking created
@@ -267,14 +368,32 @@ paths:
                 $ref: '#/components/schemas/Error'
 
   /bookings/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    put:
+      summary: Update booking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Booking'
+      responses:
+        '200':
+          description: Booking updated
+        '409':
+          description: Booking conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
     delete:
-      summary: Delete a booking
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
+      summary: Delete booking
       responses:
         '204':
           description: Booking deleted
@@ -293,7 +412,13 @@ paths:
                   $ref: '#/components/schemas/BookingSeries'
 
     post:
-      summary: Create a booking series
+      summary: Create booking series
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingSeries'
       responses:
         '201':
           description: Booking series created
@@ -308,3 +433,28 @@ paths:
                     type: array
                     items:
                       type: string
+
+  /booking-series/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    put:
+      summary: Update booking series
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingSeries'
+      responses:
+        '200':
+          description: Booking series updated
+
+    delete:
+      summary: Delete booking series
+      responses:
+        '204':
+          description: Booking series deleted
