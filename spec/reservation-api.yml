@@ -129,6 +129,11 @@ components:
           type: string
         workplaceId:
           type: string
+        blocksWorkplaceIds:
+          type: array
+          items:
+            type: string
+          description: Only part of the read response when the booking blocks other workplaces
         name:
           type: string
           description: Visible only with viewBookingsDetails permission

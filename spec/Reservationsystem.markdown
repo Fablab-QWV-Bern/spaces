@@ -13,17 +13,43 @@
 
 ## Ansichten
 
-- Übersichtskarte mit Jetzt-Belegung (basierend auf .svg)
-- Alle Arbeitsplätze "Heute"
-  - Bereiche mit Farbe + Buchungsbeschränkungen
-  - Bereichs-Ansichten
-- Rollen (Benutzer, Admin)
-- Resourcenliste
-  - Bearbeiten
-- Serienbuchung (für Admins)
+### Übersichtskarte mit Jetzt-Belegung
+- basierend auf .svg mit tags (z.B. id="workplace-42")
+- Farbige Markierung der Arbeitsplätze (frei/belegt/defekt/deaktiviert)
+- Hover auf Arbeitsplatz zeigt Details an und link zum Buchen (sofern berechtigt)
+- Auto-Refresh alle 60 Sekunden
+
+### Kalenderansicht "Alle Arbeitsplätze"
+- Zeigt alle Arbeitsplätze in der ersten Spalte (fixierte Spalte)
+- Die Arbeitsplätze sind gruppiert nach Bereichen
+- Oben gibt es eine Schnellwahl für "Heute", "Morgen", "Ganze Woche", "Ganzer Monat"
+- Die weiteren Spalten zeigen die Zeit in bspw. 15-Minuten-Intervallen (horizontal scrollbar)
+- Je nach Zeitbereich gibt es mehr oder weniger Spalten (z.B. bei "Ganze Woche" evtl. nur 1-Stunden-Intervalle)
+- Die Zeitachse kann vor- und zurückgescrollt werden (Pfeile links/rechts)
+- Buchungen als farbige Blöcke
+- Blockierungen durch andere Buchungen werden als graue Blöcke angezeigt
+- Die Blöcke zeigen Name + Kontakt des Buchenden an (sofern berechtigt)
+- Hover auf Block zeigt Details an und link zum Bearbeiten (Bleistift-Icon) (sofern berechtigt)
+
+### Kalenderansicht "Einzelner Arbeitsplatz"
+- Zeigt einen Kalender für einen einzelnen Arbeitsplatz
+- Oben Auswahl des Arbeitsplatzes (Dropdown)
+- Erste Spalte: Datum
+- Weitere Spalten: Zeit in 15-Minuten-Intervallen (horizontal scrollbar)
+- Zeilen: Tage
+
+### Admin-Ansichten
+Jeder Aufzählungspunkt ist eine eigene Seite.
+
+- Rollenübersicht
+- Rolle bearbeiten
+- Bereichsübersicht
+- Bereich bearbeiten
+- Arbeitsplatzübersicht (gruppiert nach Bereichen)
+- Arbeitsplatz bearbeiten
+- Serienbuchung (für Admins) (erst später implementieren)
   - csv-import
   - Kalender
-
 
 
 ## Modelle
@@ -82,6 +108,7 @@ Deaktivierte Arbeitsplätze (`status` = DISABLED) sind nicht buchbar und werden 
 - ID
 - Benutzerrolle des Erstellers
 - Referenz auf Arbeitsplatz (string)
+- Blockiert ebenfalls (Liste von Arbeitsplatz-IDs, `blocksWorkplaceIds`)
 - Name (string, als Cookie gespeichert)
 - Kontakt (string, als Cookie gespeichert)
 - Starttag/zeit (DateTime)
