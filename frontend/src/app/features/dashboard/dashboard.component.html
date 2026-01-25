@@ -1,0 +1,30 @@
+<div class="dashboard-container" *ngIf="vm$ | async as vm; else loading">
+  <h1>Overview</h1>
+
+  <div class="monitor-view">
+    <div *ngFor="let area of vm.areas" class="area-section">
+      <h2>{{ area.name }}</h2>
+      <div class="workplaces-grid">
+        <div *ngFor="let wp of area.workplaces"
+             class="workplace-card"
+             [class.disabled]="wp.status === 'DISABLED'">
+          <div class="workplace-header">
+            <span class="workplace-name">{{ wp.name }}</span>
+            <span class="status-indicator" [class]="(wp.status || '').toLowerCase()"></span>
+          </div>
+          <div class="workplace-details">
+             <span *ngIf="wp.status === 'DISABLED'">Disabled</span>
+             <span *ngIf="wp.status === 'OK'">Available</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #loading>
+  <div class="dashboard-container">
+    Loading areas...
+  </div>
+</ng-template>
+
