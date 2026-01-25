@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-
 use App\Models\Booking;
+use App\Http\Resources\BookingResource;
 
 class BookingController extends Controller
 {
@@ -19,15 +19,16 @@ class BookingController extends Controller
             $query->where('workplace_id', $request->workplaceId);
         }
 
+        // Correct overlap logic: start < to AND end > from
         if ($request->has('from')) {
-            $query->where('start_time', '>=', $request->from);
+            $query->where('end_time', '>', $request->from);
         }
 
         if ($request->has('to')) {
-            $query->where('end_time', '<=', $request->to);
+            $query->where('start_time', '<', $request->to);
         }
 
-        return $query->get();
+        return BookingResource::collection($query->get());
     }
 
     /**
@@ -47,7 +48,7 @@ class BookingController extends Controller
 
         $booking = Booking::create($request->all());
 
-        return response()->json($booking, 201);
+        return new BookingResource($booking);
     }
 
     /**
@@ -55,7 +56,7 @@ class BookingController extends Controller
      */
     public function show(string $id)
     {
-        return Booking::findOrFail($id);
+        return new BookingResource(Booking::findOrFail($id));
     }
 
     /**
@@ -65,7 +66,7 @@ class BookingController extends Controller
     {
         $booking = Booking::findOrFail($id);
         $booking->update($request->all());
-        return $booking;
+        return new BookingResource($booking);
     }
 
     /**

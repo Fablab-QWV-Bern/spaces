@@ -100,6 +100,51 @@ class DatabaseSeeder extends Seeder
             'tags' => ['#projector'],
         ]);
 
+        // 4. Create Bookings
+        $desk1 = Workplace::where('name', 'Desk 1')->first();
+        $meetingRoomA = Workplace::where('name', 'Meeting Room A')->first();
+
+        \App\Models\Booking::create([
+            'creator_role_id' => $memberRole->id,
+            'workplace_id' => $desk1->id,
+            'name' => 'Alice',
+            'contact' => 'alice@example.com',
+            'start_time' => now()->setHour(9)->setMinute(0)->setSecond(0),
+            'end_time' => now()->setHour(12)->setMinute(0)->setSecond(0),
+            'ip_address' => '127.0.0.1',
+        ]);
+
+        \App\Models\Booking::create([
+            'creator_role_id' => $memberRole->id,
+            'workplace_id' => $desk1->id,
+            'name' => 'Bob',
+            'contact' => 'bob@example.com',
+            'start_time' => now()->setHour(13)->setMinute(0)->setSecond(0),
+            'end_time' => now()->setHour(17)->setMinute(0)->setSecond(0),
+            'ip_address' => '127.0.0.1',
+        ]);
+
+        \App\Models\Booking::create([
+            'creator_role_id' => $memberRole->id,
+            'workplace_id' => $meetingRoomA->id,
+            'name' => 'Charlie & Team',
+            'contact' => 'charlie@example.com',
+            'start_time' => now()->setHour(14)->setMinute(0)->setSecond(0),
+            'end_time' => now()->setHour(15)->setMinute(30)->setSecond(0),
+            'ip_address' => '127.0.0.1',
+        ]);
+
+        // Future booking
+        \App\Models\Booking::create([
+            'creator_role_id' => $memberRole->id,
+            'workplace_id' => $desk1->id,
+            'name' => 'Alice',
+            'contact' => 'alice@example.com',
+            'start_time' => now()->addDay()->setHour(10)->setMinute(0)->setSecond(0),
+            'end_time' => now()->addDay()->setHour(11)->setMinute(0)->setSecond(0),
+            'ip_address' => '127.0.0.1',
+        ]);
+
         $this->command->info("Seeding completed successfully!");
     }
 }

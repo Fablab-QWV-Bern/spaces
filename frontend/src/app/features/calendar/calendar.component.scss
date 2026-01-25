@@ -1,0 +1,199 @@
+.calendar-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+
+  .date-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+
+    button {
+      padding: 6px 12px;
+      border: 1px solid #ced4da;
+      background: white;
+      border-radius: 4px;
+      cursor: pointer;
+      &:hover { background: #e9ecef; }
+    }
+
+    .current-date {
+      font-weight: bold;
+      font-size: 1.1rem;
+      margin-left: 10px;
+    }
+  }
+}
+
+.timeline-scroll-container {
+  flex: 1;
+  overflow: auto;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  position: relative;
+  background: white;
+}
+
+// Variables for grid dimensions
+$workplace-col-width: 160px;
+$slot-width: 30px; // Must match TS calculation
+$header-height: 40px;
+$row-height: 50px;
+
+.timeline-header {
+  display: flex;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+  min-width: fit-content;
+
+  .workplace-column-header {
+    width: $workplace-col-width;
+    min-width: $workplace-col-width;
+    box-sizing: border-box;
+    padding: 10px;
+    position: sticky;
+    left: 0;
+    background: #f8f9fa;
+    z-index: 21;
+    border-right: 1px solid #dee2e6;
+    font-weight: bold;
+  }
+
+  .time-slots-header {
+    display: flex;
+
+    .time-slot-label {
+      width: $slot-width;
+      min-width: $slot-width;
+      text-align: center;
+      box-sizing: border-box;
+      font-size: 0.8rem;
+      color: #666;
+      padding-top: 10px;
+      &.major {
+        border-left: 1px solid #eee;
+      }
+    }
+  }
+}
+
+.timeline-body {
+  min-width: fit-content;
+}
+
+.area-header-row {
+  display: flex;
+  background: #f1f3f5;
+  border-bottom: 1px solid #dee2e6;
+
+  .area-title {
+    width: $workplace-col-width;
+    min-width: $workplace-col-width;
+    box-sizing: border-box;
+    padding: 8px 10px;
+    position: sticky;
+    left: 0;
+    background: #f1f3f5;
+    z-index: 10;
+    border-right: 1px solid #dee2e6;
+    font-weight: bold;
+    border-left: 4px solid transparent; // Set dynamically
+  }
+
+  .area-track {
+    flex: 1;
+  }
+}
+
+.workplace-row {
+  display: flex;
+  height: $row-height;
+  border-bottom: 1px solid #eee;
+
+  .workplace-cell {
+    width: $workplace-col-width;
+    min-width: $workplace-col-width;
+    box-sizing: border-box;
+    padding: 0 10px;
+    display: flex;
+    align-items: center;
+    position: sticky;
+    left: 0;
+    background: white;
+    z-index: 10;
+    border-right: 1px solid #dee2e6;
+
+    .wp-name {
+      font-weight: 500;
+    }
+    .wp-capacity {
+      margin-left: 5px;
+      color: #888;
+      font-size: 0.8rem;
+    }
+  }
+
+  .time-track-cell {
+    display: flex;
+    position: relative; // Context for absolute positioning of bookings
+
+    .grid-line {
+      width: $slot-width;
+      min-width: $slot-width;
+      border-left: 1px solid #f8f8f8; // Fainter for 15/30/45
+      height: 100%;
+      box-sizing: border-box;
+
+      &.major {
+        border-left: 1px solid #ddd; // Clearer for full hours
+      }
+    }
+
+    .now-indicator {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background-color: #e74c3c; // Red
+      z-index: 15; // Above grid lines (z=0) and bookings (z=5)
+      pointer-events: none;
+    }
+
+    .booking-block {
+      overflow: hidden;
+      color: white;
+      cursor: pointer;
+      z-index: 5;
+      border-radius: 10px;
+      box-sizing: border-box;
+      align-content: center;
+
+      .booking-content {
+        padding: 6px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      &:hover {
+        opacity: 0.9;
+      }
+    }
+  }
+}

@@ -1,30 +1,36 @@
-<div class="dashboard-container" *ngIf="vm$ | async as vm; else loading">
-  <h1>Overview</h1>
+@if (vm$ | async; as vm) {
+  <div class="dashboard-container">
+    <h1>Übersicht</h1>
 
-  <div class="monitor-view">
-    <div *ngFor="let area of vm.areas" class="area-section">
-      <h2>{{ area.name }}</h2>
-      <div class="workplaces-grid">
-        <div *ngFor="let wp of area.workplaces"
-             class="workplace-card"
-             [class.disabled]="wp.status === 'DISABLED'">
-          <div class="workplace-header">
-            <span class="workplace-name">{{ wp.name }}</span>
-            <span class="status-indicator" [class]="(wp.status || '').toLowerCase()"></span>
-          </div>
-          <div class="workplace-details">
-             <span *ngIf="wp.status === 'DISABLED'">Disabled</span>
-             <span *ngIf="wp.status === 'OK'">Available</span>
+    <div class="monitor-view">
+      @for (area of vm.areas; track area.id) {
+        <div class="area-section">
+          <h2>{{ area.name }}</h2>
+          <div class="workplaces-grid">
+            @for (wp of area.workplaces; track wp.id) {
+              <div class="workplace-card" [class.disabled]="wp.status === 'DISABLED'">
+                <div class="workplace-header">
+                  <span class="workplace-name">{{ wp.name }}</span>
+                  <span class="status-indicator" [class]="(wp.status || '').toLowerCase()"></span>
+                </div>
+                <div class="workplace-details">
+                   @if (wp.status === 'DISABLED') {
+                     <span>Deaktiviert</span>
+                   }
+                   @if (wp.status === 'OK') {
+                     <span>Verfügbar</span>
+                   }
+                </div>
+              </div>
+            }
           </div>
         </div>
-      </div>
+      }
     </div>
   </div>
-</div>
-
-<ng-template #loading>
+} @else {
   <div class="dashboard-container">
-    Loading areas...
+    Bereiche werden geladen...
   </div>
-</ng-template>
+}
 
