@@ -105,6 +105,10 @@ export class CalendarComponent implements OnInit, OnDestroy {
   );
 
   setDate(delta: number) {
+    if (delta === 0) {
+      this.selectedDateSubject.next(new Date());
+      return;
+    }
     const newDate = addDays(this.selectedDateSubject.value, delta);
     this.selectedDateSubject.next(newDate);
   }
