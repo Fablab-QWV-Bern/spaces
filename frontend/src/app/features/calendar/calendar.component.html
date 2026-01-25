@@ -1,12 +1,12 @@
 @if (vm$ | async; as vm) {
   <div class="calendar-container">
     <div class="toolbar">
-      <div class="date-controls">
-        <button (click)="setDate(-1)">Zurück</button>
-        <button (click)="setDate(0)">Heute</button>
-        <button (click)="setDate(1)">Weiter</button>
-        <span class="current-date">{{ vm.date | date:'EEEE, d. MMMM y' }}</span>
-      </div>
+    <div class="date-controls">
+      <button (click)="setDate(-1)">Zurück</button>
+      <button (click)="setDate(0)">Heute</button>
+      <button (click)="setDate(1)">Weiter</button>
+      <span class="current-date">{{ vm.date | date:'EEEE, d. MMMM y' }}</span>
+    </div>
       <div class="view-controls">
         <!-- Future: Day/Week/Month selector -->
         <span>Alle Arbeitsplätze</span>

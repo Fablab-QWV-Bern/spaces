@@ -51,6 +51,9 @@
                 <div class="grid-line" [class.major]="(slot | date:'mm') === '00'"></div>
               }
 
+              <!-- Current Time Indicator -->
+              <div class="now-indicator" [ngStyle]="getNowStyle(day, vm.timeSlots)"></div>
+
               <!-- Bookings -->
                @for (booking of vm.bookings; track booking.id) {
                  <div class="booking-block"

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -7,8 +7,9 @@ import { Area } from '../../api/model/area';
 import { Workplace } from '../../api/model/workplace';
 import { Booking } from '../../api/model/booking';
 import { Observable, BehaviorSubject, combineLatest, of } from 'rxjs';
-import { map, switchMap, shareReplay, catchError, startWith, tap } from 'rxjs/operators';
-import { addDays, startOfDay, endOfDay, setHours, setMinutes, differenceInMinutes, isSameDay, startOfMonth, endOfMonth, addMonths, eachDayOfInterval, format } from 'date-fns';
+import { map, switchMap, shareReplay, catchError } from 'rxjs/operators';
+import { addDays, startOfDay, endOfDay, setHours, setMinutes, differenceInMinutes, isSameDay, format } from 'date-fns';
+import { CALENDAR_CONFIG } from '../calendar/calendar.constants';
 
 interface WorkplaceCalendarViewModel {
   workplaceId: string | null;
@@ -26,22 +27,29 @@ interface WorkplaceCalendarViewModel {
   templateUrl: './workplace-calendar.component.html',
   styleUrls: ['./workplace-calendar.component.scss']
 })
-export class WorkplaceCalendarComponent implements OnInit {
+export class WorkplaceCalendarComponent implements OnInit, OnDestroy {
   private apiService = inject(DefaultService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private now = new Date();
+  private intervalId: any;
 
   private selectedWorkplaceIdSubject = new BehaviorSubject<string | null>(null);
   private startDateSubject = new BehaviorSubject<Date>(new Date());
 
   // Configuration
-  readonly startHour = 8;
-  readonly endHour = 22;
-  readonly intervalMinutes = 15;
-  readonly slotWidth = 20; // px
+  readonly startHour = CALENDAR_CONFIG.startHour;
+  readonly endHour = CALENDAR_CONFIG.endHour;
+  readonly intervalMinutes = CALENDAR_CONFIG.intervalMinutes;
+  readonly slotWidth = CALENDAR_CONFIG.slotWidth;
   readonly daysToShow = 14;
 
   ngOnInit() {
+    // Update 'now' every minute
+    this.intervalId = setInterval(() => {
+      this.now = new Date();
+    }, 60000);
+
     this.route.queryParams.subscribe(params => {
       if (params['workplaceId']) {
         this.selectedWorkplaceIdSubject.next(params['workplaceId']);
@@ -50,6 +58,12 @@ export class WorkplaceCalendarComponent implements OnInit {
         this.startDateSubject.next(new Date(params['date']));
       }
     });
+  }
+
+  ngOnDestroy() {
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+    }
   }
 
   vm$: Observable<WorkplaceCalendarViewModel> = combineLatest([
@@ -179,6 +193,37 @@ export class WorkplaceCalendarComponent implements OnInit {
       queryParams: { date: format(newDate, 'yyyy-MM-dd') },
       queryParamsHandling: 'merge'
     });
+  }
+
+  isToday(date: Date): boolean {
+    return isSameDay(date, new Date());
+  }
+
+  getNowStyle(day: Date, timeSlots: Date[]) {
+    // Check if showing today
+    if (!isSameDay(this.now, day)) {
+      return { display: 'none' };
+    }
+
+    if (!timeSlots.length) return { display: 'none' };
+
+    // Check if now is within calendar range
+    const calendarStart = setMinutes(setHours(startOfDay(day), this.startHour), 0);
+    const calendarEnd = new Date(timeSlots[timeSlots.length - 1].getTime() + this.intervalMinutes * 60000);
+
+    if (this.now < calendarStart || this.now > calendarEnd) {
+      return { display: 'none' };
+    }
+
+    const startMinutes = differenceInMinutes(this.now, calendarStart);
+
+    const pixelsPerMinute = this.slotWidth / this.intervalMinutes;
+    const left = startMinutes * pixelsPerMinute;
+
+    return {
+      left: `${left}px`,
+      display: 'block'
+    };
   }
 
   getBookingStyle(booking: Booking, day: Date, timeSlots: Date[]) {

@@ -9,6 +9,7 @@ import { Booking } from '../../api/model/booking';
 import { Observable, BehaviorSubject, combineLatest, of } from 'rxjs';
 import { map, switchMap, shareReplay, catchError } from 'rxjs/operators';
 import { addDays, format, startOfDay, endOfDay, setHours, setMinutes, differenceInMinutes, isSameDay } from 'date-fns';
+import { CALENDAR_CONFIG } from './calendar.constants';
 
 interface CalendarViewModel {
   date: Date;
@@ -35,10 +36,10 @@ export class CalendarComponent implements OnInit, OnDestroy {
   selectedDate$ = this.selectedDateSubject.asObservable();
 
   // Define start and end hours for the calendar view (e.g., 08:00 to 22:00)
-  readonly startHour = 8;
-  readonly endHour = 22;
-  readonly intervalMinutes = 15;
-  readonly slotWidth = 30; // Must match SCSS $slot-width
+  readonly startHour = CALENDAR_CONFIG.startHour;
+  readonly endHour = CALENDAR_CONFIG.endHour;
+  readonly intervalMinutes = CALENDAR_CONFIG.intervalMinutes;
+  readonly slotWidth = CALENDAR_CONFIG.slotWidth;
 
   ngOnInit() {
     // Update 'now' every minute

@@ -166,6 +166,16 @@ $row-height: 30px; // Slightly taller for date info
       }
     }
 
+    .now-indicator {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background-color: #e74c3c; // Red
+      z-index: 15; // Above grid lines (z=0) and bookings (z=5)
+      pointer-events: none;
+    }
+
     .booking-block {
       border-radius: 4px;
       overflow: hidden;
