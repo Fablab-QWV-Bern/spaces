@@ -1,6 +1,7 @@
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { DefaultService } from '../../api/api/default.service';
 import { Area } from '../../api/model/area';
 import { Workplace } from '../../api/model/workplace';
@@ -25,6 +26,8 @@ interface CalendarViewModel {
 })
 export class CalendarComponent implements OnInit, OnDestroy {
   private apiService = inject(DefaultService);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private now = new Date();
   private intervalId: any;
 
@@ -42,6 +45,13 @@ export class CalendarComponent implements OnInit, OnDestroy {
     this.intervalId = setInterval(() => {
       this.now = new Date();
     }, 60000);
+
+    // Watch for query params
+    this.route.queryParams.subscribe(params => {
+      if (params['date']) {
+        this.selectedDateSubject.next(new Date(params['date']));
+      }
+    });
   }
 
   ngOnDestroy() {
@@ -105,12 +115,27 @@ export class CalendarComponent implements OnInit, OnDestroy {
   );
 
   setDate(delta: number) {
+    let newDate: Date;
     if (delta === 0) {
-      this.selectedDateSubject.next(new Date());
-      return;
+      newDate = new Date();
+    } else {
+      newDate = addDays(this.selectedDateSubject.value, delta);
     }
-    const newDate = addDays(this.selectedDateSubject.value, delta);
-    this.selectedDateSubject.next(newDate);
+
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { date: format(newDate, 'yyyy-MM-dd') },
+      queryParamsHandling: 'merge'
+    });
+  }
+
+  navigateToWorkplace(workplaceId: string) {
+    this.router.navigate(['/workplace-calendar'], {
+      queryParams: {
+        workplaceId,
+        date: format(this.selectedDateSubject.value, 'yyyy-MM-dd')
+      }
+    });
   }
 
   isToday(date: Date): boolean {

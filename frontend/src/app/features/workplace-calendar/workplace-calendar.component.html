@@ -1,0 +1,72 @@
+@if (vm$ | async; as vm) {
+  <div class="calendar-container">
+    <div class="toolbar">
+      <div class="controls-group">
+        <label for="wp-select">Arbeitsplatz:</label>
+        <select id="wp-select" [ngModel]="vm.workplaceId" (ngModelChange)="onWorkplaceChange($event)">
+          @for (area of vm.areas; track area.id) {
+            <optgroup [label]="area.name">
+              @for (wp of area.workplaces; track wp.id) {
+                <option [value]="wp.id" [disabled]="wp.status === 'DISABLED'">
+                  {{ wp.name }} @if(wp.status === 'DISABLED') { (Inaktiv) }
+                </option>
+              }
+            </optgroup>
+          }
+        </select>
+      </div>
+
+      <div class="date-controls">
+        <button (click)="setDate(-daysToShow)">Zurück</button>
+        <button (click)="setDate(0)">Heute</button>
+        <button (click)="setDate(daysToShow)">Weiter</button>
+        <span class="current-date">Ab {{ vm.startDate | date:'d. MMMM' }}</span>
+      </div>
+    </div>
+
+    <div class="timeline-scroll-container">
+      <div class="timeline-header">
+        <div class="row-header-column">Datum</div>
+        <div class="time-slots-header">
+          @for (slot of vm.timeSlots; track slot) {
+            <div class="time-slot-label">
+              @if ((slot | date:'mm') === '00') {
+                {{ slot | date:'HH:mm' }}
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="timeline-body">
+        @for (day of vm.days; track day) {
+          <div class="day-row">
+            <div class="day-cell clickable" (click)="navigateToCalendar(day)">
+              <div class="day-name">{{ day | date:'EE' }}</div>
+              <div class="day-date">{{ day | date:'d. MMM' }}</div>
+            </div>
+            <div class="time-track-cell">
+              <!-- Grid Lines -->
+              @for (slot of vm.timeSlots; track slot) {
+                <div class="grid-line" [class.major]="(slot | date:'mm') === '00'"></div>
+              }
+
+              <!-- Bookings -->
+               @for (booking of vm.bookings; track booking.id) {
+                 <div class="booking-block"
+                      [ngStyle]="getBookingStyle(booking, day, vm.timeSlots)"
+                      [title]="booking.name + ' (' + booking.contact + ')'">
+                   <div class="booking-content">
+                     <div class="booking-name">{{ booking.name }}</div>
+                   </div>
+                 </div>
+               }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+} @else {
+  <div class="loading-state">Lade Arbeitsplatz-Kalender...</div>
+}

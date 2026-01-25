@@ -15,6 +15,23 @@
   background: #f8f9fa;
   border-radius: 8px;
   border: 1px solid #dee2e6;
+  flex-wrap: wrap;
+  gap: 15px;
+
+  .controls-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    label { font-weight: 500; }
+
+    select {
+      padding: 6px;
+      border-radius: 4px;
+      border: 1px solid #ced4da;
+      min-width: 200px;
+    }
+  }
 
   .date-controls {
     display: flex;
@@ -47,11 +64,11 @@
   background: white;
 }
 
-// Variables for grid dimensions
-$workplace-col-width: 160px;
-$slot-width: 30px; // Must match TS calculation
+// Variables
+$header-col-width: 120px;
+$slot-width: 20px;
 $header-height: 40px;
-$row-height: 50px;
+$row-height: 30px; // Slightly taller for date info
 
 .timeline-header {
   display: flex;
@@ -62,10 +79,9 @@ $row-height: 50px;
   border-bottom: 1px solid #dee2e6;
   min-width: fit-content;
 
-  .workplace-column-header {
-    width: $workplace-col-width;
-    min-width: $workplace-col-width;
-    box-sizing: border-box;
+  .row-header-column {
+    width: $header-col-width;
+    min-width: $header-col-width;
     padding: 10px;
     position: sticky;
     left: 0;
@@ -73,6 +89,8 @@ $row-height: 50px;
     z-index: 21;
     border-right: 1px solid #dee2e6;
     font-weight: bold;
+    display: flex;
+    align-items: center;
   }
 
   .time-slots-header {
@@ -82,13 +100,11 @@ $row-height: 50px;
       width: $slot-width;
       min-width: $slot-width;
       text-align: center;
-      box-sizing: border-box;
+      border-right: 1px solid transparent;
       font-size: 0.8rem;
       color: #666;
       padding-top: 10px;
-      &.major {
-        border-left: 1px solid #eee;
-      }
+      // Only show border/tick for full hours? optional
     }
   }
 }
@@ -97,108 +113,70 @@ $row-height: 50px;
   min-width: fit-content;
 }
 
-.area-header-row {
-  display: flex;
-  background: #f1f3f5;
-  border-bottom: 1px solid #dee2e6;
-
-  .area-title {
-    width: $workplace-col-width;
-    min-width: $workplace-col-width;
-    box-sizing: border-box;
-    padding: 8px 10px;
-    position: sticky;
-    left: 0;
-    background: #f1f3f5;
-    z-index: 10;
-    border-right: 1px solid #dee2e6;
-    font-weight: bold;
-    border-left: 4px solid transparent; // Set dynamically
-  }
-
-  .area-track {
-    flex: 1;
-  }
-}
-
-.workplace-row {
+.day-row {
   display: flex;
   height: $row-height;
   border-bottom: 1px solid #eee;
 
-  .workplace-cell {
-    width: $workplace-col-width;
-    min-width: $workplace-col-width;
-    box-sizing: border-box;
+  .day-cell {
+    width: $header-col-width;
+    min-width: $header-col-width;
     padding: 0 10px;
     display: flex;
-    align-items: center;
+    flex-direction: row;
+    gap: 0.5em;
     position: sticky;
     left: 0;
     background: white;
     z-index: 10;
     border-right: 1px solid #dee2e6;
 
-    .wp-name {
-      font-weight: 500;
+    .day-name { font-weight: 500; }
+    .day-date { color: #888; }
 
-      &.clickable {
-        cursor: pointer;
-        color: #3498db;
-        padding: 2px 4px;
-        border-radius: 4px;
-        margin: -2px -4px;
+    &.clickable {
+      cursor: pointer;
+      color: #3498db;
 
-        &:hover {
-          text-decoration: none;
-          background-color: #f1f3f5;
-        }
+      .day-name, .day-date {
+        color: inherit;
+        align-content: center;
       }
-    }
-    .wp-capacity {
-      margin-left: 5px;
-      color: #888;
-      font-size: 0.8rem;
+
+      &:hover {
+        background-color: #f1f3f5;
+        text-decoration: none;
+      }
     }
   }
 
   .time-track-cell {
     display: flex;
-    position: relative; // Context for absolute positioning of bookings
+    position: relative;
 
     .grid-line {
       width: $slot-width;
       min-width: $slot-width;
-      border-left: 1px solid #f8f8f8; // Fainter for 15/30/45
+      border-right: 1px solid #f8f8f8;
       height: 100%;
       box-sizing: border-box;
 
       &.major {
-        border-left: 1px solid #ddd; // Clearer for full hours
+        border-right: 1px solid #ddd;
       }
     }
 
-    .now-indicator {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      width: 2px;
-      background-color: #e74c3c; // Red
-      z-index: 15; // Above grid lines (z=0) and bookings (z=5)
-      pointer-events: none;
-    }
-
     .booking-block {
+      border-radius: 4px;
       overflow: hidden;
+      font-size: 0.75rem;
       color: white;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
       cursor: pointer;
       z-index: 5;
-      border-radius: 10px;
-      box-sizing: border-box;
-      align-content: center;
 
       .booking-content {
-        padding: 6px;
+        padding: 2px 4px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;

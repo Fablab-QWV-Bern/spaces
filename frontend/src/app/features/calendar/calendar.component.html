@@ -40,7 +40,7 @@
             @for (wp of area.workplaces; track wp.id) {
               <div class="workplace-row">
                 <div class="workplace-cell">
-                  <span class="wp-name">{{ wp.name }}</span>
+                  <span class="wp-name clickable" (click)="navigateToWorkplace(wp.id)">{{ wp.name }}</span>
                   @if (wp.maxBookingDurationMinutes) {
                     <span class="wp-capacity">({{wp.maxBookingDurationMinutes}}m)</span>
                   }
