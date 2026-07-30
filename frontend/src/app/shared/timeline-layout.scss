@@ -1,0 +1,70 @@
+.timeline-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  background: #fff;
+}
+
+.timeline-scroll-area {
+  flex: 1;
+  overflow: auto;
+  position: relative;
+
+  // Need to ensure background is white for sticky elements
+}
+
+.timeline-header-row {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  background: #f8f9fa;
+  min-width: fit-content;
+  border-bottom: 1px solid #ddd;
+  height: 30px;
+}
+
+.timeline-row {
+  display: flex;
+  min-width: fit-content;
+  border-bottom: 1px solid #eee;
+  background: white;
+  min-height: 30px; // Default row height
+
+  &:hover {
+      background-color: #fafafa;
+  }
+}
+
+.timeline-sticky-col {
+  position: sticky;
+  left: 0;
+  z-index: 10; // Above normal scrolling content
+  background: inherit; // Match row background usually
+  width: var(--timeline-sticky-width, 150px);
+  flex-shrink: 0;
+  border-right: 1px solid #ddd;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  box-sizing: border-box;
+
+  // Ensure solid background for sticky
+  background-color: #fff;
+
+  &.header-col {
+    z-index: 30; // Above both row sticky and header scrolling
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: #555;
+    justify-content: center;
+  }
+}
+
+.timeline-track-col {
+  flex-grow: 1;
+  position: relative; // For positioning context if needed
+  // Width specific content usually handled by children
+}

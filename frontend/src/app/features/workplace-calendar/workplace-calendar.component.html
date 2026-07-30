@@ -1,5 +1,5 @@
 @if (vm$ | async; as vm) {
-  <div class="calendar-container">
+  <div class="calendar-container timeline-container">
     <div class="toolbar">
       <div class="controls-group">
         <label for="wp-select">Arbeitsplatz:</label>
@@ -24,48 +24,31 @@
       </div>
     </div>
 
-    <div class="timeline-scroll-container">
-      <div class="timeline-header">
-        <div class="row-header-column">Datum</div>
-        <div class="time-slots-header">
-          @for (slot of vm.timeSlots; track slot) {
-            <div class="time-slot-label">
-              @if ((slot | date:'mm') === '00') {
-                {{ slot | date:'HH:mm' }}
-              }
-            </div>
-          }
-        </div>
-      </div>
+    <div class="timeline-scroll-area">
+      <app-timeline-header
+        [startHour]="startHour"
+        [endHour]="endHour"
+        [intervalMinutes]="intervalMinutes"
+        [slotWidth]="slotWidth">
+        Datum
+      </app-timeline-header>
 
       <div class="timeline-body">
-        @for (day of vm.days; track day) {
-          <div class="day-row">
-            <div class="day-cell clickable" (click)="navigateToCalendar(day)">
-              <div class="day-name">{{ day | date:'EE' }}</div>
-              <div class="day-date">{{ day | date:'d. MMM' }}</div>
-            </div>
-            <div class="time-track-cell">
-              <!-- Grid Lines -->
-              @for (slot of vm.timeSlots; track slot) {
-                <div class="grid-line" [class.major]="(slot | date:'mm') === '00'"></div>
-              }
-
-              <!-- Current Time Indicator -->
-              <div class="now-indicator" [ngStyle]="getNowStyle(day, vm.timeSlots)"></div>
-
-              <!-- Bookings -->
-               @for (booking of vm.bookings; track booking.id) {
-                 <div class="booking-block"
-                      [ngStyle]="getBookingStyle(booking, day, vm.timeSlots)"
-                      [title]="booking.name + ' (' + booking.contact + ')'">
-                   <div class="booking-content">
-                     <div class="booking-name">{{ booking.name }}</div>
+        @for (dayVm of vm.days; track dayVm.date) {
+            <app-timeline-track
+              [startHour]="startHour"
+              [endHour]="endHour"
+              [intervalMinutes]="intervalMinutes"
+              [slotWidth]="slotWidth"
+              [events]="dayVm.events"
+              [referenceDate]="dayVm.date">
+                <div class="timeline-sticky-col clickable" (click)="navigateToCalendar(dayVm.date)">
+                   <div style="display:flex; flex-direction:column; justify-content:center;">
+                      <span style="font-weight:bold;">{{ dayVm.date | date:'EE' }}</span>
+                      <span style="color:#666;">{{ dayVm.date | date:'d. MMM' }}</span>
                    </div>
-                 </div>
-               }
-            </div>
-          </div>
+                </div>
+            </app-timeline-track>
         }
       </div>
     </div>

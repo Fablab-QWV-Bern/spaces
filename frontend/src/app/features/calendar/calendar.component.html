@@ -1,75 +1,52 @@
 @if (vm$ | async; as vm) {
-  <div class="calendar-container">
+  <div class="calendar-container timeline-container">
     <div class="toolbar">
-    <div class="date-controls">
-      <button (click)="setDate(-1)">Zurück</button>
-      <button (click)="setDate(0)">Heute</button>
-      <button (click)="setDate(1)">Weiter</button>
-      <span class="current-date">{{ vm.date | date:'EEEE, d. MMMM y' }}</span>
-    </div>
+      <div class="date-controls">
+        <button (click)="setDate(-1)">Zurück</button>
+        <button (click)="setDate(0)">Heute</button>
+        <button (click)="setDate(1)">Weiter</button>
+        <span class="current-date">{{ vm.date | date:'EEEE, d. MMMM y' }}</span>
+      </div>
       <div class="view-controls">
         <!-- Future: Day/Week/Month selector -->
         <span>Alle Arbeitsplätze</span>
       </div>
     </div>
 
-    <div class="timeline-scroll-container">
-      <div class="timeline-header">
-        <div class="workplace-column-header">Arbeitsplatz</div>
-        <div class="time-slots-header">
-          @for (slot of vm.timeSlots; track slot) {
-            <div class="time-slot-label" [class.major]="(slot | date:'mm') === '00'">
-              @if ((slot | date:'mm') === '00') {
-                {{ slot | date:'HH:mm' }}
-              }
-            </div>
-          }
-        </div>
-      </div>
+    <div class="timeline-scroll-area">
+      <app-timeline-header
+        [startHour]="startHour"
+        [endHour]="endHour"
+        [intervalMinutes]="intervalMinutes"
+        [slotWidth]="slotWidth">
+        Arbeitsplatz
+      </app-timeline-header>
 
       <div class="timeline-body">
         @for (area of vm.areas; track area.id) {
-          <ng-container>
-            <div class="area-header-row">
-              <div class="area-title" [style.border-left-color]="area.color">
-                {{ area.name }}
-              </div>
-              <div class="area-track"></div>
+          <div class="timeline-row area-row">
+            <div class="timeline-sticky-col" [style.border-left-color]="area.color">
+               {{ area.name }}
             </div>
+            <div class="timeline-track-col"></div>
+          </div>
 
-            @for (wp of area.workplaces; track wp.id) {
-              <div class="workplace-row">
-                <div class="workplace-cell">
-                  <span class="wp-name clickable" (click)="navigateToWorkplace(wp.id)">{{ wp.name }}</span>
-                  @if (wp.maxBookingDurationMinutes) {
-                    <span class="wp-capacity">({{wp.maxBookingDurationMinutes}}m)</span>
-                  }
-                </div>
-                <div class="time-track-cell">
-                  <!-- Grid Lines -->
-                  @for (slot of vm.timeSlots; track slot) {
-                    <div class="grid-line" [class.major]="(slot | date:'mm') === '00'"></div>
-                  }
-
-                  <!-- Current Time Indicator -->
-                  <div class="now-indicator" [ngStyle]="getNowStyle(vm.timeSlots)"></div>
-
-                  <!-- Bookings -->
-                   @for (booking of vm.bookings; track booking.id) {
-                     @if (booking.workplaceId === wp.id) {
-                       <div class="booking-block"
-                            [ngStyle]="getBookingStyle(booking, vm.timeSlots)"
-                            [title]="booking.name + ' (' + booking.contact + ')'">
-                         <div class="booking-content">
-                           <div class="booking-name">{{ booking.name }}</div>
-                         </div>
-                       </div>
-                     }
-                   }
-                </div>
+          @for (wp of area.workplaces; track wp.id) {
+            <app-timeline-track
+              [startHour]="startHour"
+              [endHour]="endHour"
+              [intervalMinutes]="intervalMinutes"
+              [slotWidth]="slotWidth"
+              [events]="wp.events"
+              [referenceDate]="vm.date">
+              <div class="timeline-sticky-col">
+                <span class="wp-name clickable" (click)="navigateToWorkplace(wp.id)">{{ wp.name }}</span>
+                @if (wp.maxBookingDurationMinutes) {
+                  <span class="wp-capacity">({{wp.maxBookingDurationMinutes}}m)</span>
+                }
               </div>
-            }
-          </ng-container>
+            </app-timeline-track>
+          }
         }
       </div>
     </div>

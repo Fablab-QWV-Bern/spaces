@@ -1,0 +1,18 @@
+<div class="timeline-header-row">
+  <div class="timeline-sticky-col header-col">
+    <ng-content></ng-content>
+  </div>
+  <div class="timeline-track-col">
+    <div class="header-container">
+      @for (slot of timeSlots; track slot) {
+        <div class="time-slot"
+             [style.width.px]="slotWidth"
+             [class.major]="(slot | date:'mm') === '00'">
+          @if ((slot | date:'mm') === '00') {
+            <span class="label">{{ slot | date:'HH:mm' }}</span>
+          }
+        </div>
+      }
+    </div>
+  </div>
+</div>

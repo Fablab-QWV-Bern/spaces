@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -8,31 +8,36 @@ import { Workplace } from '../../api/model/workplace';
 import { Booking } from '../../api/model/booking';
 import { Observable, BehaviorSubject, combineLatest, of } from 'rxjs';
 import { map, switchMap, shareReplay, catchError } from 'rxjs/operators';
-import { addDays, startOfDay, endOfDay, setHours, setMinutes, differenceInMinutes, isSameDay, format } from 'date-fns';
+import { addDays, startOfDay, endOfDay, isSameDay, format } from 'date-fns';
 import { CALENDAR_CONFIG } from '../calendar/calendar.constants';
+import { TimelineHeaderComponent } from '../../shared/components/timeline-header/timeline-header.component';
+import { TimelineTrackComponent } from '../../shared/components/timeline-track/timeline-track.component';
+import { TimelineEvent } from '../../shared/model/timeline';
+
+interface DayViewModel {
+  date: Date;
+  events: TimelineEvent[];
+}
 
 interface WorkplaceCalendarViewModel {
   workplaceId: string | null;
   startDate: Date;
-  days: Date[];
+  days: DayViewModel[];
   areas: (Area & { workplaces: Workplace[] })[];
   bookings: Booking[];
-  timeSlots: Date[];
 }
 
 @Component({
   selector: 'app-workplace-calendar',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TimelineHeaderComponent, TimelineTrackComponent],
   templateUrl: './workplace-calendar.component.html',
   styleUrls: ['./workplace-calendar.component.scss']
 })
-export class WorkplaceCalendarComponent implements OnInit, OnDestroy {
+export class WorkplaceCalendarComponent implements OnInit {
   private apiService = inject(DefaultService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  private now = new Date();
-  private intervalId: any;
 
   private selectedWorkplaceIdSubject = new BehaviorSubject<string | null>(null);
   private startDateSubject = new BehaviorSubject<Date>(new Date());
@@ -45,11 +50,6 @@ export class WorkplaceCalendarComponent implements OnInit, OnDestroy {
   readonly daysToShow = 14;
 
   ngOnInit() {
-    // Update 'now' every minute
-    this.intervalId = setInterval(() => {
-      this.now = new Date();
-    }, 60000);
-
     this.route.queryParams.subscribe(params => {
       if (params['workplaceId']) {
         this.selectedWorkplaceIdSubject.next(params['workplaceId']);
@@ -58,12 +58,6 @@ export class WorkplaceCalendarComponent implements OnInit, OnDestroy {
         this.startDateSubject.next(new Date(params['date']));
       }
     });
-  }
-
-  ngOnDestroy() {
-    if (this.intervalId) {
-      clearInterval(this.intervalId);
-    }
   }
 
   vm$: Observable<WorkplaceCalendarViewModel> = combineLatest([
@@ -75,17 +69,14 @@ export class WorkplaceCalendarComponent implements OnInit, OnDestroy {
     switchMap(([workplaceId, viewDate, areas, workplaces]) => {
       // Logic to auto-select first workplace if none selected
       if (!workplaceId && workplaces.length > 0) {
-        // Find a default active one preference? or just first.
         const first = workplaces.find(w => w.status !== 'DISABLED') || workplaces[0];
         this.selectedWorkplaceIdSubject.next(first.id);
-        // switchMap will restart this stream, so return empty for now to avoid race conditions
         return of({
           workplaceId: null,
           startDate: viewDate,
           days: [],
-          areas: [], // we will reprocess this in next emission
-          bookings: [],
-          timeSlots: []
+          areas: [],
+          bookings: []
         });
       }
 
@@ -94,8 +85,7 @@ export class WorkplaceCalendarComponent implements OnInit, OnDestroy {
           startDate: viewDate,
           days: [],
           areas: [],
-          bookings: [],
-          timeSlots: []
+          bookings: []
       });
 
       const start = startOfDay(viewDate);
@@ -107,16 +97,13 @@ export class WorkplaceCalendarComponent implements OnInit, OnDestroy {
       );
     }),
     map(data => {
-      // Re-check just in case we are in the "not yet selected" state
       if (!data.workplaceId) {
-         // Should largely be handled by the switchMap logic above, but strictly typing:
          return {
            workplaceId: null,
            startDate: data.startDate,
            days: [],
            areas: [],
-           bookings: [],
-           timeSlots: []
+           bookings: []
          } as WorkplaceCalendarViewModel;
       }
 
@@ -136,20 +123,22 @@ export class WorkplaceCalendarComponent implements OnInit, OnDestroy {
         }));
 
       // Generate Days (Rows)
-      const days: Date[] = [];
+      const days: DayViewModel[] = [];
       for (let i = 0; i < this.daysToShow; i++) {
-        days.push(addDays(data.startDate, i));
-      }
+        const d = addDays(data.startDate, i);
+        const dayEvents = data.bookings
+            .filter(b => isSameDay(new Date(b.startTime), d))
+            .map(b => ({
+                  id: b.id,
+                  start: new Date(b.startTime),
+                  end: new Date(b.endTime),
+                  title: b.name,
+                  subtitle: b.contact,
+                  color: '#3498db',
+                  data: b
+            } as TimelineEvent));
 
-      // Generate Time Slots (Columns) - only for header calculation mostly
-      const timeSlots: Date[] = [];
-      // Use startDate for calculating timeSlots simply for hours/minutes
-      let current = setMinutes(setHours(startOfDay(data.startDate), this.startHour), 0);
-      const endTime = setMinutes(setHours(startOfDay(data.startDate), this.endHour), 0);
-
-      while (current <= endTime) {
-        timeSlots.push(new Date(current));
-        current = new Date(current.getTime() + this.intervalMinutes * 60000);
+        days.push({ date: d, events: dayEvents });
       }
 
       return {
@@ -157,8 +146,7 @@ export class WorkplaceCalendarComponent implements OnInit, OnDestroy {
         startDate: data.startDate,
         days,
         areas: structuredAreas,
-        bookings: data.bookings,
-        timeSlots
+        bookings: data.bookings
       } as WorkplaceCalendarViewModel;
     }),
     shareReplay(1)
@@ -197,64 +185,5 @@ export class WorkplaceCalendarComponent implements OnInit, OnDestroy {
 
   isToday(date: Date): boolean {
     return isSameDay(date, new Date());
-  }
-
-  getNowStyle(day: Date, timeSlots: Date[]) {
-    // Check if showing today
-    if (!isSameDay(this.now, day)) {
-      return { display: 'none' };
-    }
-
-    if (!timeSlots.length) return { display: 'none' };
-
-    // Check if now is within calendar range
-    const calendarStart = setMinutes(setHours(startOfDay(day), this.startHour), 0);
-    const calendarEnd = new Date(timeSlots[timeSlots.length - 1].getTime() + this.intervalMinutes * 60000);
-
-    if (this.now < calendarStart || this.now > calendarEnd) {
-      return { display: 'none' };
-    }
-
-    const startMinutes = differenceInMinutes(this.now, calendarStart);
-
-    const pixelsPerMinute = this.slotWidth / this.intervalMinutes;
-    const left = startMinutes * pixelsPerMinute;
-
-    return {
-      left: `${left}px`,
-      display: 'block'
-    };
-  }
-
-  getBookingStyle(booking: Booking, day: Date, timeSlots: Date[]) {
-    // Check if booking belongs to this day
-    const bookingStart = new Date(booking.startTime);
-    if (!isSameDay(bookingStart, day)) {
-        return { display: 'none' };
-    }
-
-    // Reuse logic from CalendarComponent but relative to 'day'
-    // Start of the visible timeline for *this* day
-    const calendarStart = setMinutes(setHours(startOfDay(day), this.startHour), 0);
-    const calendarEnd = new Date(timeSlots[timeSlots.length - 1].getTime() + this.intervalMinutes * 60000); // approx
-
-    const bookingEnd = new Date(booking.endTime);
-
-    const startMinutes = differenceInMinutes(bookingStart, calendarStart);
-    const durationMinutes = differenceInMinutes(bookingEnd, bookingStart);
-
-    const pixelsPerMinute = this.slotWidth / this.intervalMinutes;
-
-    const left = startMinutes * pixelsPerMinute;
-    const width = durationMinutes * pixelsPerMinute;
-
-    return {
-      left: `${left}px`,
-      width: `${width}px`,
-      backgroundColor: '#3498db',
-      position: 'absolute',
-      height: '80%',
-      top: '10%'
-    };
   }
 }

@@ -1,22 +1,30 @@
-.calendar-container {
-  display: flex;
-  flex-direction: column;
+@import "../../shared/timeline-layout.scss";
+
+:host {
+  display: block;
   height: 100%;
-  padding: 20px;
-  box-sizing: border-box;
+
+  // Customizing the shared layout
+  --timeline-sticky-width: 100px;
+}
+
+.calendar-container {
+  @extend .timeline-container;
+  padding: 0;
 }
 
 .toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin: 10px 20px;
   padding: 10px;
   background: #f8f9fa;
   border-radius: 8px;
   border: 1px solid #dee2e6;
   flex-wrap: wrap;
   gap: 15px;
+  flex-shrink: 0;
 
   .controls-group {
     display: flex;
@@ -55,146 +63,28 @@
   }
 }
 
-.timeline-scroll-container {
-  flex: 1;
-  overflow: auto;
-  border: 1px solid #dee2e6;
-  border-radius: 4px;
-  position: relative;
-  background: white;
-}
-
-// Variables
-$header-col-width: 120px;
-$slot-width: 20px;
-$header-height: 40px;
-$row-height: 30px; // Slightly taller for date info
-
-.timeline-header {
+// Customizing the shared layout
+.timeline-sticky-col {
+  width: 100px;
   display: flex;
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  background: #f8f9fa;
-  border-bottom: 1px solid #dee2e6;
-  min-width: fit-content;
-
-  .row-header-column {
-    width: $header-col-width;
-    min-width: $header-col-width;
-    padding: 10px;
-    position: sticky;
-    left: 0;
-    background: #f8f9fa;
-    z-index: 21;
-    border-right: 1px solid #dee2e6;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-  }
-
-  .time-slots-header {
-    display: flex;
-
-    .time-slot-label {
-      width: $slot-width;
-      min-width: $slot-width;
-      text-align: center;
-      border-right: 1px solid transparent;
-      font-size: 0.8rem;
-      color: #666;
-      padding-top: 10px;
-      // Only show border/tick for full hours? optional
-    }
-  }
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: #fcfcfc;
 }
 
-.timeline-body {
-  min-width: fit-content;
+.timeline-row {
+  height: 40px;
 }
 
-.day-row {
-  display: flex;
-  height: $row-height;
-  border-bottom: 1px solid #eee;
+.clickable {
+    cursor: pointer;
+    transition: background-color 0.2s;
+    &:hover { background-color: #eee; }
+}
 
-  .day-cell {
-    width: $header-col-width;
-    min-width: $header-col-width;
-    padding: 0 10px;
-    display: flex;
-    flex-direction: row;
-    gap: 0.5em;
-    position: sticky;
-    left: 0;
-    background: white;
-    z-index: 10;
-    border-right: 1px solid #dee2e6;
-
-    .day-name { font-weight: 500; }
-    .day-date { color: #888; }
-
-    &.clickable {
-      cursor: pointer;
-      color: #3498db;
-
-      .day-name, .day-date {
-        color: inherit;
-        align-content: center;
-      }
-
-      &:hover {
-        background-color: #f1f3f5;
-        text-decoration: none;
-      }
-    }
-  }
-
-  .time-track-cell {
-    display: flex;
-    position: relative;
-
-    .grid-line {
-      width: $slot-width;
-      min-width: $slot-width;
-      border-right: 1px solid #f8f8f8;
-      height: 100%;
-      box-sizing: border-box;
-
-      &.major {
-        border-right: 1px solid #ddd;
-      }
-    }
-
-    .now-indicator {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      width: 2px;
-      background-color: #e74c3c; // Red
-      z-index: 15; // Above grid lines (z=0) and bookings (z=5)
-      pointer-events: none;
-    }
-
-    .booking-block {
-      border-radius: 4px;
-      overflow: hidden;
-      font-size: 0.75rem;
-      color: white;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
-      cursor: pointer;
-      z-index: 5;
-
-      .booking-content {
-        padding: 2px 4px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-
-      &:hover {
-        opacity: 0.9;
-      }
-    }
-  }
+.loading-state {
+    padding: 20px;
+    text-align: center;
+    color: #888;
 }
