@@ -33,9 +33,11 @@ tags:
   - name: Integrations
     description: Read-only feeds for external consumers.
 
-security:
-  - SessionCookie: []
-  - {}
+# Kein Endpunkt *verlangt* eine Anmeldung: ohne Session-Cookie handelt der Aufruf
+# als die Rolle mit `isAnonymous`. Was diese Rolle darf, entscheidet ihre
+# Berechtigungsliste — deshalb steht hier keine Security-Anforderung, sondern nur
+# `x-permissions` an den einzelnen Operationen.
+security: []
 
 components:
 
@@ -331,6 +333,7 @@ components:
           type: string
         description:
           type: string
+          nullable: true
           description: Markdown. Rendered against a safe subset — no HTML, no scripts, no external images.
         usageRules:
           type: string
@@ -351,6 +354,7 @@ components:
           enum: [OK, DEFECT, DISABLED]
         location:
           type: string
+          nullable: true
         areaId:
           type: string
         wikiUrl:
@@ -381,7 +385,6 @@ components:
       required:
         - id
         - name
-        - description
         - status
         - areaId
         - blocksWorkplaceIds
@@ -456,6 +459,10 @@ components:
           type: string
         creatorRoleId:
           type: string
+          nullable: true
+          description: |
+            Null for bookings the system created itself — series instances have no
+            creator. Kept as a dangling reference when the role is later deleted.
         ipAddress:
           type: string
           nullable: true
@@ -1495,8 +1502,6 @@ paths:
 
         Open: how the feed authenticates. Calendar clients cannot log in interactively, so this
         likely needs an unguessable feed token rather than the session cookie.
-      security:
-        - {}
       parameters:
         - name: areaId
           in: query

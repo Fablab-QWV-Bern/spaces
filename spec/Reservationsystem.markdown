@@ -21,12 +21,15 @@
 
 hosttech Webhosting, Paket "Smart Deal" (CHF 6.90/Mt.). Daraus folgende Randbedingungen:
 
-- **Kein SSH.** Deployment läuft über FTP; `composer install` und `php artisan migrate` sind auf dem
-  Server nicht direkt ausführbar. Entweder `vendor/` mit ausliefern und Migrationen über einen
-  geschützten Cron- bzw. Web-Trigger fahren, oder SSH dazubuchen (ab Paket "L").
+- **Kein SSH.** Deployment läuft über FTP: `vendor/` wird mitgeliefert, Migrationen laufen über einen
+  geschützten Cron- bzw. Web-Trigger. `composer install` und `php artisan migrate` sind auf dem
+  Server nicht ausführbar.
 - Kein Node auf dem Server: Frontend-Assets werden lokal oder in CI gebaut und als statische Dateien
   hochgeladen.
 - PHP maximal 8.3, MariaDB, Plesk als Control Panel (Document Root pro Domain auf `public/` setzbar).
+  Lokal läuft eine neuere PHP-Version, deshalb wird in `composer.json` `config.platform.php` auf 8.3
+  festgenagelt — sonst löst Composer Abhängigkeiten gegen eine Version auf, die es auf dem Server
+  nicht gibt.
 - `max_execution_time` 60 Sekunden, `memory_limit` 512 MB, 512 MB RAM. Der tägliche Serien-Lauf und
   der CSV-Import müssen deshalb in Batches arbeiten und wiederaufsetzbar sein.
 - Keine dauerhaft laufenden Prozesse — keine Queue-Worker, alles Periodische über Cron.
@@ -40,6 +43,8 @@ hosttech Webhosting, Paket "Smart Deal" (CHF 6.90/Mt.). Daraus folgende Randbedi
 
 Als UI-Referenz dient das bestehende System, siehe `Kalenderansicht Alle Arbeitsplätze Tag.png`,
 `Kalenderansicht alle arbeitsplätze woche.png` und `Kalenderansicht einzelner arbeitsplatz.png`.
+
+Die Kalenderkomponente wird selbst gebaut, nicht zugekauft.
 
 ### Übersichtskarte mit Jetzt-Belegung
 
@@ -344,7 +349,7 @@ Das Zeitraster ist fix 15 Minuten und nicht konfigurierbar.
   (vgl. https://reservation.quartierwerkstatt-viktoria.ch/coming_up.php?room=%25Kurs%25&max=50)
 - Begrüssungs-Tablet (Kartenansicht)
 - UG-Tablet (Bereichsansicht)
-- .ical-Abo (Modell-Referenz folgt)
+- .ical-Abo (Modell-Referenz folgt, wird zuletzt umgesetzt)
 
 ## Use Cases
 
