@@ -36,9 +36,10 @@ export interface Booking {
   ipAddress?: string | null;
 
   /**
-   * Only present with viewBookingsDetails; null otherwise.
+   * Who booked. Always present — reaching this endpoint at all already requires
+   * viewBookings.
    */
-  name: string | null;
+  name: string;
   startTime: string;
   usageRulesAcknowledged: boolean;
   workplaceId: string;

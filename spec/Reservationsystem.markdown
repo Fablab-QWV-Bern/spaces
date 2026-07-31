@@ -153,8 +153,8 @@ gekennzeichnet, nicht über ihren Namen; genau eine Rolle trägt das Flag, sie h
 - Name (string, umbenennbar)
 - Kennwort (gespeichert mit Salt und gehasht)
 - Berechtigungen:
-    - Buchungen ohne Name + Kontakt anzeigen (boolean, `viewBookings`)
-    - Buchungen mit Name + Kontakt anzeigen (boolean, `viewBookingsDetails`)
+    - Buchungen anzeigen, inklusive Name des Buchenden (boolean, `viewBookings`)
+    - Zusätzlich Kontaktangaben des Buchenden anzeigen (boolean, `viewBookingsDetails`)
     - Buchungen erstellen, ändern und löschen (boolean, `manageBookings`)
     - Keine Beschränkung von Buchungsdauer und Vorlauf (boolean, `noTimeRestrictions`)
     - Buchungsserien verwalten (boolean, `manageBookingSeries`)

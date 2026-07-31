@@ -142,11 +142,12 @@
 
     <p class="card-time">{{ details.timeRange }}</p>
 
-    @if (details.booking.name) {
-      <p class="card-who">{{ details.booking.name }}</p>
+    <p class="card-who">{{ details.booking.name }}</p>
+
+    @if (details.booking.contact) {
       <p class="card-contact">{{ details.booking.contact }}</p>
     } @else {
-      <p class="card-who muted">Name nicht sichtbar</p>
+      <p class="card-contact muted">Kontakt nicht sichtbar</p>
     }
 
     @if (details.booking.bookingSeriesId) {

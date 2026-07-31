@@ -3,7 +3,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, map, switchMap, tap } from 'rxjs';
 
 import { ApiConfiguration } from '../api/api-configuration';
-import { getSession, login, logout } from '../api/functions';
+import { getSession, listLoginableRoles, login, logout } from '../api/functions';
 import { Session } from '../api/models';
 
 @Injectable({ providedIn: 'root' })
@@ -23,6 +23,11 @@ export class SessionService {
       map((response) => response.body),
       tap((session) => this.session.set(session)),
     );
+  }
+
+  /** Für die Rollenknöpfe im Anmeldedialog — kein Freitextfeld. */
+  loginableRoles(): Observable<string[]> {
+    return listLoginableRoles(this.http, this.rootUrl).pipe(map((response) => response.body));
   }
 
   login(roleName: string, password: string): Observable<Session> {

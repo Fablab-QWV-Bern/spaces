@@ -73,3 +73,10 @@ it('verlangt Rollenname und Kennwort', function () {
         ->assertStatus(422)
         ->assertJsonValidationErrors(['roleName', 'password']);
 });
+
+it('listet die anmeldbaren Rollen ohne die anonyme', function () {
+    $this->getJson('/api/session/roles')
+        ->assertValidRequest()
+        ->assertValidResponse(200)
+        ->assertExactJson(['Mitglied', 'Admin']);
+});

@@ -33,12 +33,12 @@ export interface Permissions {
   noTimeRestrictions: boolean;
 
   /**
-   * View bookings without name and contact details
+   * View bookings, including who booked. Contact details stay hidden.
    */
   viewBookings: boolean;
 
   /**
-   * View bookings with name and contact details
+   * Additionally view the booker's contact details
    */
   viewBookingsDetails: boolean;
 }

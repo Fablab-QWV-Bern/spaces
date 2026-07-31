@@ -193,6 +193,10 @@
     background: #2563eb;
     color: #fff;
     box-shadow: 0 0 0 2px #fff;
+
+    &.collision {
+      background: #dc2626;
+    }
   }
 }
 

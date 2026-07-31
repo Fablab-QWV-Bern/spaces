@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('session', [SessionController::class, 'show']);
 Route::post('session', [SessionController::class, 'login']);
 Route::delete('session', [SessionController::class, 'logout']);
+Route::get('session/roles', [SessionController::class, 'roles']);
 
 Route::get('config', [ConfigController::class, 'show']);
 

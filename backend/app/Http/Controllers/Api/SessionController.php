@@ -27,6 +27,18 @@ class SessionController extends Controller
         return new SessionResource($this->currentRole->get());
     }
 
+    /**
+     * Öffentlich: der Login zeigt eine Schaltfläche pro Rolle statt eines
+     * Freitextfelds. Nur Namen, keine Berechtigungen — die anonyme Rolle fehlt,
+     * sie hat kein Kennwort und kann sich nicht anmelden.
+     */
+    public function roles(): JsonResponse
+    {
+        return response()->json(
+            Role::where('is_anonymous', false)->orderBy('created_at')->pluck('name'),
+        );
+    }
+
     public function login(Request $request): SessionResource|JsonResponse
     {
         $credentials = $request->validate([

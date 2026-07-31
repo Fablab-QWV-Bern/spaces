@@ -125,10 +125,10 @@ components:
       properties:
         viewBookings:
           type: boolean
-          description: View bookings without name and contact details
+          description: View bookings, including who booked. Contact details stay hidden.
         viewBookingsDetails:
           type: boolean
-          description: View bookings with name and contact details
+          description: Additionally view the booker's contact details
         manageBookings:
           type: boolean
           description: Create, update and delete any booking
@@ -483,8 +483,9 @@ components:
             type: string
         name:
           type: string
-          nullable: true
-          description: Only present with viewBookingsDetails; null otherwise.
+          description: |
+            Who booked. Always present — reaching this endpoint at all already requires
+            viewBookings.
         contact:
           type: string
           nullable: true
@@ -761,6 +762,25 @@ paths:
       responses:
         '204':
           description: Session ended; caller falls back to the anonymous role
+
+  /session/roles:
+    get:
+      tags: [Session]
+      operationId: listLoginableRoles
+      summary: Role names available to log in as
+      description: |
+        Public — the login screen offers one button per role rather than a free-text field. Lists
+        every role except the anonymous one; carries no permissions or other detail, just the names,
+        in the order roles were created.
+      responses:
+        '200':
+          description: Role names
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
 
   /config:
     get:
@@ -1199,8 +1219,8 @@ paths:
       summary: List bookings in a time window
       description: |
         `from` and `to` are required so the response stays bounded; the calendar always knows its
-        window. Returns every booking overlapping the window. Without viewBookingsDetails, `name`
-        and `contact` come back as null.
+        window. Returns every booking overlapping the window. Without viewBookingsDetails, `contact`
+        comes back as null; `name` is always shown.
       x-permissions: ["viewBookings"]
       parameters:
         - name: from
@@ -1312,7 +1332,7 @@ paths:
       operationId: getBooking
       summary: Get booking
       description: |
-        viewBookings is enough to fetch a booking; name and contact are null without
+        viewBookings is enough to fetch a booking and see who booked; contact is null without
         viewBookingsDetails.
       x-permissions: ["viewBookings"]
       responses:

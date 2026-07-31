@@ -34,12 +34,17 @@ import { Booker, readBooker, writeBooker } from '../shared/booker-cookie';
 import { SessionBar } from '../shared/session-bar';
 import { SessionService } from '../shared/session-service';
 
+/** Standarddauer einer neuen Buchung, sofern sie am Arbeitsplatz erlaubt ist. */
+const DEFAULT_DURATION_MINUTES = 120;
+
 interface PreviewBlock {
   label: string;
   leftPercent: number;
   widthPercent: number;
   own: boolean;
   blockage: boolean;
+  /** Nur für die eigene Box gesetzt: färbt sie rot. */
+  collision?: boolean;
 }
 
 @Component({
@@ -255,6 +260,12 @@ export class BookingForm {
       this.booker().contact.trim() !== '',
   );
 
+  /** Speziell die Kollision, nicht jeder Regelverstoss — die färbt die Box rot. */
+  protected readonly hasCollision = computed(
+    () =>
+      this.validation()?.violations.some((violation) => violation.code === 'COLLISION') ?? false,
+  );
+
   // --- Vorschau auf der Zeitleiste -----------------------------------------
 
   protected readonly previewBlocks = computed<PreviewBlock[]>(() => {
@@ -291,14 +302,9 @@ export class BookingForm {
           return [];
         }
 
-        // Ohne viewBookingsDetails liefert die API keinen Namen.
-        const who = booking.name;
-
         return [
           {
-            label: onThisWorkplace
-              ? (who ?? 'Belegt')
-              : `blockiert durch ${who ?? 'eine andere Buchung'}`,
+            label: onThisWorkplace ? booking.name : `blockiert durch ${booking.name}`,
             own: false,
             blockage: !onThisWorkplace,
             ...geometry,
@@ -312,7 +318,13 @@ export class BookingForm {
       const geometry = blockGeometry(axis, range.start, range.end, day);
 
       if (geometry) {
-        existing.push({ label: 'Neue Buchung', own: true, blockage: false, ...geometry });
+        existing.push({
+          label: 'Neue Buchung',
+          own: true,
+          blockage: false,
+          collision: this.hasCollision(),
+          ...geometry,
+        });
       }
     }
 
@@ -379,7 +391,7 @@ export class BookingForm {
       this.endMinutes.set(end.getHours() * 60 + end.getMinutes());
     }
 
-    this.booker.set({ name: booking.name ?? '', contact: booking.contact ?? '' });
+    this.booker.set({ name: booking.name, contact: booking.contact ?? '' });
     this.rulesAcknowledged.set(booking.usageRulesAcknowledged);
   }
 
@@ -398,7 +410,12 @@ export class BookingForm {
       this.startMinutes.set(axis?.opensAt ?? 480);
     }
 
-    this.durationMinutes.set(Number(query.get('durationMinutes') ?? GRID_MINUTES));
+    const requestedDuration = Number(query.get('durationMinutes'));
+    const maxDuration = this.maxDurationMinutes() || DEFAULT_DURATION_MINUTES;
+
+    this.durationMinutes.set(
+      requestedDuration > 0 ? requestedDuration : Math.min(DEFAULT_DURATION_MINUTES, maxDuration),
+    );
     this.endDate.set(this.date());
     this.endMinutes.set((axis?.opensAt ?? 480) + GRID_MINUTES);
   }

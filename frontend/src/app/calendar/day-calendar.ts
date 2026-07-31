@@ -6,7 +6,6 @@ import { SessionBar } from '../shared/session-bar';
 import { Booking, Workplace } from '../api/models';
 import { CalendarStore } from './calendar-store';
 import {
-  GRID_MINUTES,
   TimeAxis,
   blockGeometry,
   buildTimeAxis,
@@ -126,8 +125,7 @@ export class DayCalendar {
           return null;
         }
 
-        // Ohne viewBookingsDetails liefert die API null statt eines Namens.
-        const who = booking.name ?? 'Belegt';
+        const who = booking.name;
         const time = `${formatTime(start)}–${formatTime(end)}`;
 
         return {
@@ -264,8 +262,7 @@ export class DayCalendar {
         // Lokale Zeit ohne Zone: das Formular arbeitet in Anzeige-Zeit, die
         // Umrechnung nach UTC passiert erst beim Speichern.
         start: toLocalIso(instantAt(this.store.date(), minutes)),
-        // Die kürzeste erlaubte Dauer, wie in der Spec vorgegeben.
-        durationMinutes: GRID_MINUTES,
+        // Keine Dauer mitgeben: das Formular setzt selbst seine Standarddauer.
       },
     });
   }

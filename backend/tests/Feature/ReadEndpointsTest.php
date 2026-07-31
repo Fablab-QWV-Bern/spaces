@@ -135,15 +135,15 @@ it('laesst Buchungen ausserhalb des Fensters weg', function () {
         ->assertJsonCount(0);
 });
 
-it('verbirgt Name und Kontakt ohne viewBookingsDetails', function () {
+it('zeigt den Namen bereits mit viewBookings, verbirgt aber den Kontakt', function () {
     $this->getJson(window())
         ->assertOk()
-        ->assertJsonPath('0.name', null)
+        ->assertJsonPath('0.name', 'Hans Cramer')
         ->assertJsonPath('0.contact', null)
         ->assertJsonPath('0.ipAddress', null);
 });
 
-it('zeigt Name und Kontakt mit viewBookingsDetails', function () {
+it('zeigt zusaetzlich den Kontakt mit viewBookingsDetails', function () {
     $this->actingAs($this->member)
         ->getJson(window())
         ->assertOk()

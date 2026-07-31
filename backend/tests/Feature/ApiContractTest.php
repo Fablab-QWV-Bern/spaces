@@ -52,6 +52,10 @@ it('haelt den Vertrag fuer /session', function () {
     $this->getJson('/api/session')->assertValidRequest()->assertValidResponse(200);
 });
 
+it('haelt den Vertrag fuer /session/roles', function () {
+    $this->getJson('/api/session/roles')->assertValidRequest()->assertValidResponse(200);
+});
+
 it('haelt den Vertrag fuer /areas', function () {
     $this->getJson('/api/areas')->assertValidRequest()->assertValidResponse(200);
 });

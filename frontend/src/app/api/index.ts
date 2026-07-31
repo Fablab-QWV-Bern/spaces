@@ -32,6 +32,8 @@ export type { Login$Params as Login$Params } from './fn/session/login';
 export { login as login } from './fn/session/login';
 export type { Logout$Params as Logout$Params } from './fn/session/logout';
 export { logout as logout } from './fn/session/logout';
+export type { ListLoginableRoles$Params as ListLoginableRoles$Params } from './fn/session/list-loginable-roles';
+export { listLoginableRoles as listLoginableRoles } from './fn/session/list-loginable-roles';
 export type { GetConfig$Params as GetConfig$Params } from './fn/config/get-config';
 export { getConfig as getConfig } from './fn/config/get-config';
 export type { UpdateConfig$Params as UpdateConfig$Params } from './fn/config/update-config';

@@ -6,6 +6,10 @@ import { SessionService } from './session-service';
 /**
  * Anmeldung als Rolle. Es gibt keine Benutzer — man wählt die Rolle, unter der
  * man handelt, und teilt sich deren Kennwort mit allen anderen.
+ *
+ * Der Dialog zeigt zuerst eine Schaltfläche pro Rolle statt eines
+ * Freitextfelds — die Rollen sind eine kleine, bekannte Liste, aus der man
+ * auswählt statt sie zu tippen. Erst nach der Auswahl erscheint das Kennwortfeld.
  */
 @Component({
   selector: 'app-session-bar',
@@ -23,42 +27,52 @@ import { SessionService } from './session-service';
     </div>
 
     <dialog #dialog class="login">
-      <form method="dialog" (submit)="$event.preventDefault(); submit()">
-        <h2>Anmelden</h2>
+      @if (!selectedRole()) {
+        <div class="roles">
+          <h2>Anmelden als</h2>
 
-        <label>
-          <span>Rolle</span>
-          <input
-            type="text"
-            [ngModel]="roleName()"
-            (ngModelChange)="roleName.set($event)"
-            name="roleName"
-            autocomplete="username"
-            required
-          />
-        </label>
+          @if (loadingRoles()) {
+            <p class="hint">Wird geladen …</p>
+          } @else {
+            @for (role of roles(); track role) {
+              <button type="button" class="role-choice" (click)="selectRole(role)">
+                {{ role }}
+              </button>
+            }
+          }
 
-        <label>
-          <span>Kennwort</span>
-          <input
-            type="password"
-            [ngModel]="password()"
-            (ngModelChange)="password.set($event)"
-            name="password"
-            autocomplete="current-password"
-            required
-          />
-        </label>
-
-        @if (error(); as message) {
-          <p class="error" role="alert">{{ message }}</p>
-        }
-
-        <div class="actions">
-          <button type="submit" class="primary" [disabled]="busy()">Anmelden</button>
-          <button type="button" (click)="close()">Abbrechen</button>
+          <div class="actions">
+            <button type="button" (click)="close()">Abbrechen</button>
+          </div>
         </div>
-      </form>
+      } @else {
+        <form method="dialog" (submit)="$event.preventDefault(); submit()">
+          <h2>Anmelden als {{ selectedRole() }}</h2>
+
+          <label>
+            <span>Kennwort</span>
+            <input
+              #passwordField
+              type="password"
+              [ngModel]="password()"
+              (ngModelChange)="password.set($event)"
+              name="password"
+              autocomplete="current-password"
+              required
+            />
+          </label>
+
+          @if (error(); as message) {
+            <p class="error" role="alert">{{ message }}</p>
+          }
+
+          <div class="actions">
+            <button type="submit" class="primary" [disabled]="busy()">Anmelden</button>
+            <button type="button" (click)="back()">Andere Rolle</button>
+            <button type="button" (click)="close()">Abbrechen</button>
+          </div>
+        </form>
+      }
     </dialog>
   `,
   styles: `
@@ -88,6 +102,11 @@ import { SessionService } from './session-service';
         border-color: #2563eb;
         color: #fff;
       }
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
     }
 
     .login {
@@ -105,11 +124,18 @@ import { SessionService } from './session-service';
         font-size: 1.1rem;
       }
 
-      form {
+      form,
+      .roles {
         display: flex;
         flex-direction: column;
         gap: 0.6rem;
         font-family: system-ui, sans-serif;
+      }
+
+      .role-choice {
+        padding: 0.6rem 0.75rem;
+        text-align: left;
+        font-size: 0.95rem;
       }
 
       label {
@@ -137,22 +163,55 @@ import { SessionService } from './session-service';
         color: #b91c1c;
         font-size: 0.85rem;
       }
+
+      .hint {
+        margin: 0;
+        color: #64748b;
+        font-size: 0.85rem;
+      }
     }
   `,
 })
 export class SessionBar {
   protected readonly session = inject(SessionService);
   private readonly dialogRef = viewChild<ElementRef<HTMLDialogElement>>('dialog');
+  private readonly passwordFieldRef = viewChild<ElementRef<HTMLInputElement>>('passwordField');
 
-  protected readonly roleName = signal('');
+  protected readonly roles = signal<string[]>([]);
+  protected readonly loadingRoles = signal(false);
+  protected readonly selectedRole = signal<string | null>(null);
   protected readonly password = signal('');
   protected readonly error = signal<string | null>(null);
   protected readonly busy = signal(false);
 
   protected open(): void {
-    this.error.set(null);
+    this.selectedRole.set(null);
     this.password.set('');
+    this.error.set(null);
     this.dialogRef()?.nativeElement.showModal();
+
+    this.loadingRoles.set(true);
+    this.session.loginableRoles().subscribe({
+      next: (roles) => {
+        this.roles.set(roles);
+        this.loadingRoles.set(false);
+      },
+      error: () => this.loadingRoles.set(false),
+    });
+  }
+
+  protected selectRole(role: string): void {
+    this.selectedRole.set(role);
+    this.password.set('');
+    this.error.set(null);
+    // Der Dialog rendert das Kennwortfeld erst in diesem Moment neu — der
+    // Fokus muss deshalb einen Tick später gesetzt werden.
+    setTimeout(() => this.passwordFieldRef()?.nativeElement.focus());
+  }
+
+  protected back(): void {
+    this.selectedRole.set(null);
+    this.error.set(null);
   }
 
   protected close(): void {
@@ -160,10 +219,16 @@ export class SessionBar {
   }
 
   protected submit(): void {
+    const role = this.selectedRole();
+
+    if (!role) {
+      return;
+    }
+
     this.busy.set(true);
     this.error.set(null);
 
-    this.session.login(this.roleName(), this.password()).subscribe({
+    this.session.login(role, this.password()).subscribe({
       next: () => {
         this.busy.set(false);
         this.password.set('');
