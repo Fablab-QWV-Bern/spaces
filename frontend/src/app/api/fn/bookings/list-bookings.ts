@@ -16,7 +16,12 @@ export interface ListBookings$Params {
   areaId?: string;
 }
 
-export function listBookings(http: HttpClient, rootUrl: string, params: ListBookings$Params, context?: HttpContext): Observable<StrictHttpResponse<Array<Booking>>> {
+export function listBookings(
+  http: HttpClient,
+  rootUrl: string,
+  params: ListBookings$Params,
+  context?: HttpContext,
+): Observable<StrictHttpResponse<Array<Booking>>> {
   const rb = new RequestBuilder(rootUrl, listBookings.PATH, 'get');
   if (params) {
     rb.query('from', params.from, {});
@@ -25,13 +30,11 @@ export function listBookings(http: HttpClient, rootUrl: string, params: ListBook
     rb.query('areaId', params.areaId, {});
   }
 
-  return http.request(
-    rb.build({ responseType: 'json', accept: 'application/json', context })
-  ).pipe(
+  return http.request(rb.build({ responseType: 'json', accept: 'application/json', context })).pipe(
     filter((r: any): r is HttpResponse<any> => r instanceof HttpResponse),
     map((r: HttpResponse<any>) => {
       return r as StrictHttpResponse<Array<Booking>>;
-    })
+    }),
   );
 }
 

@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { blockGeometry, buildTimeAxis, instantAt, minutesOfDay, slotAtOffset } from './time-axis';
+import {
+  allowedDurations,
+  blockGeometry,
+  buildTimeAxis,
+  formatDuration,
+  instantAt,
+  minutesOfDay,
+  slotAtOffset,
+} from './time-axis';
 
 const axis = buildTimeAxis('08:00', '21:00');
 const day = new Date('2026-08-03T12:00:00');
@@ -65,7 +73,9 @@ describe('blockGeometry', () => {
   });
 
   it('laesst Buchungen weg, die den Tag gar nicht beruehren', () => {
-    expect(blockGeometry(axis, at('09:00', '2026-08-05'), at('11:00', '2026-08-05'), day)).toBeNull();
+    expect(
+      blockGeometry(axis, at('09:00', '2026-08-05'), at('11:00', '2026-08-05'), day),
+    ).toBeNull();
   });
 
   it('laesst Buchungen ausserhalb der Oeffnungszeiten weg', () => {
@@ -101,5 +111,32 @@ describe('instantAt', () => {
     expect(instant.getFullYear()).toBe(2026);
     expect(instant.getHours()).toBe(14);
     expect(instant.getMinutes()).toBe(30);
+  });
+});
+
+describe('allowedDurations', () => {
+  it('schneidet die Staffel beim Maximum ab', () => {
+    expect(allowedDurations(120)).toEqual([15, 30, 45, 60, 90, 120]);
+  });
+
+  it('macht das Maximum immer waehlbar, auch neben der Staffel', () => {
+    expect(allowedDurations(100)).toEqual([15, 30, 45, 60, 90, 100]);
+  });
+
+  it('geht ueber 24 Stunden in Tagesschritten weiter', () => {
+    expect(allowedDurations(4320)).toContain(1440);
+    expect(allowedDurations(4320)).toContain(2880);
+    expect(allowedDurations(4320)).toContain(4320);
+  });
+});
+
+describe('formatDuration', () => {
+  it('beugt richtig', () => {
+    expect(formatDuration(15)).toBe('15 Minuten');
+    expect(formatDuration(60)).toBe('1 Stunde');
+    expect(formatDuration(90)).toBe('1,5 Stunden');
+    expect(formatDuration(480)).toBe('8 Stunden');
+    expect(formatDuration(1440)).toBe('1 Tag');
+    expect(formatDuration(2880)).toBe('2 Tage');
   });
 });

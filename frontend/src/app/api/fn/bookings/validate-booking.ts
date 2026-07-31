@@ -11,28 +11,30 @@ import { BookingValidation } from '../../models/booking-validation';
 import { BookingWrite } from '../../models/booking-write';
 
 export interface ValidateBooking$Params {
-
-/**
- * Set when checking an edit, so the booking does not collide with itself.
- */
+  /**
+   * Set when checking an edit, so the booking does not collide with itself.
+   */
   excludeBookingId?: string;
-      body: BookingWrite
+  body: BookingWrite;
 }
 
-export function validateBooking(http: HttpClient, rootUrl: string, params: ValidateBooking$Params, context?: HttpContext): Observable<StrictHttpResponse<BookingValidation>> {
+export function validateBooking(
+  http: HttpClient,
+  rootUrl: string,
+  params: ValidateBooking$Params,
+  context?: HttpContext,
+): Observable<StrictHttpResponse<BookingValidation>> {
   const rb = new RequestBuilder(rootUrl, validateBooking.PATH, 'post');
   if (params) {
     rb.query('excludeBookingId', params.excludeBookingId, {});
     rb.body(params.body, 'application/json');
   }
 
-  return http.request(
-    rb.build({ responseType: 'json', accept: 'application/json', context })
-  ).pipe(
+  return http.request(rb.build({ responseType: 'json', accept: 'application/json', context })).pipe(
     filter((r: any): r is HttpResponse<any> => r instanceof HttpResponse),
     map((r: HttpResponse<any>) => {
       return r as StrictHttpResponse<BookingValidation>;
-    })
+    }),
   );
 }
 

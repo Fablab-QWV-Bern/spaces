@@ -241,13 +241,7 @@
 .blockage {
   // Blockierungen tragen ein Schraffurmuster, damit sie sich nicht allein über
   // die Farbe von freien Flächen unterscheiden.
-  background: repeating-linear-gradient(
-    45deg,
-    #cbd5e1,
-    #cbd5e1 4px,
-    #e2e8f0 4px,
-    #e2e8f0 8px
-  );
+  background: repeating-linear-gradient(45deg, #cbd5e1, #cbd5e1 4px, #e2e8f0 4px, #e2e8f0 8px);
 }
 
 .now-layer {
@@ -289,13 +283,7 @@
     }
 
     &.blockage {
-      background: repeating-linear-gradient(
-        45deg,
-        #cbd5e1,
-        #cbd5e1 4px,
-        #e2e8f0 4px,
-        #e2e8f0 8px
-      );
+      background: repeating-linear-gradient(45deg, #cbd5e1, #cbd5e1 4px, #e2e8f0 4px, #e2e8f0 8px);
     }
 
     &.free {
@@ -326,7 +314,10 @@
   position-anchor: --hovered-block;
   position-area: block-end span-inline-end;
   // Am Viewport-Rand nach oben bzw. zur anderen Seite umklappen.
-  position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline;
+  position-try-fallbacks:
+    flip-block,
+    flip-inline,
+    flip-block flip-inline;
 
   min-width: 12rem;
   max-width: 20rem;

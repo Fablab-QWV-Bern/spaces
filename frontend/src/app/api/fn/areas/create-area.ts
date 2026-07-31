@@ -11,22 +11,25 @@ import { Area } from '../../models/area';
 import { AreaWrite } from '../../models/area-write';
 
 export interface CreateArea$Params {
-      body: AreaWrite
+  body: AreaWrite;
 }
 
-export function createArea(http: HttpClient, rootUrl: string, params: CreateArea$Params, context?: HttpContext): Observable<StrictHttpResponse<Area>> {
+export function createArea(
+  http: HttpClient,
+  rootUrl: string,
+  params: CreateArea$Params,
+  context?: HttpContext,
+): Observable<StrictHttpResponse<Area>> {
   const rb = new RequestBuilder(rootUrl, createArea.PATH, 'post');
   if (params) {
     rb.body(params.body, 'application/json');
   }
 
-  return http.request(
-    rb.build({ responseType: 'json', accept: 'application/json', context })
-  ).pipe(
+  return http.request(rb.build({ responseType: 'json', accept: 'application/json', context })).pipe(
     filter((r: any): r is HttpResponse<any> => r instanceof HttpResponse),
     map((r: HttpResponse<any>) => {
       return r as StrictHttpResponse<Area>;
-    })
+    }),
   );
 }
 

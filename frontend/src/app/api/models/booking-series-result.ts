@@ -10,8 +10,8 @@ import { BookingSeries } from '../models/booking-series';
 export interface BookingSeriesResult {
   series: BookingSeries;
   skippedInstances: Array<{
-'startTime': string;
-'endTime': string;
-'conflictingBookingIds': Array<string>;
-}>;
+    startTime: string;
+    endTime: string;
+    conflictingBookingIds: Array<string>;
+  }>;
 }

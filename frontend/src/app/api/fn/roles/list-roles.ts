@@ -9,21 +9,23 @@ import { RequestBuilder } from '../../request-builder';
 
 import { Role } from '../../models/role';
 
-export interface ListRoles$Params {
-}
+export interface ListRoles$Params {}
 
-export function listRoles(http: HttpClient, rootUrl: string, params?: ListRoles$Params, context?: HttpContext): Observable<StrictHttpResponse<Array<Role>>> {
+export function listRoles(
+  http: HttpClient,
+  rootUrl: string,
+  params?: ListRoles$Params,
+  context?: HttpContext,
+): Observable<StrictHttpResponse<Array<Role>>> {
   const rb = new RequestBuilder(rootUrl, listRoles.PATH, 'get');
   if (params) {
   }
 
-  return http.request(
-    rb.build({ responseType: 'json', accept: 'application/json', context })
-  ).pipe(
+  return http.request(rb.build({ responseType: 'json', accept: 'application/json', context })).pipe(
     filter((r: any): r is HttpResponse<any> => r instanceof HttpResponse),
     map((r: HttpResponse<any>) => {
       return r as StrictHttpResponse<Array<Role>>;
-    })
+    }),
   );
 }
 

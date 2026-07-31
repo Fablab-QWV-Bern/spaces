@@ -3,6 +3,5 @@
 
 import { WorkplaceCreate } from '../models/workplace-create';
 export type WorkplaceUpdate = WorkplaceCreate & {
-'id'?: any;
+  id?: any;
 };
-

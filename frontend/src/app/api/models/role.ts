@@ -3,7 +3,6 @@
 
 import { Permissions } from '../models/permissions';
 export interface Role {
-
   /**
    * Stable and immutable. Referenced by Booking.creatorRoleId.
    */

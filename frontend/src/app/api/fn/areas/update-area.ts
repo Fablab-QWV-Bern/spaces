@@ -12,23 +12,26 @@ import { AreaWrite } from '../../models/area-write';
 
 export interface UpdateArea$Params {
   id: string;
-      body: AreaWrite
+  body: AreaWrite;
 }
 
-export function updateArea(http: HttpClient, rootUrl: string, params: UpdateArea$Params, context?: HttpContext): Observable<StrictHttpResponse<Area>> {
+export function updateArea(
+  http: HttpClient,
+  rootUrl: string,
+  params: UpdateArea$Params,
+  context?: HttpContext,
+): Observable<StrictHttpResponse<Area>> {
   const rb = new RequestBuilder(rootUrl, updateArea.PATH, 'put');
   if (params) {
     rb.path('id', params.id, {});
     rb.body(params.body, 'application/json');
   }
 
-  return http.request(
-    rb.build({ responseType: 'json', accept: 'application/json', context })
-  ).pipe(
+  return http.request(rb.build({ responseType: 'json', accept: 'application/json', context })).pipe(
     filter((r: any): r is HttpResponse<any> => r instanceof HttpResponse),
     map((r: HttpResponse<any>) => {
       return r as StrictHttpResponse<Area>;
-    })
+    }),
   );
 }
 

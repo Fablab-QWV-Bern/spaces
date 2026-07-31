@@ -112,3 +112,63 @@ export function instantAt(day: string, minutesSinceMidnight: number): Date {
 
   return instant;
 }
+
+/** Die Staffelung aus der Spec, in Minuten. */
+const DURATION_LADDER = [15, 30, 45, 60, 90, 120, 180, 240, 360, 480, 720, 1440];
+
+/**
+ * Erlaubte Dauern bis zum Maximum. Über 24 Stunden geht es in Tagesschritten
+ * weiter, und das Maximum selbst ist immer wählbar — auch wenn es nicht auf der
+ * Staffel liegt.
+ */
+export function allowedDurations(maxMinutes: number): number[] {
+  const durations = DURATION_LADDER.filter((minutes) => minutes <= maxMinutes);
+
+  for (let minutes = 2880; minutes <= maxMinutes; minutes += 1440) {
+    durations.push(minutes);
+  }
+
+  if (durations.at(-1) !== maxMinutes && maxMinutes >= GRID_MINUTES) {
+    durations.push(maxMinutes);
+  }
+
+  return durations;
+}
+
+export function formatDuration(minutes: number): string {
+  if (minutes < 60) {
+    return `${minutes} Minuten`;
+  }
+
+  if (minutes % 1440 === 0) {
+    const days = minutes / 1440;
+
+    return days === 1 ? '1 Tag' : `${days} Tage`;
+  }
+
+  if (minutes === 60) {
+    return '1 Stunde';
+  }
+
+  const hours = minutes / 60;
+
+  return `${Number.isInteger(hours) ? hours : hours.toFixed(1).replace('.', ',')} Stunden`;
+}
+
+/** Alle Startzeitpunkte des Rasters innerhalb der Öffnungszeiten. */
+export function slotsOfDay(axis: TimeAxis): number[] {
+  const slots: number[] = [];
+
+  for (let minutes = axis.opensAt; minutes < axis.closesAt; minutes += GRID_MINUTES) {
+    slots.push(minutes);
+  }
+
+  return slots;
+}
+
+export function formatMinutes(minutes: number): string {
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+
+  return `${String(hours).padStart(2, '0')}:${String(rest).padStart(2, '0')}`;
+}

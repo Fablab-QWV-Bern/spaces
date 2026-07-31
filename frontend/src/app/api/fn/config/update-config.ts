@@ -10,22 +10,25 @@ import { RequestBuilder } from '../../request-builder';
 import { Config } from '../../models/config';
 
 export interface UpdateConfig$Params {
-      body: Config
+  body: Config;
 }
 
-export function updateConfig(http: HttpClient, rootUrl: string, params: UpdateConfig$Params, context?: HttpContext): Observable<StrictHttpResponse<Config>> {
+export function updateConfig(
+  http: HttpClient,
+  rootUrl: string,
+  params: UpdateConfig$Params,
+  context?: HttpContext,
+): Observable<StrictHttpResponse<Config>> {
   const rb = new RequestBuilder(rootUrl, updateConfig.PATH, 'put');
   if (params) {
     rb.body(params.body, 'application/json');
   }
 
-  return http.request(
-    rb.build({ responseType: 'json', accept: 'application/json', context })
-  ).pipe(
+  return http.request(rb.build({ responseType: 'json', accept: 'application/json', context })).pipe(
     filter((r: any): r is HttpResponse<any> => r instanceof HttpResponse),
     map((r: HttpResponse<any>) => {
       return r as StrictHttpResponse<Config>;
-    })
+    }),
   );
 }
 

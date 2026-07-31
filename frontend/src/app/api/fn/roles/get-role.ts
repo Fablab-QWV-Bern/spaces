@@ -13,19 +13,22 @@ export interface GetRole$Params {
   id: string;
 }
 
-export function getRole(http: HttpClient, rootUrl: string, params: GetRole$Params, context?: HttpContext): Observable<StrictHttpResponse<Role>> {
+export function getRole(
+  http: HttpClient,
+  rootUrl: string,
+  params: GetRole$Params,
+  context?: HttpContext,
+): Observable<StrictHttpResponse<Role>> {
   const rb = new RequestBuilder(rootUrl, getRole.PATH, 'get');
   if (params) {
     rb.path('id', params.id, {});
   }
 
-  return http.request(
-    rb.build({ responseType: 'json', accept: 'application/json', context })
-  ).pipe(
+  return http.request(rb.build({ responseType: 'json', accept: 'application/json', context })).pipe(
     filter((r: any): r is HttpResponse<any> => r instanceof HttpResponse),
     map((r: HttpResponse<any>) => {
       return r as StrictHttpResponse<Role>;
-    })
+    }),
   );
 }
 

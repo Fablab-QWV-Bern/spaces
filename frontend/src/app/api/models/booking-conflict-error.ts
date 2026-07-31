@@ -3,10 +3,8 @@
 
 import { Error } from '../models/error';
 export type BookingConflictError = Error & {
-
-/**
- * Existing bookings the request collides with.
- */
-'conflictingBookingIds': Array<string>;
+  /**
+   * Existing bookings the request collides with.
+   */
+  conflictingBookingIds: Array<string>;
 };
-

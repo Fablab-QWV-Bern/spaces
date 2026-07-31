@@ -12,23 +12,26 @@ import { BookingWrite } from '../../models/booking-write';
 
 export interface UpdateBooking$Params {
   id: string;
-      body: BookingWrite
+  body: BookingWrite;
 }
 
-export function updateBooking(http: HttpClient, rootUrl: string, params: UpdateBooking$Params, context?: HttpContext): Observable<StrictHttpResponse<Booking>> {
+export function updateBooking(
+  http: HttpClient,
+  rootUrl: string,
+  params: UpdateBooking$Params,
+  context?: HttpContext,
+): Observable<StrictHttpResponse<Booking>> {
   const rb = new RequestBuilder(rootUrl, updateBooking.PATH, 'put');
   if (params) {
     rb.path('id', params.id, {});
     rb.body(params.body, 'application/json');
   }
 
-  return http.request(
-    rb.build({ responseType: 'json', accept: 'application/json', context })
-  ).pipe(
+  return http.request(rb.build({ responseType: 'json', accept: 'application/json', context })).pipe(
     filter((r: any): r is HttpResponse<any> => r instanceof HttpResponse),
     map((r: HttpResponse<any>) => {
       return r as StrictHttpResponse<Booking>;
-    })
+    }),
   );
 }
 

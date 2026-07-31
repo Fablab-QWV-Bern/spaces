@@ -1,6 +1,8 @@
 import { Component, ElementRef, computed, inject, signal, viewChild } from '@angular/core';
 import { Router } from '@angular/router';
 
+import { SessionBar } from '../shared/session-bar';
+
 import { Booking, Workplace } from '../api/models';
 import { CalendarStore } from './calendar-store';
 import {
@@ -40,6 +42,7 @@ interface HoverCard {
 
 @Component({
   selector: 'app-day-calendar',
+  imports: [SessionBar],
   templateUrl: './day-calendar.html',
   styleUrl: './day-calendar.scss',
 })
@@ -184,7 +187,8 @@ export class DayCalendar {
       workplaceName: workplace.name,
       // Bei einer Blockierung liegt die Buchung auf einem anderen Arbeitsplatz.
       bookedWorkplaceName:
-        this.store.workplaceById().get(block.booking.workplaceId)?.name ?? block.booking.workplaceId,
+        this.store.workplaceById().get(block.booking.workplaceId)?.name ??
+        block.booking.workplaceId,
       timeRange: `${formatTime(start)}–${formatTime(end)}`,
       isBlockage: block.isBlockage,
     });

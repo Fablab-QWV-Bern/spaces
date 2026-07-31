@@ -14,20 +14,23 @@ export interface ListWorkplaces$Params {
   areaId?: string;
 }
 
-export function listWorkplaces(http: HttpClient, rootUrl: string, params?: ListWorkplaces$Params, context?: HttpContext): Observable<StrictHttpResponse<Array<Workplace>>> {
+export function listWorkplaces(
+  http: HttpClient,
+  rootUrl: string,
+  params?: ListWorkplaces$Params,
+  context?: HttpContext,
+): Observable<StrictHttpResponse<Array<Workplace>>> {
   const rb = new RequestBuilder(rootUrl, listWorkplaces.PATH, 'get');
   if (params) {
     rb.query('includeDisabled', params.includeDisabled, {});
     rb.query('areaId', params.areaId, {});
   }
 
-  return http.request(
-    rb.build({ responseType: 'json', accept: 'application/json', context })
-  ).pipe(
+  return http.request(rb.build({ responseType: 'json', accept: 'application/json', context })).pipe(
     filter((r: any): r is HttpResponse<any> => r instanceof HttpResponse),
     map((r: HttpResponse<any>) => {
       return r as StrictHttpResponse<Array<Workplace>>;
-    })
+    }),
   );
 }
 

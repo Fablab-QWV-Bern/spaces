@@ -12,23 +12,26 @@ import { BookingSeriesWrite } from '../../models/booking-series-write';
 
 export interface UpdateBookingSeries$Params {
   id: string;
-      body: BookingSeriesWrite
+  body: BookingSeriesWrite;
 }
 
-export function updateBookingSeries(http: HttpClient, rootUrl: string, params: UpdateBookingSeries$Params, context?: HttpContext): Observable<StrictHttpResponse<BookingSeriesResult>> {
+export function updateBookingSeries(
+  http: HttpClient,
+  rootUrl: string,
+  params: UpdateBookingSeries$Params,
+  context?: HttpContext,
+): Observable<StrictHttpResponse<BookingSeriesResult>> {
   const rb = new RequestBuilder(rootUrl, updateBookingSeries.PATH, 'put');
   if (params) {
     rb.path('id', params.id, {});
     rb.body(params.body, 'application/json');
   }
 
-  return http.request(
-    rb.build({ responseType: 'json', accept: 'application/json', context })
-  ).pipe(
+  return http.request(rb.build({ responseType: 'json', accept: 'application/json', context })).pipe(
     filter((r: any): r is HttpResponse<any> => r instanceof HttpResponse),
     map((r: HttpResponse<any>) => {
       return r as StrictHttpResponse<BookingSeriesResult>;
-    })
+    }),
   );
 }
 

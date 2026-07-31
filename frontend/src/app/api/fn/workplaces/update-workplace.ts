@@ -12,23 +12,26 @@ import { WorkplaceUpdate } from '../../models/workplace-update';
 
 export interface UpdateWorkplace$Params {
   id: string;
-      body: WorkplaceUpdate
+  body: WorkplaceUpdate;
 }
 
-export function updateWorkplace(http: HttpClient, rootUrl: string, params: UpdateWorkplace$Params, context?: HttpContext): Observable<StrictHttpResponse<Workplace>> {
+export function updateWorkplace(
+  http: HttpClient,
+  rootUrl: string,
+  params: UpdateWorkplace$Params,
+  context?: HttpContext,
+): Observable<StrictHttpResponse<Workplace>> {
   const rb = new RequestBuilder(rootUrl, updateWorkplace.PATH, 'put');
   if (params) {
     rb.path('id', params.id, {});
     rb.body(params.body, 'application/json');
   }
 
-  return http.request(
-    rb.build({ responseType: 'json', accept: 'application/json', context })
-  ).pipe(
+  return http.request(rb.build({ responseType: 'json', accept: 'application/json', context })).pipe(
     filter((r: any): r is HttpResponse<any> => r instanceof HttpResponse),
     map((r: HttpResponse<any>) => {
       return r as StrictHttpResponse<Workplace>;
-    })
+    }),
   );
 }
 

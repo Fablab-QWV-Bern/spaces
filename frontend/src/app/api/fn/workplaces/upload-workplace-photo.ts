@@ -11,25 +11,28 @@ import { Workplace } from '../../models/workplace';
 
 export interface UploadWorkplacePhoto$Params {
   id: string;
-      body: {
-'file': Blob;
-}
+  body: {
+    file: Blob;
+  };
 }
 
-export function uploadWorkplacePhoto(http: HttpClient, rootUrl: string, params: UploadWorkplacePhoto$Params, context?: HttpContext): Observable<StrictHttpResponse<Workplace>> {
+export function uploadWorkplacePhoto(
+  http: HttpClient,
+  rootUrl: string,
+  params: UploadWorkplacePhoto$Params,
+  context?: HttpContext,
+): Observable<StrictHttpResponse<Workplace>> {
   const rb = new RequestBuilder(rootUrl, uploadWorkplacePhoto.PATH, 'post');
   if (params) {
     rb.path('id', params.id, {});
     rb.body(params.body, 'multipart/form-data');
   }
 
-  return http.request(
-    rb.build({ responseType: 'json', accept: 'application/json', context })
-  ).pipe(
+  return http.request(rb.build({ responseType: 'json', accept: 'application/json', context })).pipe(
     filter((r: any): r is HttpResponse<any> => r instanceof HttpResponse),
     map((r: HttpResponse<any>) => {
       return r as StrictHttpResponse<Workplace>;
-    })
+    }),
   );
 }
 

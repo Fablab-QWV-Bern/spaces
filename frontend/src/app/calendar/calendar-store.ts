@@ -3,8 +3,9 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { forkJoin, map } from 'rxjs';
 
 import { ApiConfiguration } from '../api/api-configuration';
-import { getConfig, getSession, listAreas, listBookings, listWorkplaces } from '../api/functions';
-import { Area, Booking, Config, Session, Workplace } from '../api/models';
+import { getConfig, listAreas, listBookings, listWorkplaces } from '../api/functions';
+import { Area, Booking, Config, Workplace } from '../api/models';
+import { SessionService } from '../shared/session-service';
 
 /** Ein Tag, wie ihn der Kalender braucht: lokales Datum ohne Zeitanteil. */
 export type IsoDate = string;
@@ -13,21 +14,19 @@ export type IsoDate = string;
 export class CalendarStore {
   private readonly http = inject(HttpClient);
   private readonly rootUrl = inject(ApiConfiguration).rootUrl;
+  private readonly sessionService = inject(SessionService);
 
   readonly date = signal<IsoDate>(todayIso());
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
 
   readonly config = signal<Config | null>(null);
-  readonly session = signal<Session | null>(null);
   readonly areas = signal<Area[]>([]);
   readonly workplaces = signal<Workplace[]>([]);
   readonly bookings = signal<Booking[]>([]);
 
-  /** Darf die aktuelle Rolle Buchungen anlegen und ändern? */
-  readonly canManageBookings = computed(
-    () => this.session()?.permissions.manageBookings ?? false,
-  );
+  /** Eine Quelle für die Rolle: der SessionService, den auch die Anmeldeleiste nutzt. */
+  readonly canManageBookings = this.sessionService.canManageBookings;
 
   readonly workplaceById = computed(
     () => new Map(this.workplaces().map((workplace) => [workplace.id, workplace])),
@@ -92,7 +91,7 @@ export class CalendarStore {
 
     forkJoin({
       config: getConfig(this.http, this.rootUrl).pipe(map((r) => r.body)),
-      session: getSession(this.http, this.rootUrl).pipe(map((r) => r.body)),
+      session: this.sessionService.load(),
       areas: listAreas(this.http, this.rootUrl).pipe(map((r) => r.body)),
       workplaces: listWorkplaces(this.http, this.rootUrl).pipe(map((r) => r.body)),
       bookings: listBookings(this.http, this.rootUrl, {
@@ -100,9 +99,8 @@ export class CalendarStore {
         to: to.toISOString(),
       }).pipe(map((r) => r.body)),
     }).subscribe({
-      next: ({ config, session, areas, workplaces, bookings }) => {
+      next: ({ config, areas, workplaces, bookings }) => {
         this.config.set(config);
-        this.session.set(session);
         this.areas.set(areas);
         this.workplaces.set(workplaces);
         this.bookings.set(bookings);

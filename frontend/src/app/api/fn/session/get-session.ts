@@ -9,21 +9,23 @@ import { RequestBuilder } from '../../request-builder';
 
 import { Session } from '../../models/session';
 
-export interface GetSession$Params {
-}
+export interface GetSession$Params {}
 
-export function getSession(http: HttpClient, rootUrl: string, params?: GetSession$Params, context?: HttpContext): Observable<StrictHttpResponse<Session>> {
+export function getSession(
+  http: HttpClient,
+  rootUrl: string,
+  params?: GetSession$Params,
+  context?: HttpContext,
+): Observable<StrictHttpResponse<Session>> {
   const rb = new RequestBuilder(rootUrl, getSession.PATH, 'get');
   if (params) {
   }
 
-  return http.request(
-    rb.build({ responseType: 'json', accept: 'application/json', context })
-  ).pipe(
+  return http.request(rb.build({ responseType: 'json', accept: 'application/json', context })).pipe(
     filter((r: any): r is HttpResponse<any> => r instanceof HttpResponse),
     map((r: HttpResponse<any>) => {
       return r as StrictHttpResponse<Session>;
-    })
+    }),
   );
 }
 

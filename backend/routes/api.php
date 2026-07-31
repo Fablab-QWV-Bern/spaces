@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Route;
 // Was dort keine Angabe hat, ist ohne Anmeldung erreichbar.
 
 Route::get('session', [SessionController::class, 'show']);
+Route::post('session', [SessionController::class, 'login']);
+Route::delete('session', [SessionController::class, 'logout']);
 
 Route::get('config', [ConfigController::class, 'show']);
 
@@ -23,4 +25,11 @@ Route::get('workplaces/{workplace}', [WorkplaceController::class, 'show']);
 Route::middleware('permission:viewBookings')->group(function (): void {
     Route::get('bookings', [BookingController::class, 'index']);
     Route::get('bookings/{booking}', [BookingController::class, 'show']);
+});
+
+Route::middleware('permission:manageBookings')->group(function (): void {
+    Route::post('bookings', [BookingController::class, 'store']);
+    Route::post('bookings/validate', [BookingController::class, 'check']);
+    Route::put('bookings/{booking}', [BookingController::class, 'update']);
+    Route::delete('bookings/{booking}', [BookingController::class, 'destroy']);
 });

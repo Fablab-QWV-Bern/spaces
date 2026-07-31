@@ -8,8 +8,8 @@ use Database\Seeders\DatabaseSeeder;
 it('legt Bereiche, Arbeitsplaetze und Rollen an', function () {
     $this->seed(DatabaseSeeder::class);
 
-    expect(Area::count())->toBe(5)
-        ->and(Workplace::count())->toBe(23)
+    expect(Area::count())->toBe(6)
+        ->and(Workplace::count())->toBe(38)
         ->and(Role::where('is_anonymous', true)->count())->toBe(1);
 });
 

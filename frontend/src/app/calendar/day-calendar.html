@@ -13,6 +13,8 @@
       (change)="onDateChange($any($event.target).value)"
       aria-label="Datum wählen"
     />
+
+    <app-session-bar />
   </nav>
 </header>
 
@@ -30,9 +32,7 @@
         <div class="label">Arbeitsplatz</div>
         <div class="track">
           @for (hour of axis.hours; track hour) {
-            <span class="hour" [style.left.%]="hourLeftPercent(hour)">
-              {{ hour }}:00
-            </span>
+            <span class="hour" [style.left.%]="hourLeftPercent(hour)"> {{ hour }}:00 </span>
           }
         </div>
       </div>
@@ -118,14 +118,12 @@
           <div class="now" [style.left.%]="nowPercent()"></div>
         </div>
       }
-
     </div>
   </div>
 
   <p class="legend">
-    <span class="swatch booking"></span> Buchung
-    <span class="swatch blockage"></span> durch andere Buchung blockiert
-    <span class="swatch free"></span> frei
+    <span class="swatch booking"></span> Buchung <span class="swatch blockage"></span> durch andere
+    Buchung blockiert <span class="swatch free"></span> frei
   </p>
 } @else {
   <p class="hint">Keine Konfiguration geladen.</p>
@@ -134,13 +132,7 @@
 <!-- Natives Popover, immer im DOM und darum jederzeit über showPopover()
      ansteuerbar. Liegt im Top Layer und wird deshalb vom scrollenden
      Kalendercontainer nicht beschnitten. -->
-<div
-  #card
-  class="card"
-  popover="auto"
-  role="tooltip"
-  (mouseleave)="hideCard($event)"
->
+<div #card class="card" popover="auto" role="tooltip" (mouseleave)="hideCard($event)">
   @if (hover(); as details) {
     @if (details.isBlockage) {
       <p class="card-kind">Blockiert durch eine Buchung auf {{ details.bookedWorkplaceName }}</p>

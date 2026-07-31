@@ -9,21 +9,23 @@ import { RequestBuilder } from '../../request-builder';
 
 import { BookingSeries } from '../../models/booking-series';
 
-export interface ListBookingSeries$Params {
-}
+export interface ListBookingSeries$Params {}
 
-export function listBookingSeries(http: HttpClient, rootUrl: string, params?: ListBookingSeries$Params, context?: HttpContext): Observable<StrictHttpResponse<Array<BookingSeries>>> {
+export function listBookingSeries(
+  http: HttpClient,
+  rootUrl: string,
+  params?: ListBookingSeries$Params,
+  context?: HttpContext,
+): Observable<StrictHttpResponse<Array<BookingSeries>>> {
   const rb = new RequestBuilder(rootUrl, listBookingSeries.PATH, 'get');
   if (params) {
   }
 
-  return http.request(
-    rb.build({ responseType: 'json', accept: 'application/json', context })
-  ).pipe(
+  return http.request(rb.build({ responseType: 'json', accept: 'application/json', context })).pipe(
     filter((r: any): r is HttpResponse<any> => r instanceof HttpResponse),
     map((r: HttpResponse<any>) => {
       return r as StrictHttpResponse<Array<BookingSeries>>;
-    })
+    }),
   );
 }
 

@@ -11,22 +11,25 @@ import { LoginRequest } from '../../models/login-request';
 import { Session } from '../../models/session';
 
 export interface Login$Params {
-      body: LoginRequest
+  body: LoginRequest;
 }
 
-export function login(http: HttpClient, rootUrl: string, params: Login$Params, context?: HttpContext): Observable<StrictHttpResponse<Session>> {
+export function login(
+  http: HttpClient,
+  rootUrl: string,
+  params: Login$Params,
+  context?: HttpContext,
+): Observable<StrictHttpResponse<Session>> {
   const rb = new RequestBuilder(rootUrl, login.PATH, 'post');
   if (params) {
     rb.body(params.body, 'application/json');
   }
 
-  return http.request(
-    rb.build({ responseType: 'json', accept: 'application/json', context })
-  ).pipe(
+  return http.request(rb.build({ responseType: 'json', accept: 'application/json', context })).pipe(
     filter((r: any): r is HttpResponse<any> => r instanceof HttpResponse),
     map((r: HttpResponse<any>) => {
       return r as StrictHttpResponse<Session>;
-    })
+    }),
   );
 }
 

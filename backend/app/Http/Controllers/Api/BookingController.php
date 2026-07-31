@@ -2,15 +2,29 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Domain\Booking\BookingCandidate;
+use App\Domain\Booking\BookingRuleException;
+use App\Domain\Booking\BookingValidator;
+use App\Domain\Booking\BookingWriter;
+use App\Domain\Booking\ValidationResult;
+use App\Domain\Booking\ViolationCode;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\BookingResource;
 use App\Models\Booking;
+use App\Support\CurrentRole;
 use Carbon\CarbonImmutable;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class BookingController extends Controller
 {
+    public function __construct(
+        private readonly CurrentRole $currentRole,
+        private readonly BookingWriter $writer,
+        private readonly BookingValidator $validator,
+    ) {}
+
     public function index(Request $request): AnonymousResourceCollection
     {
         $filters = $request->validate([
@@ -46,4 +60,169 @@ class BookingController extends Controller
     {
         return new BookingResource($booking);
     }
+
+    public function store(Request $request): BookingResource|JsonResponse
+    {
+        $data = $this->validatePayload($request);
+
+        try {
+            $booking = $this->writer->create(
+                $this->candidate($data),
+                $this->currentRole->get(),
+                ['name' => $data['name'], 'contact' => $data['contact']],
+                $request->ip(),
+            );
+        } catch (BookingRuleException $exception) {
+            return $this->ruleFailure($exception);
+        }
+
+        return (new BookingResource($booking))
+            ->response()
+            ->setStatusCode(201)
+            ->header('Location', "/api/bookings/{$booking->id}");
+    }
+
+    public function update(Request $request, Booking $booking): BookingResource|JsonResponse
+    {
+        if ($booking->isPast()) {
+            return $this->pastBooking();
+        }
+
+        $data = $this->validatePayload($request);
+
+        try {
+            $updated = $this->writer->update(
+                $booking,
+                $this->candidate($data, excludeBookingId: $booking->id),
+                $this->currentRole->get(),
+                ['name' => $data['name'], 'contact' => $data['contact']],
+            );
+        } catch (BookingRuleException $exception) {
+            return $this->ruleFailure($exception);
+        }
+
+        return new BookingResource($updated);
+    }
+
+    public function destroy(Booking $booking): JsonResponse
+    {
+        if ($booking->isPast()) {
+            return $this->pastBooking();
+        }
+
+        $booking->delete();
+
+        return response()->json(status: 204);
+    }
+
+    /** Vorabprüfung für die Echtzeit-Anzeige im Formular. Schreibt nichts. */
+    public function check(Request $request): JsonResponse
+    {
+        $data = $this->validatePayload($request);
+
+        $result = $this->validator->validate(
+            $this->candidate($data, excludeBookingId: $request->query('excludeBookingId')),
+            $this->currentRole->get(),
+        );
+
+        return response()->json([
+            'valid' => $result->isValid(),
+            'conflictingBookingIds' => $result->conflictingBookingIds,
+            'violations' => array_map(fn (ViolationCode $code): array => [
+                'code' => $code->value,
+                'message' => self::MESSAGES[$code->value],
+            ], $result->violations),
+            'chargeableDurationMinutes' => $result->chargeableDurationMinutes,
+        ]);
+    }
+
+    /** @return array<string, mixed> */
+    private function validatePayload(Request $request): array
+    {
+        return $request->validate([
+            'workplaceId' => ['required', 'string'],
+            'startTime' => ['required', 'date'],
+            'endTime' => ['required', 'date'],
+            'name' => ['required', 'string', 'max:150'],
+            'contact' => ['required', 'string', 'max:150'],
+            'usageRulesAcknowledged' => ['sometimes', 'boolean'],
+        ]);
+    }
+
+    /** @param  array<string, mixed>  $data */
+    private function candidate(array $data, ?string $excludeBookingId = null): BookingCandidate
+    {
+        return new BookingCandidate(
+            $data['workplaceId'],
+            CarbonImmutable::parse($data['startTime'])->utc(),
+            CarbonImmutable::parse($data['endTime'])->utc(),
+            (bool) ($data['usageRulesAcknowledged'] ?? false),
+            $excludeBookingId,
+        );
+    }
+
+    /**
+     * Eine Kollision ist ein Konflikt mit fremdem Zustand (409), alles andere ein
+     * Fehler in der Eingabe selbst (422).
+     */
+    private function ruleFailure(BookingRuleException $exception): JsonResponse
+    {
+        $result = $exception->result;
+
+        if ($exception->isCollision()) {
+            return response()->json([
+                'message' => 'Die Buchung überschneidet sich mit einer bestehenden Buchung.',
+                'conflictingBookingIds' => $result->conflictingBookingIds,
+            ], 409);
+        }
+
+        return response()->json([
+            'message' => 'Die Buchung verstösst gegen die Buchungsregeln.',
+            'errors' => $this->fieldErrors($result),
+        ], 422);
+    }
+
+    /** @return array<string, list<string>> */
+    private function fieldErrors(ValidationResult $result): array
+    {
+        $errors = [];
+
+        foreach ($result->violations as $code) {
+            $field = self::FIELDS[$code->value];
+            $errors[$field][] = self::MESSAGES[$code->value];
+        }
+
+        return $errors;
+    }
+
+    private function pastBooking(): JsonResponse
+    {
+        return response()->json([
+            'message' => 'Vergangene Buchungen lassen sich nicht mehr ändern oder löschen.',
+        ], 422);
+    }
+
+    private const MESSAGES = [
+        'COLLISION' => 'Der Arbeitsplatz ist in diesem Zeitraum bereits belegt.',
+        'OUTSIDE_OPENING_HOURS' => 'Beginn und Ende müssen innerhalb der Öffnungszeiten liegen.',
+        'EXCEEDS_MAX_DURATION' => 'Die Buchung ist länger als für diesen Arbeitsplatz erlaubt.',
+        'EXCEEDS_MAX_END_OFFSET' => 'So weit im Voraus lässt sich hier nicht buchen.',
+        'STARTS_IN_PAST' => 'Der Beginn liegt in der Vergangenheit.',
+        'NOT_ON_GRID' => 'Beginn und Ende müssen auf einer Viertelstunde liegen, das Ende nach dem Beginn.',
+        'SPANS_NIGHT_NOT_ALLOWED' => 'In diesem Bereich sind keine Buchungen über Nacht möglich.',
+        'WORKPLACE_NOT_BOOKABLE' => 'Dieser Arbeitsplatz ist nicht buchbar.',
+        'USAGE_RULES_NOT_ACKNOWLEDGED' => 'Die Nutzungsregeln müssen bestätigt werden.',
+    ];
+
+    private const FIELDS = [
+        'COLLISION' => 'startTime',
+        'OUTSIDE_OPENING_HOURS' => 'startTime',
+        'EXCEEDS_MAX_DURATION' => 'endTime',
+        'EXCEEDS_MAX_END_OFFSET' => 'startTime',
+        'STARTS_IN_PAST' => 'startTime',
+        'NOT_ON_GRID' => 'startTime',
+        'SPANS_NIGHT_NOT_ALLOWED' => 'endTime',
+        'WORKPLACE_NOT_BOOKABLE' => 'workplaceId',
+        'USAGE_RULES_NOT_ACKNOWLEDGED' => 'usageRulesAcknowledged',
+    ];
 }

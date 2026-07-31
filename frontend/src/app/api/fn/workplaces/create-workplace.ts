@@ -11,22 +11,25 @@ import { Workplace } from '../../models/workplace';
 import { WorkplaceCreate } from '../../models/workplace-create';
 
 export interface CreateWorkplace$Params {
-      body: WorkplaceCreate
+  body: WorkplaceCreate;
 }
 
-export function createWorkplace(http: HttpClient, rootUrl: string, params: CreateWorkplace$Params, context?: HttpContext): Observable<StrictHttpResponse<Workplace>> {
+export function createWorkplace(
+  http: HttpClient,
+  rootUrl: string,
+  params: CreateWorkplace$Params,
+  context?: HttpContext,
+): Observable<StrictHttpResponse<Workplace>> {
   const rb = new RequestBuilder(rootUrl, createWorkplace.PATH, 'post');
   if (params) {
     rb.body(params.body, 'application/json');
   }
 
-  return http.request(
-    rb.build({ responseType: 'json', accept: 'application/json', context })
-  ).pipe(
+  return http.request(rb.build({ responseType: 'json', accept: 'application/json', context })).pipe(
     filter((r: any): r is HttpResponse<any> => r instanceof HttpResponse),
     map((r: HttpResponse<any>) => {
       return r as StrictHttpResponse<Workplace>;
-    })
+    }),
   );
 }
 

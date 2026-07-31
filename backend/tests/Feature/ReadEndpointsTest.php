@@ -68,7 +68,7 @@ it('liefert Bereiche in ihrer Reihenfolge', function () {
     $response = $this->getJson('/api/areas')->assertOk();
 
     expect(array_column($response->json(), 'name'))
-        ->toBe(['Spezial', 'Kurse', 'Holz', 'Metall', 'Diverses']);
+        ->toBe(['Spezial', 'Kurse', 'Holz', 'Metall', 'Fablab', 'Diverses']);
 });
 
 it('gruppiert Arbeitsplaetze nach Bereich und Reihenfolge', function () {
@@ -92,16 +92,16 @@ it('loest Tags und Blockierungen im Arbeitsplatz auf', function () {
 // abgesetzten Anfrage greift nicht mehr — deshalb sind das zwei Tests.
 
 it('ignoriert includeDisabled ohne manageWorkplaces', function () {
-    // parkplatz-2 ist DISABLED.
+    // loeten-2 ist DISABLED.
     expect(array_column($this->getJson('/api/workplaces?includeDisabled=1')->json(), 'id'))
-        ->not->toContain('parkplatz-2');
+        ->not->toContain('loeten-2');
 });
 
 it('zeigt deaktivierte Arbeitsplaetze mit manageWorkplaces', function () {
     expect(array_column(
         $this->actingAs($this->admin)->getJson('/api/workplaces?includeDisabled=1')->json(),
         'id',
-    ))->toContain('parkplatz-2');
+    ))->toContain('loeten-2');
 });
 
 it('laedt die Listen der Arbeitsplaetze ohne N+1', function () {
@@ -185,7 +185,7 @@ it('liefert den Blockierungs-Snapshot der Buchung mit', function () {
 
     $data = collect($this->getJson(window())->json())->firstWhere('id', $ruhetag->id);
 
-    // Der Ruhetag blockiert alle 13 Plätze mit dem Tag "werkstatt".
-    expect($data['blockedWorkplaceIds'])->toHaveCount(13)
+    // Der Ruhetag blockiert alle Plätze mit dem Tag "werkstatt".
+    expect($data['blockedWorkplaceIds'])->toHaveCount(27)
         ->and($data['blockedWorkplaceIds'])->toContain('holz-1');
 });

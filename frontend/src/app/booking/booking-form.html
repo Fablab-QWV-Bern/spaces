@@ -1,0 +1,263 @@
+<header class="toolbar">
+  <h1>{{ editing() ? 'Buchung bearbeiten' : 'Buchung erstellen' }}</h1>
+  <a routerLink="/">Zurück zur Kalenderansicht</a>
+</header>
+
+@if (loadError(); as error) {
+  <p class="error" role="alert">{{ error }}</p>
+} @else if (loading()) {
+  <p class="hint">Wird geladen …</p>
+} @else if (!session.canManageBookings()) {
+  <div class="notice">
+    <p>
+      Zum Buchen braucht es eine Rolle mit Buchungsrecht. Aktuell bist du
+      @if (session.isAnonymous()) {
+        nicht angemeldet.
+      } @else {
+        als <strong>{{ session.roleName() }}</strong> angemeldet, diese Rolle darf nicht buchen.
+      }
+    </p>
+    <app-session-bar />
+    <p><a routerLink="/">Zurück zur Kalenderansicht</a></p>
+  </div>
+} @else {
+  <form class="form" (ngSubmit)="submit()">
+    <section class="panel">
+      <label class="field">
+        <span>Arbeitsplatz</span>
+        <select
+          [ngModel]="workplaceId()"
+          (ngModelChange)="workplaceId.set($event)"
+          name="workplace"
+        >
+          @for (group of grouped(); track group.area.id) {
+            <optgroup [label]="group.area.name">
+              @for (workplace of group.workplaces; track workplace.id) {
+                <option [value]="workplace.id" [disabled]="workplace.status !== 'OK'">
+                  {{ workplace.name }}
+                  @if (workplace.status !== 'OK') {
+                    — nicht buchbar
+                  }
+                </option>
+              }
+            </optgroup>
+          }
+        </select>
+      </label>
+
+      @if (workplace(); as selected) {
+        <div class="details">
+          @if (selected.location) {
+            <p class="detail"><span class="key">Ort</span> {{ selected.location }}</p>
+          }
+          @if (selected.description) {
+            <p class="detail">{{ selected.description }}</p>
+          }
+          @if (selected.tags.length) {
+            <p class="tags">
+              @for (tag of selected.tags; track tag) {
+                <span class="tag">#{{ tag }}</span>
+              }
+            </p>
+          }
+          @if (selected.wikiUrl) {
+            <p class="detail">
+              <a [href]="selected.wikiUrl" target="_blank" rel="noopener">Anleitung im Wiki ↗</a>
+            </p>
+          }
+          <p class="detail muted">
+            Maximal {{ formatDuration(maxDurationMinutes()) }}
+            @if (allowsOvernight()) {
+              , Buchungen über Nacht möglich
+            }
+          </p>
+        </div>
+      }
+    </section>
+
+    <section class="panel">
+      <div class="row">
+        <label class="field">
+          <span>Datum</span>
+          <select [ngModel]="date()" (ngModelChange)="date.set($event)" name="date">
+            @for (option of dateOptions(); track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Beginn</span>
+          <select
+            [ngModel]="startMinutes()"
+            (ngModelChange)="startMinutes.set(+$event)"
+            name="start"
+          >
+            @for (slot of slots(); track slot) {
+              <option [value]="slot">{{ formatMinutes(slot) }}</option>
+            }
+          </select>
+        </label>
+
+        @if (!overnight()) {
+          <label class="field">
+            <span>Dauer</span>
+            <select
+              [ngModel]="durationMinutes()"
+              (ngModelChange)="durationMinutes.set(+$event)"
+              name="duration"
+            >
+              @for (minutes of durations(); track minutes) {
+                <option [value]="minutes">{{ formatDuration(minutes) }}</option>
+              }
+            </select>
+          </label>
+        } @else {
+          <label class="field">
+            <span>Ende am</span>
+            <select [ngModel]="endDate()" (ngModelChange)="endDate.set($event)" name="endDate">
+              @for (option of dateOptions(); track option.value) {
+                <option [value]="option.value">{{ option.label }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Ende um</span>
+            <select
+              [ngModel]="endMinutes()"
+              (ngModelChange)="endMinutes.set(+$event)"
+              name="endTime"
+            >
+              @for (slot of endSlots(); track slot) {
+                <option [value]="slot">{{ formatMinutes(slot) }}</option>
+              }
+            </select>
+          </label>
+        }
+      </div>
+
+      @if (allowsOvernight()) {
+        <label class="check">
+          <input
+            type="checkbox"
+            [ngModel]="overnight()"
+            (ngModelChange)="overnight.set($event)"
+            name="overnight"
+          />
+          <span>Über Nacht — Ende an einem anderen Tag</span>
+        </label>
+      }
+
+      <p class="ends">
+        Ende: <strong>{{ endLabel() }}</strong>
+        @if (validation(); as result) {
+          <span class="muted">
+            · angerechnet {{ formatDuration(result.chargeableDurationMinutes ?? 0) }}
+          </span>
+        }
+      </p>
+
+      <!-- Vorschau: bestehende Buchungen des Tages und die geplante. -->
+      @if (axis(); as axis) {
+        <div class="preview">
+          <div class="preview-track">
+            @for (hour of hourMarks(); track hour) {
+              <span class="preview-hour" [style.left.%]="hourLeftPercent(hour)">{{ hour }}</span>
+            }
+            @for (block of previewBlocks(); track $index) {
+              <div
+                class="preview-block"
+                [class.own]="block.own"
+                [class.blockage]="block.blockage"
+                [style.left.%]="block.leftPercent"
+                [style.width.%]="block.widthPercent"
+                [title]="block.label"
+              >
+                {{ block.label }}
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      @if (validation(); as result) {
+        @if (result.violations.length) {
+          <ul class="violations" role="alert">
+            @for (violation of result.violations; track violation.code) {
+              <li>{{ violation.message }}</li>
+            }
+          </ul>
+        } @else {
+          <p class="ok">Der Zeitraum ist frei.</p>
+        }
+      }
+    </section>
+
+    <section class="panel">
+      <div class="row">
+        <label class="field">
+          <span>Name</span>
+          <input
+            type="text"
+            [ngModel]="booker().name"
+            (ngModelChange)="updateBooker({ name: $event })"
+            name="name"
+            required
+            autocomplete="name"
+          />
+        </label>
+
+        <label class="field">
+          <span>Kontakt</span>
+          <input
+            type="text"
+            [ngModel]="booker().contact"
+            (ngModelChange)="updateBooker({ contact: $event })"
+            name="contact"
+            required
+            placeholder="E-Mail oder Telefon"
+            autocomplete="email"
+          />
+        </label>
+      </div>
+
+      <p class="hint small">Name und Kontakt werden für das nächste Mal im Browser gemerkt.</p>
+
+      @if (workplace()?.usageRules; as rules) {
+        <div class="rules">
+          <h2>Nutzungsregeln</h2>
+          <p>{{ rules }}</p>
+
+          <label class="check">
+            <input
+              type="checkbox"
+              [ngModel]="rulesAcknowledged()"
+              (ngModelChange)="rulesAcknowledged.set($event)"
+              name="rules"
+            />
+            <span>Ich habe die Nutzungsregeln gelesen</span>
+          </label>
+        </div>
+      }
+    </section>
+
+    @if (saveError(); as error) {
+      <p class="error" role="alert">{{ error }}</p>
+    }
+
+    <div class="actions">
+      <button type="submit" class="primary" [disabled]="!canSubmit()">
+        {{ editing() ? 'Änderungen speichern' : 'Buchung erstellen' }}
+      </button>
+
+      @if (editing()) {
+        <button type="button" class="danger" [disabled]="saving()" (click)="remove()">
+          Buchung löschen
+        </button>
+      }
+
+      <a routerLink="/" class="cancel">Abbrechen</a>
+    </div>
+  </form>
+}

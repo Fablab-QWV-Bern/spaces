@@ -11,22 +11,25 @@ import { Role } from '../../models/role';
 import { RoleWrite } from '../../models/role-write';
 
 export interface CreateRole$Params {
-      body: RoleWrite
+  body: RoleWrite;
 }
 
-export function createRole(http: HttpClient, rootUrl: string, params: CreateRole$Params, context?: HttpContext): Observable<StrictHttpResponse<Role>> {
+export function createRole(
+  http: HttpClient,
+  rootUrl: string,
+  params: CreateRole$Params,
+  context?: HttpContext,
+): Observable<StrictHttpResponse<Role>> {
   const rb = new RequestBuilder(rootUrl, createRole.PATH, 'post');
   if (params) {
     rb.body(params.body, 'application/json');
   }
 
-  return http.request(
-    rb.build({ responseType: 'json', accept: 'application/json', context })
-  ).pipe(
+  return http.request(rb.build({ responseType: 'json', accept: 'application/json', context })).pipe(
     filter((r: any): r is HttpResponse<any> => r instanceof HttpResponse),
     map((r: HttpResponse<any>) => {
       return r as StrictHttpResponse<Role>;
-    })
+    }),
   );
 }
 

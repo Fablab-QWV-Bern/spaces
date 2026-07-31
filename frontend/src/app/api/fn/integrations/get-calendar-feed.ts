@@ -7,26 +7,28 @@ import { filter, map } from 'rxjs/operators';
 import { StrictHttpResponse } from '../../strict-http-response';
 import { RequestBuilder } from '../../request-builder';
 
-
 export interface GetCalendarFeed$Params {
   areaId?: string;
   workplaceId?: string;
 }
 
-export function getCalendarFeed(http: HttpClient, rootUrl: string, params?: GetCalendarFeed$Params, context?: HttpContext): Observable<StrictHttpResponse<string>> {
+export function getCalendarFeed(
+  http: HttpClient,
+  rootUrl: string,
+  params?: GetCalendarFeed$Params,
+  context?: HttpContext,
+): Observable<StrictHttpResponse<string>> {
   const rb = new RequestBuilder(rootUrl, getCalendarFeed.PATH, 'get');
   if (params) {
     rb.query('areaId', params.areaId, {});
     rb.query('workplaceId', params.workplaceId, {});
   }
 
-  return http.request(
-    rb.build({ responseType: 'text', accept: 'text/calendar', context })
-  ).pipe(
+  return http.request(rb.build({ responseType: 'text', accept: 'text/calendar', context })).pipe(
     filter((r: any): r is HttpResponse<any> => r instanceof HttpResponse),
     map((r: HttpResponse<any>) => {
       return r as StrictHttpResponse<string>;
-    })
+    }),
   );
 }
 
