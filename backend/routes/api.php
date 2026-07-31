@@ -1,0 +1,26 @@
+<?php
+
+use App\Http\Controllers\Api\AreaController;
+use App\Http\Controllers\Api\BookingController;
+use App\Http\Controllers\Api\ConfigController;
+use App\Http\Controllers\Api\SessionController;
+use App\Http\Controllers\Api\WorkplaceController;
+use Illuminate\Support\Facades\Route;
+
+// Die Berechtigungen entsprechen den `x-permissions` in spec/reservation-api.yml.
+// Was dort keine Angabe hat, ist ohne Anmeldung erreichbar.
+
+Route::get('session', [SessionController::class, 'show']);
+
+Route::get('config', [ConfigController::class, 'show']);
+
+Route::get('areas', [AreaController::class, 'index']);
+Route::get('areas/{area}', [AreaController::class, 'show']);
+
+Route::get('workplaces', [WorkplaceController::class, 'index']);
+Route::get('workplaces/{workplace}', [WorkplaceController::class, 'show']);
+
+Route::middleware('permission:viewBookings')->group(function (): void {
+    Route::get('bookings', [BookingController::class, 'index']);
+    Route::get('bookings/{booking}', [BookingController::class, 'show']);
+});
