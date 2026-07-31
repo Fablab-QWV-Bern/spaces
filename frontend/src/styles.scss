@@ -1,0 +1,13 @@
+// Ohne border-box addiert sich das Padding eines Blocks auf dessen prozentuale
+// Breite — die Buchungen ragten dadurch über das Zeitraster hinaus.
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: #f8fafc;
+}

@@ -1,0 +1,170 @@
+<header class="toolbar">
+  <h1>{{ heading() }}</h1>
+
+  <nav class="controls">
+    <button type="button" (click)="shift(-1)" aria-label="Ein Tag zurück">‹</button>
+    <button type="button" (click)="today()">Heute</button>
+    <button type="button" (click)="tomorrow()">Morgen</button>
+    <button type="button" (click)="shift(1)" aria-label="Ein Tag vorwärts">›</button>
+
+    <input
+      type="date"
+      [value]="store.date()"
+      (change)="onDateChange($any($event.target).value)"
+      aria-label="Datum wählen"
+    />
+  </nav>
+</header>
+
+@if (store.error(); as error) {
+  <p class="error" role="alert">{{ error }}</p>
+}
+
+@if (store.loading()) {
+  <p class="hint">Wird geladen …</p>
+} @else if (axis(); as axis) {
+  <div class="calendar">
+    <div class="grid" [style.--quarter]="quarterHourPercent() + '%'">
+      <!-- Kopfzeile: Stundenbeschriftung -->
+      <div class="row header">
+        <div class="label">Arbeitsplatz</div>
+        <div class="track">
+          @for (hour of axis.hours; track hour) {
+            <span class="hour" [style.left.%]="hourLeftPercent(hour)">
+              {{ hour }}:00
+            </span>
+          }
+        </div>
+      </div>
+
+      @for (group of store.rows(); track group.area.id) {
+        <div class="row group">
+          <div class="label">{{ group.area.name }}</div>
+          <div class="track"></div>
+        </div>
+
+        @for (workplace of group.workplaces; track workplace.id) {
+          <div class="row workplace" [class.not-bookable]="workplace.status !== 'OK'">
+            <div class="label">
+              <span class="name">{{ workplace.name }}</span>
+
+              @if (statusLabel(workplace); as status) {
+                <span class="status">{{ status }}</span>
+              }
+
+              @if (workplace.wikiUrl) {
+                <a
+                  class="wiki"
+                  [href]="workplace.wikiUrl"
+                  target="_blank"
+                  rel="noopener"
+                  [attr.aria-label]="'Wiki zu ' + workplace.name"
+                  >↗</a
+                >
+              }
+            </div>
+
+            <div
+              class="track"
+              [class.clickable]="isBookable(workplace)"
+              (click)="onTrackClick(workplace, $event)"
+            >
+              @for (block of blockageBlocks(workplace); track block.booking.id) {
+                <div
+                  class="block blockage"
+                  tabindex="0"
+                  [attr.aria-label]="block.title"
+                  [style.left.%]="block.leftPercent"
+                  [style.width.%]="block.widthPercent"
+                  [class.clipped-start]="block.clippedStart"
+                  [class.clipped-end]="block.clippedEnd"
+                  (mouseenter)="showCard(block, workplace, $event)"
+                  (focus)="showCard(block, workplace, $event)"
+                  (mouseleave)="hideCard($event)"
+                  (blur)="hideCard($event)"
+                ></div>
+              }
+
+              @for (block of bookingBlocks(workplace); track block.booking.id) {
+                <div
+                  class="block booking"
+                  tabindex="0"
+                  [attr.aria-label]="block.title"
+                  [style.left.%]="block.leftPercent"
+                  [style.width.%]="block.widthPercent"
+                  [style.background]="areaColor(workplace.areaId)"
+                  [class.clipped-start]="block.clippedStart"
+                  [class.clipped-end]="block.clippedEnd"
+                  (mouseenter)="showCard(block, workplace, $event)"
+                  (focus)="showCard(block, workplace, $event)"
+                  (mouseleave)="hideCard($event)"
+                  (blur)="hideCard($event)"
+                >
+                  @if (block.isSeries) {
+                    <span class="series" aria-label="Teil einer Serie">↻</span>
+                  }
+                  <span class="text">{{ block.label }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      }
+
+      @if (nowPercent() !== null) {
+        <!-- Eigene Ebene, die exakt über der Zeitachse liegt — so ist die
+             Prozentangabe auf die Achse bezogen und nicht auf das ganze Raster. -->
+        <div class="now-layer">
+          <div class="now" [style.left.%]="nowPercent()"></div>
+        </div>
+      }
+
+    </div>
+  </div>
+
+  <p class="legend">
+    <span class="swatch booking"></span> Buchung
+    <span class="swatch blockage"></span> durch andere Buchung blockiert
+    <span class="swatch free"></span> frei
+  </p>
+} @else {
+  <p class="hint">Keine Konfiguration geladen.</p>
+}
+
+<!-- Natives Popover, immer im DOM und darum jederzeit über showPopover()
+     ansteuerbar. Liegt im Top Layer und wird deshalb vom scrollenden
+     Kalendercontainer nicht beschnitten. -->
+<div
+  #card
+  class="card"
+  popover="auto"
+  role="tooltip"
+  (mouseleave)="hideCard($event)"
+>
+  @if (hover(); as details) {
+    @if (details.isBlockage) {
+      <p class="card-kind">Blockiert durch eine Buchung auf {{ details.bookedWorkplaceName }}</p>
+    } @else {
+      <p class="card-kind">{{ details.workplaceName }}</p>
+    }
+
+    <p class="card-time">{{ details.timeRange }}</p>
+
+    @if (details.booking.name) {
+      <p class="card-who">{{ details.booking.name }}</p>
+      <p class="card-contact">{{ details.booking.contact }}</p>
+    } @else {
+      <p class="card-who muted">Name nicht sichtbar</p>
+    }
+
+    @if (details.booking.bookingSeriesId) {
+      <p class="card-series">↻ Teil einer Serie</p>
+    }
+
+    @if (store.canManageBookings()) {
+      <button type="button" class="card-edit" (click)="editBooking(details.booking)">
+        ✎ Bearbeiten
+      </button>
+    }
+  }
+</div>

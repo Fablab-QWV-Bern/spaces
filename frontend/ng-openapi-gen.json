@@ -1,0 +1,11 @@
+{
+  "$schema": "node_modules/ng-openapi-gen/ng-openapi-gen-schema.json",
+  "input": "../spec/reservation-api.yml",
+  "output": "src/app/api",
+  "module": false,
+  "ignoreUnusedModels": false,
+  "indexFile": true,
+  "serviceSuffix": "Api",
+  "modelIndex": "models",
+  "enumStyle": "upper"
+}
