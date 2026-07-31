@@ -35,14 +35,20 @@ beforeEach(function () {
     $this->validator = app(BookingValidator::class);
 });
 
-function check(string $start, string $end, ?Role $role = null, bool $acknowledged = false): ValidationResult
-{
+function check(
+    string $start,
+    string $end,
+    ?Role $role = null,
+    bool $acknowledged = false,
+    ?string $excludeBookingId = null,
+): ValidationResult {
     return test()->validator->validate(
         new BookingCandidate(
             'holz-1',
             CarbonImmutable::parse($start, 'Europe/Zurich')->utc(),
             CarbonImmutable::parse($end, 'Europe/Zurich')->utc(),
             $acknowledged,
+            $excludeBookingId,
         ),
         $role ?? test()->member,
     );
@@ -129,9 +135,16 @@ it('hebt mit noTimeRestrictions den Vorlauf auf', function () {
     expect(check('2026-12-01 09:00', '2026-12-01 11:00', $this->admin)->isValid())->toBeTrue();
 });
 
-it('verbietet Buchungen in der Vergangenheit auch mit noTimeRestrictions', function () {
+it('verbietet neue Buchungen in der Vergangenheit auch mit noTimeRestrictions', function () {
     expect(check('2026-08-02 09:00', '2026-08-02 11:00', $this->admin)->has(ViolationCode::StartsInPast))
         ->toBeTrue();
+});
+
+it('laesst einen Beginn in der Vergangenheit beim Aendern zu', function () {
+    // Eine laufende Buchung soll sich weiterhin anpassen lassen — ihr Beginn
+    // liegt dann zwangsläufig zurück.
+    expect(check('2026-08-02 09:00', '2026-08-02 11:00', excludeBookingId: 'irgendeine-id')
+        ->has(ViolationCode::StartsInPast))->toBeFalse();
 });
 
 it('verweigert defekte und deaktivierte Arbeitsplaetze', function () {

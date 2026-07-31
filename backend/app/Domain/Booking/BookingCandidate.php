@@ -17,4 +17,13 @@ final readonly class BookingCandidate
         /** Beim Ändern gesetzt, damit die Buchung nicht mit sich selbst kollidiert. */
         public ?string $excludeBookingId = null,
     ) {}
+
+    /**
+     * Bezieht sich der Kandidat auf eine bestehende Buchung? Entscheidet unter
+     * anderem darüber, ob ein Beginn in der Vergangenheit zulässig ist.
+     */
+    public function isEdit(): bool
+    {
+        return $this->excludeBookingId !== null;
+    }
 }

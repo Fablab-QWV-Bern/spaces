@@ -59,9 +59,11 @@ final class BookingValidator
 
         // --- Zeitregeln ----------------------------------------------------
 
-        // Gilt für alle: noTimeRestrictions hebt weder die Öffnungszeiten noch
-        // das Verbot auf, in der Vergangenheit zu buchen.
-        if ($candidate->startTime->isPast()) {
+        // Nur beim Anlegen: eine bereits laufende Buchung soll sich weiterhin
+        // ändern lassen, und ihr Beginn liegt naturgemäss in der Vergangenheit.
+        // Dass eine vollständig vergangene Buchung unantastbar ist, regelt die
+        // Endzeit-Prüfung in der HTTP-Schicht.
+        if (! $candidate->isEdit() && $candidate->startTime->isPast()) {
             $violations[] = ViolationCode::StartsInPast;
         }
 

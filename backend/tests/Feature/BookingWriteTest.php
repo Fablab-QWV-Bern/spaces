@@ -150,6 +150,18 @@ it('laesst vergangene Buchungen in Ruhe', function () {
     expect(Booking::count())->toBe(1);
 });
 
+it('laesst eine laufende Buchung noch aendern', function () {
+    $booking = existingBooking('holz-1', '09:00', '11:00');
+
+    // Mitten in der Buchung: der Beginn liegt jetzt zurück, das Ende noch nicht.
+    $this->travelTo(CarbonImmutable::parse('2026-08-03 10:00', 'Europe/Zurich'));
+
+    $this->actingAs($this->member)
+        ->putJson("/api/bookings/{$booking->id}", payload(['name' => 'Verlängert']))
+        ->assertValidResponse(200)
+        ->assertJsonPath('name', 'Verlängert');
+});
+
 it('prueft eine Buchung vorab, ohne sie anzulegen', function () {
     $this->actingAs($this->member)
         ->postJson('/api/bookings/validate', payload())

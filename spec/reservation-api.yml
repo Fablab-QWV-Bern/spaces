@@ -572,6 +572,8 @@ components:
                   - OUTSIDE_OPENING_HOURS
                   - EXCEEDS_MAX_DURATION
                   - EXCEEDS_MAX_END_OFFSET
+                  # Nur beim Anlegen. Beim Ändern darf der Beginn zurückliegen,
+                  # sonst liesse sich eine laufende Buchung nicht mehr anpassen.
                   - STARTS_IN_PAST
                   - NOT_ON_GRID
                   - SPANS_NIGHT_NOT_ALLOWED

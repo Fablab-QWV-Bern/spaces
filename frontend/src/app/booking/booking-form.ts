@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, effect, inject, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormField, form, required } from '@angular/forms/signals';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin, map, of, switchMap } from 'rxjs';
 
@@ -30,12 +30,30 @@ import {
   minutesOfDay,
   slotsOfDay,
 } from '../calendar/time-axis';
-import { Booker, readBooker, writeBooker } from '../shared/booker-cookie';
+import { readBooker, writeBooker } from '../shared/booker-cookie';
 import { SessionBar } from '../shared/session-bar';
 import { SessionService } from '../shared/session-service';
 
 /** Standarddauer einer neuen Buchung, sofern sie am Arbeitsplatz erlaubt ist. */
 const DEFAULT_DURATION_MINUTES = 120;
+
+/**
+ * Der Formularzustand als ein Wert. Die Felder, die an einem `<select>` hängen,
+ * sind bewusst Strings — das ist es, was ein Select liefert; die Umrechnung in
+ * Minuten passiert in den abgeleiteten Signalen.
+ */
+interface BookingFormValue {
+  workplaceId: string;
+  date: string;
+  startMinutes: string;
+  durationMinutes: string;
+  overnight: boolean;
+  endDate: string;
+  endMinutes: string;
+  name: string;
+  contact: string;
+  rulesAcknowledged: boolean;
+}
 
 interface PreviewBlock {
   label: string;
@@ -49,7 +67,7 @@ interface PreviewBlock {
 
 @Component({
   selector: 'app-booking-form',
-  imports: [FormsModule, RouterLink, SessionBar],
+  imports: [FormField, RouterLink, SessionBar],
   templateUrl: './booking-form.html',
   styleUrl: './booking-form.scss',
 })
@@ -60,6 +78,32 @@ export class BookingForm {
   private readonly router = inject(Router);
 
   protected readonly session = inject(SessionService);
+
+  // --- Formular -------------------------------------------------------------
+
+  private readonly model = signal<BookingFormValue>({
+    workplaceId: '',
+    date: '',
+    startMinutes: '480',
+    durationMinutes: String(DEFAULT_DURATION_MINUTES),
+    overnight: false,
+    endDate: '',
+    endMinutes: '495',
+    ...readBooker(),
+    rulesAcknowledged: false,
+  });
+
+  /**
+   * Signal Forms übernimmt nur, was der Client selbst beurteilen kann:
+   * Pflichtfelder. Alle Buchungsregeln bleiben im Backend und kommen über
+   * `POST /bookings/validate` zurück — so gibt es sie nur einmal.
+   */
+  protected readonly bookingForm = form(this.model, (path) => {
+    required(path.name, { message: 'Bitte einen Namen angeben.' });
+    required(path.contact, {
+      message: 'Bitte eine Kontaktangabe machen, z.B. E-Mail oder Telefon.',
+    });
+  });
 
   // --- Stammdaten -----------------------------------------------------------
 
@@ -75,18 +119,6 @@ export class BookingForm {
 
   /** Gesetzt, wenn eine bestehende Buchung bearbeitet wird. */
   protected readonly editing = signal<Booking | null>(null);
-
-  // --- Formularfelder -------------------------------------------------------
-
-  protected readonly workplaceId = signal('');
-  protected readonly date = signal('');
-  protected readonly startMinutes = signal(0);
-  protected readonly durationMinutes = signal(GRID_MINUTES);
-  protected readonly overnight = signal(false);
-  protected readonly endDate = signal('');
-  protected readonly endMinutes = signal(0);
-  protected readonly booker = signal<Booker>(readBooker());
-  protected readonly rulesAcknowledged = signal(false);
 
   protected readonly validation = signal<BookingValidation | null>(null);
 
@@ -113,6 +145,17 @@ export class BookingForm {
       }
     });
   }
+
+  // --- Abgeleitete Formularwerte -------------------------------------------
+
+  protected readonly workplaceId = computed(() => this.model().workplaceId);
+  protected readonly date = computed(() => this.model().date);
+  protected readonly startMinutes = computed(() => Number(this.model().startMinutes));
+  protected readonly durationMinutes = computed(() => Number(this.model().durationMinutes));
+  protected readonly overnight = computed(() => this.model().overnight);
+  protected readonly endDate = computed(() => this.model().endDate);
+  protected readonly endMinutes = computed(() => Number(this.model().endMinutes));
+  protected readonly rulesAcknowledged = computed(() => this.model().rulesAcknowledged);
 
   // --- Abgeleitetes ---------------------------------------------------------
 
@@ -187,10 +230,9 @@ export class BookingForm {
     for (let offset = 0; offset <= Math.min(limit, 365); offset++) {
       const day = new Date();
       day.setDate(day.getDate() + offset);
-      const value = isoDate(day);
 
       options.push({
-        value,
+        value: isoDate(day),
         label:
           offset === 0
             ? `Heute, ${formatDate(day)}`
@@ -236,28 +278,26 @@ export class BookingForm {
 
   private readonly candidate = computed(() => {
     const range = this.range();
-    const workplaceId = this.workplaceId();
+    const value = this.model();
 
-    if (!range || !workplaceId || range.end <= range.start) {
+    if (!range || !value.workplaceId || range.end <= range.start) {
       return null;
     }
 
     return {
-      workplaceId,
+      workplaceId: value.workplaceId,
       startTime: range.start.toISOString(),
       endTime: range.end.toISOString(),
-      name: this.booker().name || 'Vorschau',
-      contact: this.booker().contact || 'vorschau@example.org',
-      usageRulesAcknowledged: this.rulesAcknowledged(),
+      // Für die Vorabprüfung reicht ein Platzhalter — geprüft wird der Zeitraum,
+      // nicht wer bucht. Beim Speichern gehen die echten Werte mit.
+      name: value.name || 'Vorschau',
+      contact: value.contact || 'vorschau@example.org',
+      usageRulesAcknowledged: value.rulesAcknowledged,
     };
   });
 
   protected readonly canSubmit = computed(
-    () =>
-      !this.saving() &&
-      this.validation()?.valid === true &&
-      this.booker().name.trim() !== '' &&
-      this.booker().contact.trim() !== '',
+    () => !this.saving() && this.validation()?.valid === true && this.bookingForm().valid(),
   );
 
   /** Speziell die Kollision, nicht jeder Regelverstoss — die färbt die Box rot. */
@@ -278,7 +318,6 @@ export class BookingForm {
 
     const day = new Date(`${date}T12:00:00`);
     const editingId = this.editing()?.id;
-
     const workplaceId = this.workplaceId();
 
     const existing = this.dayBookings()
@@ -377,47 +416,51 @@ export class BookingForm {
   private prefillFromBooking(booking: Booking): void {
     const start = new Date(booking.startTime);
     const end = new Date(booking.endTime);
+    const overnight = isoDate(start) !== isoDate(end);
 
     this.editing.set(booking);
-    this.workplaceId.set(booking.workplaceId);
-    this.date.set(isoDate(start));
-    this.startMinutes.set(start.getHours() * 60 + start.getMinutes());
 
-    if (isoDate(start) === isoDate(end)) {
-      this.durationMinutes.set(Math.round((end.getTime() - start.getTime()) / 60_000));
-    } else {
-      this.overnight.set(true);
-      this.endDate.set(isoDate(end));
-      this.endMinutes.set(end.getHours() * 60 + end.getMinutes());
-    }
-
-    this.booker.set({ name: booking.name, contact: booking.contact ?? '' });
-    this.rulesAcknowledged.set(booking.usageRulesAcknowledged);
+    this.model.update((value) => ({
+      ...value,
+      workplaceId: booking.workplaceId,
+      date: isoDate(start),
+      startMinutes: String(start.getHours() * 60 + start.getMinutes()),
+      durationMinutes: overnight
+        ? value.durationMinutes
+        : String(Math.round((end.getTime() - start.getTime()) / 60_000)),
+      overnight,
+      endDate: isoDate(end),
+      endMinutes: String(end.getHours() * 60 + end.getMinutes()),
+      name: booking.name,
+      contact: booking.contact ?? '',
+      rulesAcknowledged: booking.usageRulesAcknowledged,
+    }));
   }
 
   private prefillFromQuery(query: { get(key: string): string | null }): void {
     const axis = this.axis();
     const start = query.get('start');
+    const workplaceId = query.get('workplace') ?? this.workplaces()[0]?.id ?? '';
 
-    this.workplaceId.set(query.get('workplace') ?? this.workplaces()[0]?.id ?? '');
+    const [datePart, timePart] = start ? start.split('T') : [isoDate(new Date()), null];
+    const startMinutes = timePart ? minutesOfDay(timePart) : (axis?.opensAt ?? 480);
 
-    if (start) {
-      const [datePart, timePart] = start.split('T');
-      this.date.set(datePart);
-      this.startMinutes.set(minutesOfDay(timePart));
-    } else {
-      this.date.set(isoDate(new Date()));
-      this.startMinutes.set(axis?.opensAt ?? 480);
-    }
+    // Erst den Arbeitsplatz setzen, damit die Standarddauer gegen dessen
+    // Maximum geklemmt werden kann.
+    this.model.update((value) => ({ ...value, workplaceId, date: datePart }));
 
     const requestedDuration = Number(query.get('durationMinutes'));
     const maxDuration = this.maxDurationMinutes() || DEFAULT_DURATION_MINUTES;
 
-    this.durationMinutes.set(
-      requestedDuration > 0 ? requestedDuration : Math.min(DEFAULT_DURATION_MINUTES, maxDuration),
-    );
-    this.endDate.set(this.date());
-    this.endMinutes.set((axis?.opensAt ?? 480) + GRID_MINUTES);
+    this.model.update((value) => ({
+      ...value,
+      startMinutes: String(startMinutes),
+      durationMinutes: String(
+        requestedDuration > 0 ? requestedDuration : Math.min(DEFAULT_DURATION_MINUTES, maxDuration),
+      ),
+      endDate: datePart,
+      endMinutes: String((axis?.opensAt ?? 480) + GRID_MINUTES),
+    }));
   }
 
   private loadDayBookings(workplaceId: string, date: string): void {
@@ -461,24 +504,32 @@ export class BookingForm {
 
   protected submit(): void {
     const candidate = this.candidate();
+    const value = this.model();
 
     if (!candidate || !this.canSubmit()) {
       return;
     }
 
-    const body = { ...candidate, name: this.booker().name, contact: this.booker().contact };
+    const body = { ...candidate, name: value.name, contact: value.contact };
     const booking = this.editing();
 
     this.saving.set(true);
     this.saveError.set(null);
-    writeBooker(this.booker());
 
     const request = booking
       ? updateBooking(this.http, this.rootUrl, { id: booking.id, body })
       : createBooking(this.http, this.rootUrl, { body });
 
     request.subscribe({
-      next: () => this.router.navigate(['/']),
+      next: () => {
+        // Nur beim Anlegen merken: beim Bearbeiten steht dort der Name einer
+        // fremden Person, den man nicht als eigenen übernehmen will.
+        if (!booking) {
+          writeBooker({ name: value.name, contact: value.contact });
+        }
+
+        this.router.navigate(['/']);
+      },
       error: (error: HttpErrorResponse) => {
         this.saving.set(false);
         this.saveError.set(this.describe(error));
@@ -521,10 +572,6 @@ export class BookingForm {
 
   protected readonly formatDuration = formatDuration;
   protected readonly formatMinutes = formatMinutes;
-
-  protected updateBooker(patch: Partial<Booker>): void {
-    this.booker.update((current) => ({ ...current, ...patch }));
-  }
 }
 
 function isoDate(date: Date): string {

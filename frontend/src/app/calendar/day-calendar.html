@@ -82,6 +82,7 @@
                   (focus)="showCard(block, workplace, $event)"
                   (mouseleave)="hideCard($event)"
                   (blur)="hideCard($event)"
+                  (click)="$event.stopPropagation()"
                 ></div>
               }
 
@@ -99,6 +100,7 @@
                   (focus)="showCard(block, workplace, $event)"
                   (mouseleave)="hideCard($event)"
                   (blur)="hideCard($event)"
+                  (click)="$event.stopPropagation()"
                 >
                   @if (block.isSeries) {
                     <span class="series" aria-label="Teil einer Serie">↻</span>

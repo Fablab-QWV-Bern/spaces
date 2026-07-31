@@ -290,10 +290,11 @@ Weiter gilt:
 - Ohne `allowNightlyActivities` müssen Start und Ende am selben Tag liegen.
 - Start und Ende müssen innerhalb der Öffnungszeiten liegen, auch bei Bereichen mit `allowNightlyActivities`.
 - Das Ende darf höchstens `maxBookingEndOffsetDays` Tage in der Zukunft liegen (Bereich, sonst globaler Wert).
-- Die Startzeit darf nicht in der Vergangenheit liegen.
+- Beim Anlegen darf die Startzeit nicht in der Vergangenheit liegen. Beim Ändern schon: eine bereits laufende Buchung
+  soll sich weiterhin anpassen lassen, und ihr Beginn liegt naturgemäss zurück.
 - Buchungen, deren Endzeit in der Vergangenheit liegt, können nicht mehr geändert oder gelöscht werden.
 - `noTimeRestrictions` hebt die maximale Buchungsdauer und `maxBookingEndOffsetDays` auf — nicht aber die
-  Öffnungszeiten, nicht das 15-Minuten-Raster und nicht das Verbot, in der Vergangenheit zu buchen.
+  Öffnungszeiten, nicht das 15-Minuten-Raster und nicht das Verbot, neu in der Vergangenheit zu buchen.
 
 Zeiten werden als UTC gespeichert und in schweizer Zeit angezeigt (globale konfigurationsoption). Alle Datums- und
 Zeitangaben in der API sind UTC mit explizitem `Z`.

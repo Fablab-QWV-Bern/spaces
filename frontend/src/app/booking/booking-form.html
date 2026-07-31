@@ -21,15 +21,14 @@
     <p><a routerLink="/">Zurück zur Kalenderansicht</a></p>
   </div>
 } @else {
-  <form class="form" (ngSubmit)="submit()">
+  <!-- Natives submit-Ereignis: (ngSubmit) stammt aus FormsModule, das Signal
+       Forms nicht mehr braucht — ohne preventDefault würde der Browser das
+       Formular selbst abschicken. -->
+  <form class="form" (submit)="$event.preventDefault(); submit()">
     <section class="panel">
       <label class="field">
         <span>Arbeitsplatz</span>
-        <select
-          [ngModel]="workplaceId()"
-          (ngModelChange)="workplaceId.set($event)"
-          name="workplace"
-        >
+        <select [formField]="bookingForm.workplaceId">
           @for (group of grouped(); track group.area.id) {
             <optgroup [label]="group.area.name">
               @for (workplace of group.workplaces; track workplace.id) {
@@ -79,7 +78,7 @@
       <div class="row">
         <label class="field">
           <span>Datum</span>
-          <select [ngModel]="date()" (ngModelChange)="date.set($event)" name="date">
+          <select [formField]="bookingForm.date">
             @for (option of dateOptions(); track option.value) {
               <option [value]="option.value">{{ option.label }}</option>
             }
@@ -88,11 +87,7 @@
 
         <label class="field">
           <span>Beginn</span>
-          <select
-            [ngModel]="startMinutes()"
-            (ngModelChange)="startMinutes.set(+$event)"
-            name="start"
-          >
+          <select [formField]="bookingForm.startMinutes">
             @for (slot of slots(); track slot) {
               <option [value]="slot">{{ formatMinutes(slot) }}</option>
             }
@@ -102,11 +97,7 @@
         @if (!overnight()) {
           <label class="field">
             <span>Dauer</span>
-            <select
-              [ngModel]="durationMinutes()"
-              (ngModelChange)="durationMinutes.set(+$event)"
-              name="duration"
-            >
+            <select [formField]="bookingForm.durationMinutes">
               @for (minutes of durations(); track minutes) {
                 <option [value]="minutes">{{ formatDuration(minutes) }}</option>
               }
@@ -115,7 +106,7 @@
         } @else {
           <label class="field">
             <span>Ende am</span>
-            <select [ngModel]="endDate()" (ngModelChange)="endDate.set($event)" name="endDate">
+            <select [formField]="bookingForm.endDate">
               @for (option of dateOptions(); track option.value) {
                 <option [value]="option.value">{{ option.label }}</option>
               }
@@ -124,11 +115,7 @@
 
           <label class="field">
             <span>Ende um</span>
-            <select
-              [ngModel]="endMinutes()"
-              (ngModelChange)="endMinutes.set(+$event)"
-              name="endTime"
-            >
+            <select [formField]="bookingForm.endMinutes">
               @for (slot of endSlots(); track slot) {
                 <option [value]="slot">{{ formatMinutes(slot) }}</option>
               }
@@ -139,12 +126,7 @@
 
       @if (allowsOvernight()) {
         <label class="check">
-          <input
-            type="checkbox"
-            [ngModel]="overnight()"
-            (ngModelChange)="overnight.set($event)"
-            name="overnight"
-          />
+          <input type="checkbox" [formField]="bookingForm.overnight" />
           <span>Über Nacht — Ende an einem anderen Tag</span>
         </label>
       }
@@ -199,27 +181,25 @@
       <div class="row">
         <label class="field">
           <span>Name</span>
-          <input
-            type="text"
-            [ngModel]="booker().name"
-            (ngModelChange)="updateBooker({ name: $event })"
-            name="name"
-            required
-            autocomplete="name"
-          />
+          <input type="text" [formField]="bookingForm.name" autocomplete="name" />
+
+          @for (error of bookingForm.name().errors(); track error.kind) {
+            <span class="field-error">{{ error.message }}</span>
+          }
         </label>
 
         <label class="field">
           <span>Kontakt</span>
           <input
             type="text"
-            [ngModel]="booker().contact"
-            (ngModelChange)="updateBooker({ contact: $event })"
-            name="contact"
-            required
+            [formField]="bookingForm.contact"
             placeholder="E-Mail oder Telefon"
             autocomplete="email"
           />
+
+          @for (error of bookingForm.contact().errors(); track error.kind) {
+            <span class="field-error">{{ error.message }}</span>
+          }
         </label>
       </div>
 
@@ -231,12 +211,7 @@
           <p>{{ rules }}</p>
 
           <label class="check">
-            <input
-              type="checkbox"
-              [ngModel]="rulesAcknowledged()"
-              (ngModelChange)="rulesAcknowledged.set($event)"
-              name="rules"
-            />
+            <input type="checkbox" [formField]="bookingForm.rulesAcknowledged" />
             <span>Ich habe die Nutzungsregeln gelesen</span>
           </label>
         </div>
