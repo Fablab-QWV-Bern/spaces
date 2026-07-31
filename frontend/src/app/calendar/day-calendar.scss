@@ -1,5 +1,5 @@
 :host {
-  --label-width: 14rem;
+  --label-width: 10rem;
   --row-height: 2.25rem;
   --border: #e2e8f0;
   --border-strong: #cbd5e1;
@@ -297,7 +297,7 @@
   cursor: copy;
 
   &:hover {
-    background-color: #f0f9ff;
+    background-color: #f0f9ff !important;
   }
 }
 

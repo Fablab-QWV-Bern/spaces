@@ -135,7 +135,7 @@
 <div #card class="card" popover="auto" role="tooltip" (mouseleave)="hideCard($event)">
   @if (hover(); as details) {
     @if (details.isBlockage) {
-      <p class="card-kind">Blockiert durch eine Buchung auf {{ details.bookedWorkplaceName }}</p>
+      <p class="card-kind">Blockiert durch {{ details.bookedWorkplaceName }}</p>
     } @else {
       <p class="card-kind">{{ details.workplaceName }}</p>
     }
