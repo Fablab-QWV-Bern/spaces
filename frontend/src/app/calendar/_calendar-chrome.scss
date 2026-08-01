@@ -12,7 +12,14 @@
   --border-strong: #cbd5e1;
   --columns: 1fr;
 
-  display: block;
+  // Die Ansicht füllt das Fenster und scrollt nicht selbst — gescrollt wird in
+  // `.calendar`. Nur so bleiben Kopfleiste und Legende stehen, und nur so kann
+  // die Kopfzeile des Rasters kleben: `.calendar` trägt `overflow-x` und ist
+  // damit ohnehin ein Scrollcontainer, an dem sich `position: sticky`
+  // ausrichtet. Klebte die Kopfzeile am Fenster, hätte sie keinen Bezug.
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
   font-family: system-ui, sans-serif;
   color: #0f172a;
 }
@@ -27,7 +34,10 @@
 }
 
 .calendar {
-  overflow-x: auto;
+  flex: 1;
+  // Ohne das wächst ein Flex-Element auf seinen Inhalt statt zu scrollen.
+  min-height: 0;
+  overflow: auto;
   padding: 0 1.5rem 1rem;
 }
 
@@ -68,7 +78,14 @@
   margin-right: -1px;
 }
 
+// Die Beschriftungsspalte klebt links, die Kopfzeile oben; ihre Ecke tut beides,
+// weil sie in der klebenden Zeile liegt. Über der Jetzt-Linie (z-index 3), damit
+// die nicht in die Stunden- bzw. Tagesbeschriftung hineinragt.
 .header {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  background: #fff;
   border-bottom: 1px solid var(--border-strong);
 
   .label {
