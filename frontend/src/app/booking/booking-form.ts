@@ -16,7 +16,16 @@ import {
   updateBooking,
   validateBooking,
 } from '../api/functions';
-import { Area, Booking, BookingValidation, Config, Workplace } from '../api/models';
+import {
+  Area,
+  Booking,
+  BookingValidation,
+  BookingWrite,
+  Config,
+  // Umbenannt, damit das generierte Modell das globale Error nicht verdeckt.
+  Error as ApiError,
+  Workplace,
+} from '../api/models';
 import {
   GRID_MINUTES,
   TimeAxis,
@@ -276,7 +285,8 @@ export class BookingForm {
     return sameDay ? formatTime(range.end) : `${formatTime(range.end)} am ${formatDate(range.end)}`;
   });
 
-  private readonly candidate = computed(() => {
+  /** Die Buchung, wie sie an die API ginge — oder null, solange etwas fehlt. */
+  private readonly candidate = computed<BookingWrite | null>(() => {
     const range = this.range();
     const value = this.model();
 
@@ -482,11 +492,7 @@ export class BookingForm {
       });
   }
 
-  private check(candidate: ReturnType<typeof this.candidate>): void {
-    if (!candidate) {
-      return;
-    }
-
+  private check(candidate: BookingWrite): void {
     const excludeBookingId = this.editing()?.id;
 
     validateBooking(this.http, this.rootUrl, {
@@ -510,7 +516,9 @@ export class BookingForm {
       return;
     }
 
-    const body = { ...candidate, name: value.name, contact: value.contact };
+    // Der Kandidat trägt für die Vorabprüfung Platzhalter — beim Speichern
+    // gehen die tatsächlich eingegebenen Werte mit.
+    const body: BookingWrite = { ...candidate, name: value.name, contact: value.contact };
     const booking = this.editing();
 
     this.saving.set(true);
@@ -562,10 +570,7 @@ export class BookingForm {
       return 'Der Arbeitsplatz wurde inzwischen von jemand anderem belegt.';
     }
 
-    return (
-      (error.error as { message?: string } | null)?.message ??
-      'Die Buchung liess sich nicht speichern.'
-    );
+    return (error.error as ApiError | null)?.message ?? 'Die Buchung liess sich nicht speichern.';
   }
 
   // --- Hilfsmittel fürs Template --------------------------------------------

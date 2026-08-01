@@ -1,6 +1,9 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
+// Umbenannt, damit das generierte Modell das globale Error nicht verdeckt.
+import { Error as ApiError } from '../api/models';
 import { SessionService } from './session-service';
 
 /**
@@ -236,10 +239,10 @@ export class SessionBar {
         // Die Ansicht hängt an den Berechtigungen — nach dem Wechsel neu laden.
         window.location.reload();
       },
-      error: (response: { status: number; error?: { message?: string } }) => {
+      error: (response: HttpErrorResponse) => {
         this.busy.set(false);
         this.error.set(
-          response.error?.message ??
+          (response.error as ApiError | null)?.message ??
             (response.status === 429
               ? 'Zu viele Versuche. Bitte kurz warten.'
               : 'Anmeldung fehlgeschlagen.'),
