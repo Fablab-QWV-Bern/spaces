@@ -144,6 +144,28 @@ button,
   align-items: center;
 }
 
+// Die Formulare speichern nichts von selbst. Darum bleibt die Leiste am unteren
+// Rand stehen, auch wenn das Formular länger ist als der Bildschirm — sonst
+// sähe man nach dem Ausfüllen nichts mehr, was auf das Speichern hinweist.
+// Sie reicht bis an die Ränder der Spalte, damit sie als Leiste liest und nicht
+// als vergessener Knopf.
+.actions.sticky {
+  position: sticky;
+  bottom: 0;
+  margin: 0 -1.5rem;
+  padding: 0.75rem 1.5rem;
+  border-top: 1px solid var(--border);
+  background: rgb(248 250 252 / 0.9);
+  backdrop-filter: blur(6px);
+}
+
+// Der Fehler gehört in die Leiste: er entsteht beim Speichern, und dort schaut
+// man in dem Moment hin.
+.save-error {
+  color: #b91c1c;
+  font-size: 0.85rem;
+}
+
 // Schiebt alles Folgende nach rechts — für das Löschen, das nicht neben dem
 // Speichern stehen soll.
 .spacer {

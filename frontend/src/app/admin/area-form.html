@@ -90,15 +90,15 @@
       </span>
     </section>
 
-    @if (saveError(); as message) {
-      <p class="error" role="alert">{{ message }}</p>
-    }
-
-    <div class="actions">
+    <div class="actions sticky">
       <button type="submit" class="primary" [disabled]="!canSubmit()">
         {{ saving() ? 'Wird gespeichert …' : 'Speichern' }}
       </button>
       <button type="button" (click)="cancel()">Abbrechen</button>
+
+      @if (saveError(); as message) {
+        <span class="save-error" role="alert">{{ message }}</span>
+      }
     </div>
   </form>
 }

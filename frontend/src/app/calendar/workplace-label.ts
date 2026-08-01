@@ -60,6 +60,6 @@ export class WorkplaceLabel {
 
   /** Null, solange der Platz benutzbar ist — dann steht nur der Name da. */
   protected readonly status = computed(
-    () => ({ DEFECT: 'defekt', DISABLED: 'deaktiviert', OK: null })[this.workplace().status],
+    () => ({ DEFECT: 'defekt', DISABLED: 'ausgeblendet', OK: null })[this.workplace().status],
   );
 }

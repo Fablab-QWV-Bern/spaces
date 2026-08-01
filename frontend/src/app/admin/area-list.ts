@@ -48,7 +48,7 @@ export class AreaList {
     forkJoin({
       session: this.session.load(),
       areas: listAreas(this.http, this.rootUrl).pipe(map((r) => r.body)),
-      // Auch die deaktivierten, sonst sähe ein Bereich leer aus, obwohl das
+      // Auch die ausgeblendeten, sonst sähe ein Bereich leer aus, obwohl das
       // Löschen daran scheitert.
       workplaces: listWorkplaces(this.http, this.rootUrl, { includeDisabled: true }).pipe(
         map((r) => r.body),

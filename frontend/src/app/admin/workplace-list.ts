@@ -48,7 +48,7 @@ export class WorkplaceList {
   }
 
   protected statusLabel(workplace: Workplace): string {
-    return { OK: 'in Betrieb', DEFECT: 'defekt', DISABLED: 'deaktiviert' }[workplace.status];
+    return { OK: 'in Betrieb', DEFECT: 'defekt', DISABLED: 'ausgeblendet' }[workplace.status];
   }
 
   protected remove(workplace: Workplace): void {
@@ -75,7 +75,7 @@ export class WorkplaceList {
     forkJoin({
       session: this.session.load(),
       areas: listAreas(this.http, this.rootUrl).pipe(map((r) => r.body)),
-      // Hier gehören die deaktivierten dazu — nur hier lassen sie sich wieder
+      // Hier gehören die ausgeblendeten dazu — nur hier lassen sie sich wieder
       // in Betrieb nehmen.
       workplaces: listWorkplaces(this.http, this.rootUrl, { includeDisabled: true }).pipe(
         map((r) => r.body),

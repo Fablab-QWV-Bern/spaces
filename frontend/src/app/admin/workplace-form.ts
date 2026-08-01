@@ -19,6 +19,7 @@ import { Area, Error as ApiError, Workplace, WorkplaceCreate } from '../api/mode
 import { formatDuration } from '../calendar/time-axis';
 import { SessionService } from '../shared/session-service';
 import { AdminHeader } from './admin-header';
+import { TagInput } from './tag-input';
 
 /** Die Grenze steht auch in der Spec — hier nur, um früh und deutlich zu warnen. */
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
@@ -36,14 +37,11 @@ interface WorkplaceFormValue {
   useAreaDuration: boolean;
   maxBookingDurationMinutes: string;
   sortOrder: string;
-  /** Frei getippt, durch Komma getrennt — Tags sind kurz und wenige. */
-  tags: string;
-  blocksWorkplacesWithTag: string;
 }
 
 @Component({
   selector: 'app-workplace-form',
-  imports: [AdminHeader, FormField],
+  imports: [AdminHeader, FormField, TagInput],
   templateUrl: './workplace-form.html',
   styleUrl: './workplace-form.scss',
 })
@@ -53,8 +51,6 @@ export class WorkplaceForm {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   protected readonly session = inject(SessionService);
-
-  protected readonly formatDuration = formatDuration;
 
   /** Gesetzt, wenn ein bestehender Arbeitsplatz bearbeitet wird. */
   protected readonly editing = signal<Workplace | null>(null);
@@ -72,6 +68,28 @@ export class WorkplaceForm {
    * von Ankreuzfeldern lässt sich als Menge einfacher führen als als Feld.
    */
   protected readonly blockedIds = signal<string[]>([]);
+
+  /** Ebenso die beiden Tag-Listen — `app-tag-input` führt sie als Feld. */
+  protected readonly tags = signal<string[]>([]);
+  protected readonly blocksWithTag = signal<string[]>([]);
+
+  /**
+   * Alle bisher irgendwo vergebenen Tags, für die Vervollständigung. Aus beiden
+   * Listen: was ein Platz trägt, blockiert ein anderer, und umgekehrt.
+   */
+  protected readonly knownTags = computed(() => {
+    const seen = new Map<string, string>();
+    const workplaces = [...this.others(), ...(this.editing() ? [this.editing()!] : [])];
+
+    for (const workplace of workplaces) {
+      for (const tag of [...workplace.tags, ...workplace.blocksWorkplacesWithTag]) {
+        // Erste Schreibweise gewinnt, wie beim Speichern im Backend.
+        seen.set(tag.toLowerCase(), seen.get(tag.toLowerCase()) ?? tag);
+      }
+    }
+
+    return [...seen.values()].sort((a, b) => a.localeCompare(b, 'de-CH'));
+  });
 
   // --- Foto ----------------------------------------------------------------
 
@@ -98,8 +116,6 @@ export class WorkplaceForm {
     useAreaDuration: true,
     maxBookingDurationMinutes: '240',
     sortOrder: '0',
-    tags: '',
-    blocksWorkplacesWithTag: '',
   });
 
   /** Wie im Buchungsformular: nur Pflichtfelder hier, alles Weitere im Backend. */
@@ -132,6 +148,13 @@ export class WorkplaceForm {
     return Number.isFinite(minutes) && minutes >= 15 ? formatDuration(minutes) : '';
   });
 
+  /** Was der gewählte Bereich vorgibt — sonst wäre das Kreuz eine Blackbox. */
+  protected readonly areaDurationLabel = computed(() => {
+    const area = this.areas().find((candidate) => candidate.id === this.model().areaId);
+
+    return area ? formatDuration(area.maxBookingDurationMinutes) : '';
+  });
+
   constructor() {
     const id = this.route.snapshot.paramMap.get('id');
 
@@ -153,6 +176,8 @@ export class WorkplaceForm {
           this.editing.set(workplace);
           this.model.set(toFormValue(workplace));
           this.blockedIds.set(workplace.blocksWorkplaceIds);
+          this.tags.set(workplace.tags);
+          this.blocksWithTag.set(workplace.blocksWorkplacesWithTag);
         } else {
           this.model.update((value) => ({ ...value, areaId: areas[0]?.id ?? '' }));
         }
@@ -256,7 +281,11 @@ export class WorkplaceForm {
     }
 
     const workplace = this.editing();
-    const body = toWrite(this.model(), this.idValue(), this.blockedIds());
+    const body = toWrite(this.model(), this.idValue(), {
+      blocksWorkplaceIds: this.blockedIds(),
+      tags: this.tags(),
+      blocksWorkplacesWithTag: this.blocksWithTag(),
+    });
 
     this.saving.set(true);
     this.saveError.set(null);
@@ -309,13 +338,17 @@ function toFormValue(workplace: Workplace): WorkplaceFormValue {
     useAreaDuration: workplace.maxBookingDurationMinutes == null,
     maxBookingDurationMinutes: String(workplace.maxBookingDurationMinutes ?? 240),
     sortOrder: String(workplace.sortOrder),
-    tags: workplace.tags.join(', '),
-    blocksWorkplacesWithTag: workplace.blocksWorkplacesWithTag.join(', '),
   };
 }
 
-function toWrite(value: WorkplaceFormValue, id: string, blockedIds: string[]): WorkplaceCreate {
+/** @param lists Die Listenfelder, die neben dem Formularmodell geführt werden. */
+function toWrite(
+  value: WorkplaceFormValue,
+  id: string,
+  lists: Pick<WorkplaceCreate, 'blocksWorkplaceIds' | 'tags' | 'blocksWorkplacesWithTag'>,
+): WorkplaceCreate {
   return {
+    ...lists,
     id,
     name: value.name.trim(),
     areaId: value.areaId,
@@ -328,18 +361,7 @@ function toWrite(value: WorkplaceFormValue, id: string, blockedIds: string[]): W
       ? null
       : Number(value.maxBookingDurationMinutes),
     sortOrder: Number(value.sortOrder),
-    tags: splitTags(value.tags),
-    blocksWorkplacesWithTag: splitTags(value.blocksWorkplacesWithTag),
-    blocksWorkplaceIds: blockedIds,
   };
-}
-
-/** "#laut, staubig  leise" → ["laut", "staubig", "leise"] */
-function splitTags(input: string): string[] {
-  return input
-    .split(/[,\s]+/)
-    .map((tag) => tag.replace(/^#/, '').trim())
-    .filter((tag) => tag !== '');
 }
 
 /** "Hobelbank 1 (UG)" → "hobelbank-1-ug" */

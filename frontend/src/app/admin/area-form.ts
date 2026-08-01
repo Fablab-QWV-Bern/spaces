@@ -50,7 +50,6 @@ export class AreaForm {
   protected readonly session = inject(SessionService);
 
   protected readonly swatches = SWATCHES;
-  protected readonly formatDuration = formatDuration;
 
   /** Gesetzt, wenn ein bestehender Bereich bearbeitet wird. */
   protected readonly editing = signal<Area | null>(null);
