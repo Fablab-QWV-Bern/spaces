@@ -1,14 +1,15 @@
 :host {
   // Popover-Standardstile des Browsers zurücksetzen: die zentrieren das Element
-  // im Viewport, wir hängen es stattdessen an den überfahrenen Block.
-  // Kein Aussenabstand: die Karte liegt lückenlos am Block, damit der Zeiger
+  // im Viewport, wir hängen es stattdessen an den überfahrenen Balken.
+  // Kein Aussenabstand: die Karte liegt lückenlos am Balken, damit der Zeiger
   // ohne Zwischenraum hinüberwandern kann.
   inset: auto;
   margin: 0;
   padding: 0.6rem 0.75rem;
   border: 1px solid #cbd5e1;
 
-  position-anchor: --hovered-block;
+  // Gegenstück zum `anchor-name` in calendar-block.scss.
+  position-anchor: --block;
   position-area: block-end span-inline-end;
   // Am Viewport-Rand nach oben bzw. zur anderen Seite umklappen.
   position-try-fallbacks:
@@ -25,6 +26,9 @@
   font-size: 0.82rem;
   line-height: 1.35;
   color: #0f172a;
+  // Der Balken schreibt seinen Inhalt einzeilig; die Karte liegt in seinem
+  // Teilbaum und erbt das.
+  white-space: normal;
 }
 
 p {

@@ -50,6 +50,16 @@ Englisch. Kommentare erklären das *Warum*, nicht das *Was*.
   und die Formularvorschau über Prozentwerte. Beide bauen auf `visibleRange()` in
   `frontend/src/app/calendar/time-axis.ts` auf — die Beschneidungslogik existiert
   nur einmal.
+- **Die Detailkarte klappt die Plattform auf, nicht wir.** Der Balken ist ein
+  `<button popovertarget>`, die Karte das benannte Popover — Umschalten, Escape,
+  Klick daneben und Tastatur kommen vom Browser. Daraus folgen zwei Dinge, die
+  sonst wie Umwege aussehen: die Karte steht *neben* dem Balken statt in ihm
+  (ein `<button>` darf keine Schaltfläche enthalten, und die Karte hat eine),
+  und `CalendarBlock` trägt `display: contents`, damit der Balken das
+  Rasterelement der Zelle bleibt. Positioniert wird über CSS Anchor Positioning;
+  der implizite Anker aus `popovertarget` greift in Chrome nicht, darum das
+  ausdrückliche `anchor-name: --block`. Kein Nachbau mit eigenen Zeigerhandlern —
+  das war einmal da und ist bewusst verschwunden.
 
 ## Umgebung
 

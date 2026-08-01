@@ -2,7 +2,6 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { Workplace } from '../api/models';
-import { BookingCard } from './booking-card';
 import { Block, blocksFor } from './blocks';
 import { CalendarStore, isoDate } from './calendar-store';
 import { CalendarToolbar } from './calendar-toolbar';
@@ -11,7 +10,7 @@ import { gridTemplateColumns, instantAt, lineName, percentOfAxis } from './time-
 
 @Component({
   selector: 'app-day-calendar',
-  imports: [BookingCard, CalendarToolbar, DayTrack],
+  imports: [CalendarToolbar, DayTrack],
   templateUrl: './day-calendar.html',
   styleUrl: './day-calendar.scss',
 })

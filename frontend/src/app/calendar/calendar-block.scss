@@ -1,0 +1,74 @@
+:host {
+  // Der Host erzeugt keine eigene Box: Rasterelement der Zelle ist der Balken
+  // selbst, die Karte daneben nimmt im Raster nie Platz ein (zugeklappt
+  // `display: none`, aufgeklappt im Top Layer).
+  display: contents;
+
+  // Beschränkt den Ankernamen auf dieses Paar aus Balken und Karte. Auch ohne
+  // diese Zeile träfe es zu — bei mehreren gleichnamigen Ankern gewinnt der
+  // letzte vor dem positionierten Element, und das ist der eigene Balken.
+  anchor-scope: --block;
+}
+
+.bar {
+  // Alle Balken einer Zelle teilen sich dieselbe Rasterzeile und überlagern
+  // sich damit; die Reihenfolge macht z-index.
+  grid-row: 1;
+  margin: 3px 0;
+  margin-left: 1px;
+  min-width: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0 0.35rem;
+  border: none;
+  border-radius: 0.4rem;
+  font: inherit;
+  font-size: 0.78rem;
+  text-align: left;
+  overflow: hidden;
+  white-space: nowrap;
+
+  // Der Anker für die eigene Karte — sie hängt sich in booking-card.scss über
+  // `position-anchor: --block` daran.
+  anchor-name: --block;
+
+  &.clipped-start {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+  }
+
+  &.clipped-end {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 1px;
+  }
+}
+
+.booking {
+  z-index: 1;
+  color: #0f172a;
+  // Ein zusätzliches Muster wäre hier falsch — die Buchung ist der Normalfall.
+  // Unterscheidbar bleibt sie durch die Beschriftung.
+
+  .text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .series {
+    flex: none;
+    opacity: 0.7;
+  }
+}
+
+.blockage {
+  // Blockierungen tragen ein Schraffurmuster, damit sie sich nicht allein über
+  // die Farbe von freien Flächen unterscheiden.
+  background: repeating-linear-gradient(45deg, #cbd5e1, #cbd5e1 4px, #e2e8f0 4px, #e2e8f0 8px);
+}

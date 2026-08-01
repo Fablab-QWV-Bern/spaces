@@ -1,17 +1,20 @@
-import { Component, ElementRef, inject } from '@angular/core';
+import { Component, inject, input, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
-import { Booking } from '../api/models';
-import { BlockHover } from './block-hover';
+import { CardDetails } from './blocks';
 import { CalendarStore } from './calendar-store';
 
 /**
- * Die Detailkarte zu einem Balken. Steht einmal je Ansicht im Template und ist
- * immer im DOM, damit sie jederzeit über showPopover() ansteuerbar ist.
+ * Die Detailkarte zu einem Balken. Sie ist selbst das Popover; wann sie
+ * erscheint, entscheidet der Balken, in dem sie steht — siehe `CalendarBlock`.
  *
  * Als natives Popover liegt sie im Top Layer. Das ist hier nicht Kosmetik: die
  * Zeitachse scrollt in einem `overflow-x: auto`-Container, ein normal
  * positioniertes Element würde am Rand beschnitten.
+ *
+ * `role="dialog"` und nicht `tooltip`: die Karte wird angeklickt statt
+ * überfahren und enthält eine Schaltfläche. Ein Tooltip ist ergänzender Text,
+ * den man nicht bedient.
  */
 @Component({
   selector: 'app-booking-card',
@@ -19,20 +22,27 @@ import { CalendarStore } from './calendar-store';
   styleUrl: './booking-card.scss',
   host: {
     popover: 'auto',
-    role: 'tooltip',
-    '(mouseleave)': 'hover.hide($event)',
+    role: 'dialog',
+    '[attr.aria-label]': '"Details zu " + details().booking.name',
+    '(beforetoggle)': 'onBeforeToggle($event)',
   },
 })
 export class BookingCard {
-  protected readonly hover = inject(BlockHover);
+  readonly details = input.required<CardDetails>();
+
+  /** Das Popover muss im DOM stehen, damit `popovertarget` es findet — sein
+   *  Inhalt nicht. `beforetoggle` statt `toggle`, damit er da ist, bevor das
+   *  Popover erstmals gezeichnet wird. */
+  protected readonly visible = signal(false);
+
   protected readonly store = inject(CalendarStore);
   private readonly router = inject(Router);
 
-  constructor() {
-    this.hover.register(inject(ElementRef<HTMLElement>).nativeElement);
+  protected onBeforeToggle(event: ToggleEvent): void {
+    this.visible.set(event.newState === 'open');
   }
 
-  protected editBooking(booking: Booking): void {
-    this.router.navigate(['/buchen'], { queryParams: { booking: booking.id } });
+  protected editBooking(): void {
+    this.router.navigate(['/buchen'], { queryParams: { booking: this.details().booking.id } });
   }
 }

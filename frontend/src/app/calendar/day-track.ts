@@ -1,7 +1,7 @@
-import { Component, computed, inject, input, output } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 
 import { Block } from './blocks';
-import { BlockHover } from './block-hover';
+import { CalendarBlock } from './calendar-block';
 import { GRID_MINUTES, TimeAxis, gridTemplateColumns, slotAtOffset } from './time-axis';
 
 /**
@@ -14,6 +14,7 @@ import { GRID_MINUTES, TimeAxis, gridTemplateColumns, slotAtOffset } from './tim
  */
 @Component({
   selector: 'app-day-track',
+  imports: [CalendarBlock],
   templateUrl: './day-track.html',
   styleUrl: './day-track.scss',
   host: {
@@ -32,8 +33,6 @@ export class DayTrack {
   /** Der angeklickte Zeitschlitz, in Minuten seit Mitternacht. */
   readonly slotClick = output<number>();
 
-  protected readonly hover = inject(BlockHover);
-
   protected readonly template = computed(() => gridTemplateColumns(this.axis()));
 
   /** Breite einer Viertelstunde — für die Rasterlinien im Hintergrund. */
@@ -42,10 +41,6 @@ export class DayTrack {
 
     return `${(GRID_MINUTES / (axis.closesAt - axis.opensAt)) * 100}%`;
   });
-
-  protected showCard(block: Block, event: Event): void {
-    this.hover.show(block.card, event.currentTarget as HTMLElement);
-  }
 
   protected onClick(event: MouseEvent): void {
     if (!this.clickable()) {
