@@ -18,7 +18,7 @@ interface WeekDay {
   /** "27. Juli" */
   label: string;
   isWeekend: boolean;
-  isSelected: boolean;
+  isToday: boolean;
 }
 
 /**
@@ -53,7 +53,10 @@ export class WeekCalendar {
   }
 
   protected readonly days = computed<WeekDay[]>(() => {
-    const selected = this.store.date();
+    // Hervorgehoben wird der heutige Tag, nicht das dargestellte Datum: beim
+    // Blättern wäre sonst in jeder Woche derselbe Wochentag blau, ohne dass
+    // daran etwas besonders wäre.
+    const today = isoDate(this.now());
 
     return this.store.days().map((date) => {
       const day = new Date(`${date}T12:00:00`);
@@ -63,10 +66,21 @@ export class WeekCalendar {
         weekday: day.toLocaleDateString('de-CH', { weekday: 'short' }),
         label: day.toLocaleDateString('de-CH', { day: 'numeric', month: 'long' }),
         isWeekend: day.getDay() === 0 || day.getDay() === 6,
-        isSelected: date === selected,
+        isToday: date === today,
       };
     });
   });
+
+  /**
+   * Der Tag unter dem Zeiger. Hervorgehoben wird die ganze Spalte und nicht nur
+   * die Zelle darunter — der Klick öffnet den Tag mit allen Arbeitsplätzen, und
+   * genau das zeigt die Spalte an.
+   */
+  protected readonly hoveredDay = signal<IsoDate | null>(null);
+
+  protected onCellEnter(workplace: Workplace, date: IsoDate): void {
+    this.hoveredDay.set(this.isBookable(workplace) ? date : null);
+  }
 
   /** "27. – 31. Juli 2026", über einen Monatswechsel hinweg ausgeschrieben. */
   protected readonly heading = computed(() => {

@@ -27,6 +27,7 @@ import {
   Workplace,
 } from '../api/models';
 import {
+  DEFAULT_DURATION_MINUTES,
   GRID_MINUTES,
   TimeAxis,
   allowedDurations,
@@ -42,9 +43,6 @@ import {
 import { readBooker, writeBooker } from '../shared/booker-cookie';
 import { SessionBar } from '../shared/session-bar';
 import { SessionService } from '../shared/session-service';
-
-/** Standarddauer einer neuen Buchung, sofern sie am Arbeitsplatz erlaubt ist. */
-const DEFAULT_DURATION_MINUTES = 120;
 
 /**
  * Der Formularzustand als ein Wert. Die Felder, die an einem `<select>` hängen,

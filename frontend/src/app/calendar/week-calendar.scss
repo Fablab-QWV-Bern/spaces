@@ -39,22 +39,40 @@ app-day-track {
   border-left: 1px solid var(--border);
 }
 
-// Wochenenden liegen grau hinterlegt, der gewählte Tag hebt sich ab. Beides
-// hinter dem Viertelstundenraster der Zelle, das durchscheinend gezeichnet ist.
+// Wochenenden liegen grau hinterlegt, heute hebt sich ab. Beides hinter dem
+// Stundenraster der Zelle, das durchscheinend gezeichnet ist.
 .weekend {
   background-color: #f1f5f9;
 }
 
-.selected {
+.today {
   background-color: #eff6ff;
 }
 
-.header .selected {
+.header .today {
   background-color: #2563eb;
   color: #dbeafe;
 
   .weekday {
     color: #fff;
+  }
+}
+
+// Der Zeiger hebt die ganze Spalte hervor, nicht nur die Zelle unter ihm: der
+// Klick öffnet den Tag mit sämtlichen Arbeitsplätzen. Die Farbe ist dieselbe,
+// die `DayTrack` für die Zelle unter dem Zeiger setzt — die Spalte wirkt
+// dadurch aus einem Stück. Nach den Tönungen oben, damit sie gewinnt.
+.hovered {
+  background-color: #f0f9ff;
+}
+
+// Ausser auf heute: dessen Kopfzelle bleibt blau, sonst verlöre man beim
+// Überfahren die einzige Marke, die die Woche hat.
+.header .hovered:not(.today) {
+  color: #0f172a;
+
+  .weekday {
+    color: #0f172a;
   }
 }
 

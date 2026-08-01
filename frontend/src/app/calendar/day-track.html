@@ -1,3 +1,10 @@
+<!-- Vor den Balken, damit eine bestehende Buchung die Vorschau überdeckt. -->
+@if (preview(); as preview) {
+  <div class="preview" [style.grid-column]="preview.gridColumn" aria-hidden="true">
+    <span class="text">{{ preview.label }}</span>
+  </div>
+}
+
 @for (block of blocks(); track block.id) {
   <app-calendar-block [block]="block" />
 }

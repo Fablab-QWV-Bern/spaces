@@ -23,7 +23,6 @@ import { SessionService } from '../shared/session-service';
     <nav class="controls">
       <button type="button" (click)="shift.emit(-1)" [attr.aria-label]="backLabel()">‹</button>
       <button type="button" (click)="today.emit()">Heute</button>
-      <button type="button" (click)="tomorrow.emit()">Morgen</button>
       <button type="button" (click)="shift.emit(1)" [attr.aria-label]="forwardLabel()">›</button>
 
       <input
@@ -154,7 +153,6 @@ export class CalendarToolbar {
 
   readonly shift = output<number>();
   readonly today = output<void>();
-  readonly tomorrow = output<void>();
   readonly dateSelected = output<string>();
 
   protected readonly backLabel = computed(

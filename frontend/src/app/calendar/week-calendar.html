@@ -4,7 +4,6 @@
   unit="Woche"
   (shift)="store.shift($event)"
   (today)="store.goToToday()"
-  (tomorrow)="store.goToTomorrow()"
   (dateSelected)="onDateChange($event)"
 />
 
@@ -16,13 +15,18 @@
   <p class="hint">Wird geladen …</p>
 } @else if (store.axis(); as axis) {
   <div class="calendar">
-    <div class="grid">
+    <div class="grid" (mouseleave)="hoveredDay.set(null)">
       <!-- Kopfzeile: die sieben Tage -->
       <div class="row header">
         <div class="label">Arbeitsplatz</div>
 
         @for (day of days(); track day.date) {
-          <div class="day" [class.weekend]="day.isWeekend" [class.selected]="day.isSelected">
+          <div
+            class="day"
+            [class.weekend]="day.isWeekend"
+            [class.today]="day.isToday"
+            [class.hovered]="hoveredDay() === day.date"
+          >
             <span class="weekday">{{ day.weekday }}</span>
             <span class="date">{{ day.label }}</span>
           </div>
@@ -42,10 +46,12 @@
             @for (day of days(); track day.date) {
               <app-day-track
                 [class.weekend]="day.isWeekend"
-                [class.selected]="day.isSelected"
+                [class.today]="day.isToday"
+                [class.hovered]="hoveredDay() === day.date"
                 [axis]="axis"
                 [blocks]="blocks(workplace, day.date)"
                 [clickable]="isBookable(workplace)"
+                (mouseenter)="onCellEnter(workplace, day.date)"
                 (slotClick)="openDay(day.date)"
               />
             }

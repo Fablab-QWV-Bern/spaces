@@ -203,6 +203,15 @@ export function instantAt(day: string, minutesSinceMidnight: number): Date {
 const DURATION_LADDER = [15, 30, 45, 60, 90, 120, 180, 240, 360, 480, 720, 1440];
 
 /**
+ * Standarddauer einer neuen Buchung, sofern sie am Arbeitsplatz erlaubt ist.
+ *
+ * Steht hier und nicht im Formular, weil auch die Vorschau im Kalender sie
+ * braucht: was dort unter dem Zeiger liegt, muss dasselbe sein, was der Klick
+ * anlegt.
+ */
+export const DEFAULT_DURATION_MINUTES = 120;
+
+/**
  * Erlaubte Dauern bis zum Maximum. Über 24 Stunden geht es in Tagesschritten
  * weiter, und das Maximum selbst ist immer wählbar — auch wenn es nicht auf der
  * Staffel liegt.

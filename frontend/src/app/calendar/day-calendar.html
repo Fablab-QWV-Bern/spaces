@@ -4,7 +4,6 @@
   unit="Tag"
   (shift)="store.shift($event)"
   (today)="store.goToToday()"
-  (tomorrow)="store.goToTomorrow()"
   (dateSelected)="onDateChange($event)"
 />
 
@@ -41,6 +40,7 @@
               [axis]="axis"
               [blocks]="blocks(workplace)"
               [clickable]="isBookable(workplace)"
+              [previewMinutes]="previewMinutes"
               (slotClick)="onSlotClick(workplace, $event)"
             />
           </div>

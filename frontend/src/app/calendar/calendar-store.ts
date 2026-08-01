@@ -144,14 +144,6 @@ export class CalendarStore {
     this.load();
   }
 
-  /** Springt auf morgen — unabhängig davon, welcher Tag gerade offen ist. */
-  goToTomorrow(): void {
-    const tomorrow = new Date(`${todayIso()}T12:00:00`);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    this.date.set(isoDate(tomorrow));
-    this.load();
-  }
-
   /** Ein Blätterschritt in der Einheit der Zoomstufe: ein Tag bzw. eine Woche. */
   shift(steps: number): void {
     this.shiftDays(steps * (this.span() === 'week' ? 7 : 1));

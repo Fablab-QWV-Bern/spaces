@@ -7,7 +7,13 @@ import { CalendarStore, isoDate } from './calendar-store';
 import { CalendarToolbar } from './calendar-toolbar';
 import { syncDateWithUrl } from './date-in-url';
 import { DayTrack } from './day-track';
-import { gridTemplateColumns, instantAt, lineName, percentOfAxis } from './time-axis';
+import {
+  DEFAULT_DURATION_MINUTES,
+  gridTemplateColumns,
+  instantAt,
+  lineName,
+  percentOfAxis,
+} from './time-axis';
 import { WorkplaceLabel } from './workplace-label';
 
 @Component({
@@ -21,6 +27,10 @@ export class DayCalendar {
   private readonly router = inject(Router);
 
   protected readonly now = signal(new Date());
+
+  /** Länge der Vorschau unter dem Zeiger — dieselbe Dauer, die das Formular
+   *  nach dem Klick voreinstellt. */
+  protected readonly previewMinutes = DEFAULT_DURATION_MINUTES;
 
   constructor() {
     this.store.span.set('day');

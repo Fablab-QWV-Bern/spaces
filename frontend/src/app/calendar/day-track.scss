@@ -29,9 +29,31 @@
 }
 
 :host(.clickable) {
-  cursor: copy;
+  cursor: pointer;
+}
 
-  &:hover {
-    background-color: #f0f9ff;
+// Der Balken, den ein Klick anlegen würde. Gestrichelt und durchscheinend, damit
+// er nicht mit einer bestehenden Buchung verwechselt wird — und ohne
+// Zeigerereignisse, sonst verlöre die Zelle den Zeiger an ihn und die Vorschau
+// flackerte.
+.preview {
+  grid-row: 1;
+  margin: 3px 0 3px 1px;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--bar-padding, 0.5rem);
+  border: 1px dashed #2563eb;
+  border-radius: var(--bar-radius, 0.4rem);
+  background: rgb(37 99 235 / 0.08);
+  color: #1d4ed8;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  overflow: hidden;
+  pointer-events: none;
+
+  .text {
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
