@@ -31,8 +31,17 @@ class WorkplaceResource extends JsonResource
         ];
     }
 
+    /**
+     * Bewusst ohne Schema und Host: API, Ablage und SPA liegen auf demselben
+     * Host. Eine absolute URL käme aus APP_URL, und ein falsch gesetztes APP_URL
+     * auf dem Hosting würde jedes Foto auf einmal unerreichbar machen.
+     */
     private function url(?string $path): ?string
     {
-        return $path === null ? null : Storage::disk('public')->url($path);
+        if ($path === null) {
+            return null;
+        }
+
+        return parse_url(Storage::disk('public')->url($path), PHP_URL_PATH);
     }
 }

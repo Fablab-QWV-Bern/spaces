@@ -1,0 +1,36 @@
+@use './admin';
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0 1.5rem 2rem;
+  max-width: 40rem;
+}
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.swatch {
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border-radius: 0.3rem;
+  border: 1px solid rgb(15 23 42 / 0.1);
+  cursor: pointer;
+
+  // Das gemeinsame Hover der Verwaltung greift hier nicht: die Farbe steht als
+  // Inline-Stil am Element und schlägt jede Regel aus dem Stylesheet.
+  &.chosen {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+  }
+}
+
+.color-value {
+  max-width: 14rem;
+  font-family: ui-monospace, monospace;
+}

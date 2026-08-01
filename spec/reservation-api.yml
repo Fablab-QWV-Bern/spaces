@@ -347,12 +347,17 @@ components:
           description: Markdown, same rendering restrictions. When set, bookings must acknowledge it.
         photoUrl:
           type: string
-          format: uri
+          format: uri-reference
           nullable: true
           readOnly: true
+          description: |
+            Relative to the host that serves the API (`/storage/...`). Deliberately not absolute:
+            the API, the storage directory and the SPA live on the same host, and an absolute URL
+            built from a misconfigured APP_URL would break every photo at once.
+          example: /storage/workplaces/holz-3/foto-20260801120000.jpg
         photoThumbnailUrl:
           type: string
-          format: uri
+          format: uri-reference
           nullable: true
           readOnly: true
         status:

@@ -1,7 +1,8 @@
-import { Component, computed, input, output } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
 import { SessionBar } from '../shared/session-bar';
+import { SessionService } from '../shared/session-service';
 
 /**
  * Kopfzeile des Kalenders: Zeitraum, Blättern, Datumswahl, Zoomstufe, Anmeldung.
@@ -51,6 +52,10 @@ import { SessionBar } from '../shared/session-bar';
         >
       </span>
 
+      @if (session.canManageAnything()) {
+        <a class="admin" routerLink="/verwaltung">Verwaltung</a>
+      }
+
       <app-session-bar />
     </nav>
   `,
@@ -94,6 +99,17 @@ import { SessionBar } from '../shared/session-bar';
       }
     }
 
+    .admin {
+      align-self: center;
+      margin-left: 0.5rem;
+      font-size: 0.85rem;
+      color: #475569;
+
+      &:hover {
+        color: #0f172a;
+      }
+    }
+
     .spans {
       display: flex;
       margin-left: 0.5rem;
@@ -129,6 +145,8 @@ import { SessionBar } from '../shared/session-bar';
   `,
 })
 export class CalendarToolbar {
+  protected readonly session = inject(SessionService);
+
   readonly heading = input.required<string>();
   readonly date = input.required<string>();
   /** Die Einheit eines Blätterschritts, für die Beschriftung der Pfeile. */

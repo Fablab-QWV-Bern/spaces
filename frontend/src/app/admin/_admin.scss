@@ -1,0 +1,151 @@
+// Gemeinsames Aussehen der Verwaltungsansichten. Sie sind einander ähnlicher
+// als dem Kalender: eine schmale Spalte mit Kopfzeile, Tabelle oder Formular.
+
+:host {
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+
+  display: block;
+  font-family: system-ui, sans-serif;
+  color: #0f172a;
+}
+
+.hint,
+.error {
+  padding: 0 1.5rem 1rem;
+}
+
+.error {
+  color: #b91c1c;
+}
+
+.notice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin: 0 1.5rem;
+  padding: 1rem;
+  max-width: 52rem;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 0.4rem;
+  font-size: 0.9rem;
+
+  p {
+    margin: 0;
+  }
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+
+  > span {
+    color: #475569;
+  }
+
+  input,
+  select,
+  textarea {
+    padding: 0.4rem 0.5rem;
+    font: inherit;
+    font-size: 0.9rem;
+    border: 1px solid var(--border-strong);
+    border-radius: 0.25rem;
+    background: #fff;
+  }
+
+  textarea {
+    min-height: 5rem;
+    resize: vertical;
+  }
+
+  .note {
+    color: #64748b;
+    font-size: 0.75rem;
+  }
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+
+  // Nur nebeneinander sollen die Felder wachsen.
+  .field {
+    flex: 1 1 12rem;
+  }
+}
+
+.checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+button,
+.button {
+  padding: 0.4rem 0.8rem;
+  font: inherit;
+  font-size: 0.85rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 0.25rem;
+  background: #fff;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+
+  &:hover {
+    background: #f1f5f9;
+  }
+
+  &.primary {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #fff;
+
+    &:hover {
+      background: #1d4ed8;
+    }
+  }
+
+  &.danger {
+    color: #b91c1c;
+    border-color: #fca5a5;
+
+    &:hover {
+      background: #fef2f2;
+    }
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+// Schiebt alles Folgende nach rechts — für das Löschen, das nicht neben dem
+// Speichern stehen soll.
+.spacer {
+  margin-left: auto;
+}

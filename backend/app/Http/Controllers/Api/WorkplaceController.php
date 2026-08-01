@@ -19,13 +19,15 @@ class WorkplaceController extends Controller
     public function index(Request $request): AnonymousResourceCollection
     {
         $filters = $request->validate([
-            'includeDisabled' => ['sometimes', 'boolean'],
+            // Nicht `boolean`: das lässt "true" und "false" nicht durch, und genau
+            // so schreibt OpenAPI einen Wahrheitswert in eine Abfragezeichenfolge.
+            'includeDisabled' => ['sometimes', 'in:true,false,1,0'],
             'areaId' => ['sometimes', 'string'],
         ]);
 
         // Deaktivierte Arbeitsplätze sieht nur, wer sie verwalten darf. Für alle
         // anderen wird der Parameter ignoriert statt abgewiesen.
-        $includeDisabled = ($filters['includeDisabled'] ?? false)
+        $includeDisabled = $request->boolean('includeDisabled')
             && $this->currentRole->can('manageWorkplaces');
 
         $query = Workplace::query()
@@ -154,14 +156,21 @@ class WorkplaceController extends Controller
      */
     private function attributes(array $data): array
     {
+        // Ein leeres Textfeld im Formular meint "nicht gesetzt" — sonst stünde
+        // in der Spalte ein Leerstring, den keine Ansicht von "gesetzt"
+        // unterscheiden kann.
+        $text = fn (?string $value): ?string => ($value === null || trim($value) === '')
+            ? null
+            : $value;
+
         return [
             'name' => $data['name'],
-            'description' => $data['description'] ?? null,
-            'usage_rules' => $data['usageRules'] ?? null,
+            'description' => $text($data['description'] ?? null),
+            'usage_rules' => $text($data['usageRules'] ?? null),
             'status' => $data['status'],
-            'location' => $data['location'] ?? null,
+            'location' => $text($data['location'] ?? null),
             'area_id' => $data['areaId'],
-            'wiki_url' => $data['wikiUrl'] ?? null,
+            'wiki_url' => $text($data['wikiUrl'] ?? null),
             'max_booking_duration_minutes' => $data['maxBookingDurationMinutes'] ?? null,
             'sort_order' => $data['sortOrder'] ?? 0,
         ];

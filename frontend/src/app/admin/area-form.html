@@ -1,0 +1,104 @@
+<app-admin-header [heading]="heading()" />
+
+@if (loadError(); as message) {
+  <p class="error" role="alert">{{ message }}</p>
+} @else if (loading()) {
+  <p class="hint">Wird geladen …</p>
+} @else if (!session.canManageAreas()) {
+  <div class="notice">
+    <p>
+      Zum Verwalten der Bereiche braucht es eine Rolle mit dem Recht dazu. Aktuell bist du
+      @if (session.isAnonymous()) {
+        nicht angemeldet.
+      } @else {
+        als <strong>{{ session.roleName() }}</strong> angemeldet, diese Rolle darf das nicht.
+      }
+    </p>
+  </div>
+} @else {
+  <!-- Natives submit-Ereignis: (ngSubmit) stammt aus FormsModule, das Signal
+       Forms nicht mehr braucht. -->
+  <form class="form" (submit)="$event.preventDefault(); submit()">
+    <section class="panel">
+      <label class="field">
+        <span>Name</span>
+        <input type="text" [formField]="areaForm.name" autocomplete="off" />
+      </label>
+
+      <div class="field">
+        <span>Farbe</span>
+
+        <div class="swatches">
+          @for (swatch of swatches; track swatch) {
+            <button
+              type="button"
+              class="swatch"
+              [class.chosen]="areaForm.color().value() === swatch"
+              [style.background]="swatch"
+              [attr.aria-label]="'Farbe ' + swatch"
+              [attr.aria-pressed]="areaForm.color().value() === swatch"
+              (click)="pick(swatch)"
+            ></button>
+          }
+        </div>
+
+        <input type="text" class="color-value" [formField]="areaForm.color" spellcheck="false" />
+        <span class="note">
+          Jede CSS-Farbe ist erlaubt. Die Vorschläge unterscheiden sich nur im Farbton — so bleiben
+          die Balken im Kalender untereinander lesbar.
+        </span>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="row">
+        <label class="field">
+          <span>Maximale Buchungsdauer (Minuten)</span>
+          <input type="number" step="15" [formField]="areaForm.maxBookingDurationMinutes" />
+          @if (durationLabel(); as label) {
+            <span class="note">{{ label }}</span>
+          }
+        </label>
+
+        <label class="field">
+          <span>Reihenfolge</span>
+          <input type="number" step="10" [formField]="areaForm.sortOrder" />
+          <span class="note">Kleinere Werte stehen im Kalender weiter oben.</span>
+        </label>
+      </div>
+
+      <label class="field checkbox">
+        <input type="checkbox" [formField]="areaForm.useGlobalOffset" />
+        <span>Vorlauf wie global eingestellt</span>
+      </label>
+
+      @if (!areaForm.useGlobalOffset().value()) {
+        <label class="field">
+          <span>Vorlauf (Tage)</span>
+          <input type="number" [formField]="areaForm.maxBookingEndOffsetDays" />
+          <span class="note">So weit im Voraus lässt sich in diesem Bereich buchen.</span>
+        </label>
+      }
+
+      <label class="field checkbox">
+        <input type="checkbox" [formField]="areaForm.allowNightlyActivities" />
+        <span>Buchungen über Nacht möglich</span>
+      </label>
+      <span class="note">
+        Beginn und Ende liegen weiterhin in den Öffnungszeiten — nur die Stunden dazwischen dürfen
+        ausserhalb liegen.
+      </span>
+    </section>
+
+    @if (saveError(); as message) {
+      <p class="error" role="alert">{{ message }}</p>
+    }
+
+    <div class="actions">
+      <button type="submit" class="primary" [disabled]="!canSubmit()">
+        {{ saving() ? 'Wird gespeichert …' : 'Speichern' }}
+      </button>
+      <button type="button" (click)="cancel()">Abbrechen</button>
+    </div>
+  </form>
+}

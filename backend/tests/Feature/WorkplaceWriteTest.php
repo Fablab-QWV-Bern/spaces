@@ -20,17 +20,6 @@ beforeEach(function () {
     $this->areaId = Workplace::findOrFail('holz-1')->area_id;
 });
 
-/**
- * Die echte public-Disk liefert absolute URLs (APP_URL + /storage); die Attrappe
- * ohne diese Angabe nur "/storage/…", und das ist laut Spec keine URI. Damit der
- * Vertragstest die Wahrheit prüft und nicht die Attrappe, bekommt sie dieselbe
- * Grundadresse.
- */
-function fakePhotoDisk(): void
-{
-    Storage::fake('public', ['url' => config('filesystems.disks.public.url')]);
-}
-
 function workplacePayload(array $overrides = []): array
 {
     return array_merge([
@@ -153,7 +142,7 @@ it('laesst nur manageWorkplaces schreiben', function () {
 // Medientyp der Anfrage buchstäblich und stolpert über das "; boundary=…", das
 // jede multipart-Anfrage mitführt.
 it('nimmt ein Foto entgegen und leitet ein Vorschaubild ab', function () {
-    fakePhotoDisk();
+    Storage::fake('public');
 
     $response = $this->actingAs($this->admin)
         ->post(
@@ -166,8 +155,9 @@ it('nimmt ein Foto entgegen und leitet ein Vorschaubild ab', function () {
     $photo = $response->json('photoUrl');
     $thumbnail = $response->json('photoThumbnailUrl');
 
-    expect($photo)->not->toBeNull()
-        ->and($thumbnail)->not->toBeNull()
+    // Ohne Schema und Host — API, Ablage und SPA liegen auf demselben Host.
+    expect($photo)->toStartWith('/storage/')
+        ->and($thumbnail)->toStartWith('/storage/')
         ->and($photo)->not->toBe($thumbnail);
 
     $workplace = Workplace::findOrFail('holz-1');
@@ -181,7 +171,7 @@ it('nimmt ein Foto entgegen und leitet ein Vorschaubild ab', function () {
 });
 
 it('ersetzt ein vorhandenes Foto und laesst nichts liegen', function () {
-    fakePhotoDisk();
+    Storage::fake('public');
 
     $upload = fn () => $this->actingAs($this->admin)->post(
         '/api/workplaces/holz-1/photo',
@@ -202,7 +192,7 @@ it('ersetzt ein vorhandenes Foto und laesst nichts liegen', function () {
 });
 
 it('loescht das Foto', function () {
-    fakePhotoDisk();
+    Storage::fake('public');
 
     $this->actingAs($this->admin)->post(
         '/api/workplaces/holz-1/photo',
@@ -222,7 +212,7 @@ it('loescht das Foto', function () {
 });
 
 it('weist eine Datei ab, die kein Bild ist', function () {
-    fakePhotoDisk();
+    Storage::fake('public');
 
     $this->actingAs($this->admin)
         ->post(

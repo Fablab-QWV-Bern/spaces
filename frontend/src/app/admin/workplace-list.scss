@@ -1,0 +1,147 @@
+@use './admin';
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 0 1.5rem 2rem;
+  max-width: 60rem;
+}
+
+.group h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #475569;
+}
+
+.swatch {
+  display: inline-block;
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 0.2rem;
+  box-shadow: inset 0 0 0 1px rgb(15 23 42 / 0.1);
+}
+
+.places {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.place {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+
+  &.inactive {
+    background: #f8fafc;
+    color: #64748b;
+  }
+}
+
+.thumb {
+  flex: none;
+  width: 4rem;
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 0.25rem;
+  background: #f1f5f9;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .no-photo {
+    opacity: 0.35;
+  }
+}
+
+.about {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.85rem;
+}
+
+.title {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+
+  code {
+    font-size: 0.75rem;
+    color: #64748b;
+  }
+}
+
+.status {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 0.05rem 0.35rem;
+  border-radius: 0.2rem;
+  background: #f1f5f9;
+  color: #475569;
+
+  &.DEFECT {
+    background: #fef2f2;
+    color: #b91c1c;
+  }
+
+  &.DISABLED {
+    background: #f1f5f9;
+    color: #64748b;
+  }
+
+  // Der Normalfall braucht keine Auszeichnung.
+  &.OK {
+    display: none;
+  }
+}
+
+.line {
+  margin: 0.2rem 0 0;
+
+  &.muted {
+    color: #64748b;
+    font-size: 0.8rem;
+  }
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.tag {
+  font-size: 0.75rem;
+  color: #475569;
+  background: #f1f5f9;
+  border-radius: 0.2rem;
+  padding: 0.05rem 0.3rem;
+}
+
+.row-actions {
+  flex: none;
+  display: flex;
+  gap: 0.4rem;
+}

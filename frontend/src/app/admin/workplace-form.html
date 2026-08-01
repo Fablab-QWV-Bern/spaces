@@ -1,0 +1,232 @@
+<app-admin-header [heading]="heading()" />
+
+@if (loadError(); as message) {
+  <p class="error" role="alert">{{ message }}</p>
+} @else if (loading()) {
+  <p class="hint">Wird geladen …</p>
+} @else if (!session.canManageWorkplaces()) {
+  <div class="notice">
+    <p>
+      Zum Verwalten der Arbeitsplätze braucht es eine Rolle mit dem Recht dazu. Aktuell bist du
+      @if (session.isAnonymous()) {
+        nicht angemeldet.
+      } @else {
+        als <strong>{{ session.roleName() }}</strong> angemeldet, diese Rolle darf das nicht.
+      }
+    </p>
+  </div>
+} @else {
+  <form class="form" (submit)="$event.preventDefault(); submit()">
+    <section class="panel">
+      <div class="row">
+        <label class="field">
+          <span>Name</span>
+          <input
+            type="text"
+            [formField]="workplaceForm.name"
+            autocomplete="off"
+            (input)="onNameInput()"
+          />
+        </label>
+
+        <label class="field">
+          <span>Bereich</span>
+          <select [formField]="workplaceForm.areaId">
+            @for (area of areas(); track area.id) {
+              <option [value]="area.id">{{ area.name }}</option>
+            }
+          </select>
+        </label>
+      </div>
+
+      @if (editing(); as workplace) {
+        <p class="field">
+          <span>Kennung</span>
+          <code class="fixed">{{ workplace.id }}</code>
+          <span class="note">
+            Steht in Adressen und in der Übersichtskarte und lässt sich darum nicht mehr ändern.
+          </span>
+        </p>
+      } @else {
+        <label class="field">
+          <span>Kennung</span>
+          <input
+            type="text"
+            class="mono"
+            [formField]="workplaceForm.id"
+            spellcheck="false"
+            autocomplete="off"
+            (input)="onIdInput()"
+          />
+          @if (idLooksWrong()) {
+            <span class="warn">
+              Nur Kleinbuchstaben, Ziffern und Bindestriche — die Kennung steht in Adressen und in
+              der Übersichtskarte.
+            </span>
+          } @else {
+            <span class="note">
+              Wird aus dem Namen vorgeschlagen und lässt sich später nicht mehr ändern.
+            </span>
+          }
+        </label>
+      }
+
+      <div class="row">
+        <label class="field">
+          <span>Zustand</span>
+          <select [formField]="workplaceForm.status">
+            <option value="OK">in Betrieb</option>
+            <option value="DEFECT">defekt</option>
+            <option value="DISABLED">deaktiviert</option>
+          </select>
+          <span class="note">Deaktivierte Plätze sieht nur die Verwaltung.</span>
+        </label>
+
+        <label class="field">
+          <span>Ort</span>
+          <input type="text" [formField]="workplaceForm.location" autocomplete="off" />
+        </label>
+
+        <label class="field">
+          <span>Reihenfolge</span>
+          <input type="number" step="10" [formField]="workplaceForm.sortOrder" />
+        </label>
+      </div>
+
+      <label class="field">
+        <span>Wiki-Link</span>
+        <input type="url" [formField]="workplaceForm.wikiUrl" placeholder="https://…" />
+      </label>
+    </section>
+
+    <section class="panel">
+      <h2>Foto</h2>
+
+      <div class="photo">
+        <div class="preview">
+          @if (photoPreview(); as url) {
+            <img [src]="url" alt="Vorschau des Fotos" />
+          } @else {
+            <span class="no-photo">kein Foto</span>
+          }
+        </div>
+
+        <div class="photo-actions">
+          <label class="button">
+            Bild wählen
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              (change)="onFilePicked($event)"
+            />
+          </label>
+
+          @if (pickedFile(); as file) {
+            <p class="note">
+              {{ file.name }} — wird beim Speichern hochgeladen.
+              <button type="button" class="link" (click)="clearPick()">verwerfen</button>
+            </p>
+          } @else if (editing()?.photoUrl) {
+            <button type="button" class="danger" (click)="removePhoto()">Foto entfernen</button>
+          } @else {
+            <p class="note">JPEG, PNG oder WebP, höchstens 5 MB.</p>
+          }
+
+          @if (photoError(); as message) {
+            <p class="warn" role="alert">{{ message }}</p>
+          }
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <label class="field">
+        <span>Beschreibung</span>
+        <textarea [formField]="workplaceForm.description"></textarea>
+        <span class="note">Markdown, ohne HTML.</span>
+      </label>
+
+      <label class="field">
+        <span>Nutzungsregeln</span>
+        <textarea [formField]="workplaceForm.usageRules"></textarea>
+        <span class="note">
+          Sind hier Regeln hinterlegt, muss beim Buchen bestätigt werden, dass man sie gelesen hat.
+        </span>
+      </label>
+    </section>
+
+    <section class="panel">
+      <label class="field checkbox">
+        <input type="checkbox" [formField]="workplaceForm.useAreaDuration" />
+        <span>Maximale Buchungsdauer wie im Bereich</span>
+      </label>
+
+      @if (!workplaceForm.useAreaDuration().value()) {
+        <label class="field">
+          <span>Maximale Buchungsdauer (Minuten)</span>
+          <input type="number" step="15" [formField]="workplaceForm.maxBookingDurationMinutes" />
+          @if (durationLabel(); as label) {
+            <span class="note">{{ label }}</span>
+          }
+        </label>
+      }
+    </section>
+
+    <section class="panel">
+      <h2>Tags und Blockierungen</h2>
+
+      <label class="field">
+        <span>Tags</span>
+        <input type="text" [formField]="workplaceForm.tags" placeholder="laut, staubig" />
+        <span class="note">Durch Komma getrennt, ohne „#“.</span>
+      </label>
+
+      <label class="field">
+        <span>Blockiert alles mit diesen Tags</span>
+        <input
+          type="text"
+          [formField]="workplaceForm.blocksWorkplacesWithTag"
+          placeholder="leise"
+        />
+      </label>
+
+      <div class="field">
+        <span>Blockiert diese Arbeitsplätze</span>
+
+        <div class="blocks">
+          @for (group of blockChoices(); track group.area.id) {
+            <fieldset>
+              <legend>{{ group.area.name }}</legend>
+
+              @for (workplace of group.workplaces; track workplace.id) {
+                <label class="block-choice">
+                  <input
+                    type="checkbox"
+                    [checked]="blocks(workplace.id)"
+                    (change)="toggleBlock(workplace.id, $any($event.target).checked)"
+                  />
+                  <span>{{ workplace.name }}</span>
+                </label>
+              }
+            </fieldset>
+          }
+        </div>
+
+        <span class="note">
+          Wirkt nur auf neue Buchungen: bestehende halten fest, was beim Anlegen galt.
+        </span>
+      </div>
+    </section>
+
+    @if (saveError(); as message) {
+      <p class="error" role="alert">{{ message }}</p>
+    }
+
+    <div class="actions">
+      <button type="submit" class="primary" [disabled]="!canSubmit()">
+        {{ saving() ? 'Wird gespeichert …' : 'Speichern' }}
+      </button>
+      <button type="button" (click)="cancel()">Abbrechen</button>
+    </div>
+  </form>
+}

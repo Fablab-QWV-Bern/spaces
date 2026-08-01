@@ -1,0 +1,101 @@
+<app-admin-header heading="Arbeitsplätze" />
+
+@if (loading()) {
+  <p class="hint">Wird geladen …</p>
+} @else if (!session.canManageWorkplaces()) {
+  <div class="notice">
+    <p>
+      Zum Verwalten der Arbeitsplätze braucht es eine Rolle mit dem Recht dazu. Aktuell bist du
+      @if (session.isAnonymous()) {
+        nicht angemeldet.
+      } @else {
+        als <strong>{{ session.roleName() }}</strong> angemeldet, diese Rolle darf das nicht.
+      }
+    </p>
+  </div>
+} @else {
+  @if (error(); as message) {
+    <p class="error" role="alert">{{ message }}</p>
+  }
+
+  <div class="content">
+    <div class="actions">
+      <a class="button primary" routerLink="/verwaltung/arbeitsplaetze/neu">Neuer Arbeitsplatz</a>
+    </div>
+
+    @if (empty()) {
+      <p class="hint">Noch keine Arbeitsplätze angelegt.</p>
+    }
+
+    @for (group of groups(); track group.area.id) {
+      <section class="group">
+        <h2>
+          <span class="swatch" [style.background]="group.area.color"></span>
+          {{ group.area.name }}
+        </h2>
+
+        <ul class="places">
+          @for (workplace of group.workplaces; track workplace.id) {
+            <li class="place" [class.inactive]="workplace.status === 'DISABLED'">
+              <div class="thumb">
+                @if (workplace.photoThumbnailUrl; as url) {
+                  <img [src]="url" [alt]="'Foto von ' + workplace.name" loading="lazy" />
+                } @else {
+                  <span class="no-photo" aria-hidden="true">📷</span>
+                }
+              </div>
+
+              <div class="about">
+                <div class="title">
+                  <strong>{{ workplace.name }}</strong>
+                  <code>{{ workplace.id }}</code>
+                  <span class="status" [class]="workplace.status">{{
+                    statusLabel(workplace)
+                  }}</span>
+                </div>
+
+                @if (workplace.location) {
+                  <p class="line">{{ workplace.location }}</p>
+                }
+
+                @if (workplace.tags.length) {
+                  <p class="line tags">
+                    @for (tag of workplace.tags; track tag) {
+                      <span class="tag">#{{ tag }}</span>
+                    }
+                  </p>
+                }
+
+                @if (
+                  workplace.blocksWorkplaceIds.length || workplace.blocksWorkplacesWithTag.length
+                ) {
+                  <p class="line muted">
+                    Blockiert
+                    @if (workplace.blocksWorkplaceIds.length) {
+                      {{ workplace.blocksWorkplaceIds.join(', ') }}
+                    }
+                    @if (workplace.blocksWorkplacesWithTag.length) {
+                      <span
+                        >alles mit
+                        @for (tag of workplace.blocksWorkplacesWithTag; track tag) {
+                          <span class="tag">#{{ tag }}</span>
+                        }
+                      </span>
+                    }
+                  </p>
+                }
+              </div>
+
+              <div class="row-actions">
+                <a class="button" [routerLink]="['/verwaltung/arbeitsplaetze', workplace.id]"
+                  >Bearbeiten</a
+                >
+                <button type="button" class="danger" (click)="remove(workplace)">Löschen</button>
+              </div>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  </div>
+}

@@ -72,6 +72,16 @@ Englisch. Kommentare erklären das *Warum*, nicht das *Was*.
   der implizite Anker aus `popovertarget` greift in Chrome nicht, darum das
   ausdrückliche `anchor-name: --block`. Kein Nachbau mit eigenen Zeigerhandlern —
   das war einmal da und ist bewusst verschwunden.
+- **Die Verwaltung hat keinen Route-Guard.** `frontend/src/app/admin/` lädt die
+  Sitzung und zeigt einen Hinweis, wenn die Rolle nicht darf. Ein Guard könnte nur
+  wiederholen, was das Backend ohnehin durchsetzt — und müsste raten, solange die
+  Sitzung noch lädt.
+- **Foto-URLs sind relativ** (`/storage/…`). API, Ablage und SPA liegen auf
+  demselben Host; eine absolute URL käme aus `APP_URL`, und ein falsch gesetztes
+  `APP_URL` auf dem Hosting würde jedes Foto auf einmal unerreichbar machen.
+- **Bilder rechnet GD**, nicht eine Bibliothek aus Composer: das Hosting bringt GD
+  mit, und `vendor/` reist per FTP mit. Vorschaubild und verkleinertes Original
+  entstehen beide aus der Originaldatei — zweimal skalieren kostet Schärfe.
 
 ## Umgebung
 
@@ -89,7 +99,13 @@ das Hosting nicht mehr kann. Lokal läuft eine neuere Version — nie entfernen.
 ```bash
 docker compose up -d                          # MariaDB
 cd backend && php artisan serve               # API auf :8000
-cd frontend && npx ng serve                   # SPA auf :4200, proxyt /api
+cd frontend && npx ng serve                   # SPA auf :4200, proxyt /api und /storage
+```
+
+Einmalig, damit hochgeladene Fotos ausgeliefert werden:
+
+```bash
+cd backend && php artisan storage:link
 ```
 
 ```bash
@@ -117,6 +133,10 @@ Ausführungszeit, keine dauerhaft laufenden Prozesse. Deployment über FTP mit
 mitgeliefertem `vendor/`, Migrationen über einen Cron- bzw. Web-Trigger. Alles
 Periodische läuft über Cron, nicht über Queue-Worker.
 
+Fotos liegen unter `storage/app/public` und werden über den Symlink
+`public/storage` ausgeliefert. Den legt sonst `php artisan storage:link` an — ohne
+SSH braucht es dafür denselben Trigger wie für die Migrationen. Ungetestet.
+
 ## Arbeitsweise
 
 - Formatierer (`pint`, `prettier`) einmal am Schluss laufen lassen, nicht nach
@@ -131,7 +151,8 @@ Periodische läuft über Cron, nicht über Queue-Worker.
 
 ## Offen
 
-- Deploy-Test auf hosttech (grösstes ungetestetes Risiko)
-- Monatsansicht, Übersichtskarte, Admin-Ansichten
-- Ansichten zum Bearbeiten von Bereichen / Arbeitsplätzen (letzteres mit image-upload)
+- Deploy-Test auf hosttech (grösstes ungetestetes Risiko), inklusive
+  `public/storage`-Symlink
+- Monatsansicht, Übersichtskarte
+- Rollen- und Konfigurationsverwaltung
 - Serienbuchungen, iCal-Abo (Modellreferenz steht aus)

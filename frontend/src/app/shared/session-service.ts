@@ -14,6 +14,12 @@ export class SessionService {
   readonly session = signal<Session | null>(null);
 
   readonly canManageBookings = computed(() => this.session()?.permissions.manageBookings ?? false);
+  readonly canManageAreas = computed(() => this.session()?.permissions.manageAreas ?? false);
+  readonly canManageWorkplaces = computed(
+    () => this.session()?.permissions.manageWorkplaces ?? false,
+  );
+  /** Ob überhaupt eine Verwaltungsansicht offensteht. */
+  readonly canManageAnything = computed(() => this.canManageAreas() || this.canManageWorkplaces());
   readonly seesDetails = computed(() => this.session()?.permissions.viewBookingsDetails ?? false);
   readonly isAnonymous = computed(() => this.session()?.isAnonymous ?? true);
   readonly roleName = computed(() => this.session()?.roleName ?? '');

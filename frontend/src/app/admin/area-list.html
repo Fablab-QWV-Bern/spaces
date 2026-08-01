@@ -1,0 +1,78 @@
+<app-admin-header heading="Bereiche" />
+
+@if (loading()) {
+  <p class="hint">Wird geladen …</p>
+} @else if (!session.canManageAreas()) {
+  <div class="notice">
+    <p>
+      Zum Verwalten der Bereiche braucht es eine Rolle mit dem Recht dazu. Aktuell bist du
+      @if (session.isAnonymous()) {
+        nicht angemeldet.
+      } @else {
+        als <strong>{{ session.roleName() }}</strong> angemeldet, diese Rolle darf das nicht.
+      }
+    </p>
+  </div>
+} @else {
+  @if (error(); as message) {
+    <p class="error" role="alert">{{ message }}</p>
+  }
+
+  <div class="content">
+    <div class="actions">
+      <a class="button primary" routerLink="/verwaltung/bereiche/neu">Neuer Bereich</a>
+    </div>
+
+    @if (empty()) {
+      <p class="hint">Noch keine Bereiche angelegt.</p>
+    } @else {
+      <table>
+        <thead>
+          <tr>
+            <th class="swatch-head"><span class="sr-only">Farbe</span></th>
+            <th>Name</th>
+            <th class="numeric">Arbeitsplätze</th>
+            <th>Maximale Dauer</th>
+            <th>Vorlauf</th>
+            <th>Über Nacht</th>
+            <th class="numeric">Reihenfolge</th>
+            <th><span class="sr-only">Aktionen</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (area of areas(); track area.id) {
+            <tr>
+              <td><span class="swatch" [style.background]="area.color"></span></td>
+              <td class="name">{{ area.name }}</td>
+              <td class="numeric">{{ count(area) }}</td>
+              <td>{{ formatDuration(area.maxBookingDurationMinutes) }}</td>
+              <td>
+                @if (area.maxBookingEndOffsetDays === null) {
+                  <span class="muted">global</span>
+                } @else {
+                  {{ area.maxBookingEndOffsetDays }} Tage
+                }
+              </td>
+              <td>{{ area.allowNightlyActivities ? 'ja' : 'nein' }}</td>
+              <td class="numeric">{{ area.sortOrder }}</td>
+              <td class="row-actions">
+                <a class="button" [routerLink]="['/verwaltung/bereiche', area.id]">Bearbeiten</a>
+                <button
+                  type="button"
+                  class="danger"
+                  [disabled]="count(area) > 0"
+                  [title]="
+                    count(area) > 0 ? 'Es hängen noch Arbeitsplätze daran.' : 'Bereich löschen'
+                  "
+                  (click)="remove(area)"
+                >
+                  Löschen
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+}
