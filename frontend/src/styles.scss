@@ -6,6 +6,14 @@
   box-sizing: border-box;
 }
 
+// Die einzige Stellschraube für die Grösse der Oberfläche. Weil Schrift,
+// Abstände und Mindestbreiten durchweg in `rem` stehen, skaliert eine Änderung
+// hier alles gemeinsam — Prozent statt Pixel, damit eine im Browser
+// eingestellte Grundschrift erhalten bleibt.
+html {
+  font-size: 115%;
+}
+
 html,
 body {
   margin: 0;

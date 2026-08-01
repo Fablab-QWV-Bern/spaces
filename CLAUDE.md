@@ -143,8 +143,6 @@ SSH braucht es dafür denselben Trigger wie für die Migrationen. Ungetestet.
   jeder Änderung — jeder Lauf löst sonst grosse Datei-Meldungen aus.
 - Browser-Verifikation nur, wo sie etwas findet: bei Logik und Geometrie ja, bei
   reinen CSS-Anpassungen nachfragen statt Screenshots zu schiessen.
-- Zusammenfassungen kurz halten: was gemacht wurde, was überrascht hat, was offen
-  bleibt. Keine Wiederholung des Diffs.
 - Bei einem neuen, in sich geschlossenen Auftrag lohnt sich eine frische Sitzung
   mehr als das Fortführen dieser — der Verlauf wird sonst bei jedem Turn
   mitgeschickt.
