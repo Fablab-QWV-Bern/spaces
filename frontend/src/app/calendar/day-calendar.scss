@@ -119,6 +119,11 @@
 }
 
 .track {
+  // Ein Raster mit einer Spalte je Viertelstunde. Die Blöcke werden über
+  // benannte Linien platziert (grid-column: t0900 / t1300) — das Einrasten auf
+  // die Viertelstunde ist damit strukturell und nicht gerechnet.
+  display: grid;
+  grid-auto-rows: 1fr;
   position: relative;
   height: var(--row-height);
 
@@ -153,14 +158,11 @@
   }
 
   .hour {
-    position: absolute;
-    top: 50%;
-    translate: 0 -50%;
+    grid-row: 1;
     padding-left: 0.25rem;
     font-size: 0.75rem;
     color: #64748b;
     border-left: 1px solid var(--border);
-    height: 100%;
     display: flex;
     align-items: center;
   }
@@ -191,9 +193,11 @@
 }
 
 .block {
-  position: absolute;
-  top: 3px;
-  bottom: 3px;
+  // Alle Blöcke teilen sich dieselbe Rasterzeile und überlagern sich damit;
+  // die Reihenfolge macht z-index.
+  grid-row: 1;
+  margin: 3px 0;
+  min-width: 0;
   cursor: default;
   display: flex;
   align-items: center;

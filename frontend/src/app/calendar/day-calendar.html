@@ -30,9 +30,9 @@
       <!-- Kopfzeile: Stundenbeschriftung -->
       <div class="row header">
         <div class="label">Arbeitsplatz</div>
-        <div class="track">
+        <div class="track" [style.gridTemplateColumns]="gridTemplate()">
           @for (hour of axis.hours; track hour) {
-            <span class="hour" [style.left.%]="hourLeftPercent(hour)"> {{ hour }}:00 </span>
+            <span class="hour" [style.gridColumn]="hourColumn(hour)">{{ hour }}:00</span>
           }
         </div>
       </div>
@@ -40,7 +40,7 @@
       @for (group of store.rows(); track group.area.id) {
         <div class="row group">
           <div class="label">{{ group.area.name }}</div>
-          <div class="track"></div>
+          <div class="track" [style.gridTemplateColumns]="gridTemplate()"></div>
         </div>
 
         @for (workplace of group.workplaces; track workplace.id) {
@@ -66,6 +66,7 @@
 
             <div
               class="track"
+              [style.gridTemplateColumns]="gridTemplate()"
               [class.clickable]="isBookable(workplace)"
               (click)="onTrackClick(workplace, $event)"
             >
@@ -74,8 +75,7 @@
                   class="block blockage"
                   tabindex="0"
                   [attr.aria-label]="block.title"
-                  [style.left.%]="block.leftPercent"
-                  [style.width.%]="block.widthPercent"
+                  [style.gridColumn]="block.gridColumn"
                   [class.clipped-start]="block.clippedStart"
                   [class.clipped-end]="block.clippedEnd"
                   (mouseenter)="showCard(block, workplace, $event)"
@@ -91,8 +91,7 @@
                   class="block booking"
                   tabindex="0"
                   [attr.aria-label]="block.title"
-                  [style.left.%]="block.leftPercent"
-                  [style.width.%]="block.widthPercent"
+                  [style.gridColumn]="block.gridColumn"
                   [style.background]="areaColor(workplace.areaId)"
                   [class.clipped-start]="block.clippedStart"
                   [class.clipped-end]="block.clippedEnd"

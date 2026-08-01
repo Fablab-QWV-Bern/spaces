@@ -6,21 +6,25 @@ import { SessionBar } from '../shared/session-bar';
 import { Booking, Workplace } from '../api/models';
 import { CalendarStore } from './calendar-store';
 import {
+  GRID_MINUTES,
   TimeAxis,
-  blockGeometry,
   buildTimeAxis,
   formatTime,
+  gridColumn,
+  gridTemplateColumns,
   instantAt,
+  lineName,
   minutesOfDay,
   slotAtOffset,
+  visibleRange,
 } from './time-axis';
 
 interface Block {
   booking: Booking;
   label: string;
   title: string;
-  leftPercent: number;
-  widthPercent: number;
+  /** Platzierung im Spaltenraster, z.B. "t0900 / t1300". */
+  gridColumn: string;
   clippedStart: boolean;
   clippedEnd: boolean;
   isSeries: boolean;
@@ -119,9 +123,9 @@ export class DayCalendar {
       .map((booking) => {
         const start = new Date(booking.startTime);
         const end = new Date(booking.endTime);
-        const geometry = blockGeometry(axis, start, end, day);
+        const range = visibleRange(axis, start, end, day);
 
-        if (!geometry) {
+        if (!range) {
           return null;
         }
 
@@ -132,29 +136,40 @@ export class DayCalendar {
           booking,
           label: blockage ? '' : who,
           title: blockage ? `Blockiert durch ${who}, ${time}` : `${who}, ${time}`,
+          gridColumn: gridColumn(range),
+          clippedStart: range.clippedStart,
+          clippedEnd: range.clippedEnd,
           isSeries: booking.bookingSeriesId !== null,
           isBlockage: blockage,
-          ...geometry,
         } satisfies Block;
       })
       .filter((block): block is Block => block !== null);
   }
 
-  protected hourLeftPercent(hour: number): number {
+  /** Das Spaltenraster, aus den konfigurierten Öffnungszeiten erzeugt. */
+  protected readonly gridTemplate = computed(() => {
     const axis = this.axis();
 
-    if (!axis) {
-      return 0;
-    }
+    return axis ? gridTemplateColumns(axis) : '';
+  });
 
-    return ((hour * 60 - axis.opensAt) / (axis.closesAt - axis.opensAt)) * 100;
-  }
-
+  /** Breite einer Viertelstunde — nur noch für die Rasterlinien im Hintergrund. */
   protected readonly quarterHourPercent = computed(() => {
     const axis = this.axis();
 
-    return axis ? (15 / (axis.closesAt - axis.opensAt)) * 100 : 0;
+    return axis ? (GRID_MINUTES / (axis.closesAt - axis.opensAt)) * 100 : 0;
   });
+
+  /** Eine Stundenbeschriftung spannt über ihre vier Viertelstunden. */
+  protected hourColumn(hour: number): string {
+    const axis = this.axis();
+
+    if (!axis) {
+      return 'auto';
+    }
+
+    return `${lineName(hour * 60)} / ${lineName(Math.min(hour * 60 + 60, axis.closesAt))}`;
+  }
 
   protected statusLabel(workplace: Workplace): string | null {
     return { DEFECT: 'defekt', DISABLED: 'deaktiviert', OK: null }[workplace.status];

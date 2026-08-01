@@ -5,9 +5,13 @@ import {
   blockGeometry,
   buildTimeAxis,
   formatDuration,
+  gridColumn,
+  gridTemplateColumns,
   instantAt,
+  lineName,
   minutesOfDay,
   slotAtOffset,
+  visibleRange,
 } from './time-axis';
 
 const axis = buildTimeAxis('08:00', '21:00');
@@ -138,5 +142,46 @@ describe('formatDuration', () => {
     expect(formatDuration(480)).toBe('8 Stunden');
     expect(formatDuration(1440)).toBe('1 Tag');
     expect(formatDuration(2880)).toBe('2 Tage');
+  });
+});
+
+describe('gridTemplateColumns', () => {
+  it('legt eine Spalte je Viertelstunde an, mit benannten Linien', () => {
+    const template = gridTemplateColumns(axis);
+
+    expect(template.startsWith('[t0800] 1fr [t0815] 1fr')).toBe(true);
+    expect(template.endsWith('[t2045] 1fr [t2100]')).toBe(true);
+    // 13 Stunden zu vier Viertelstunden.
+    expect(template.match(/1fr/g)).toHaveLength(52);
+  });
+});
+
+describe('lineName', () => {
+  it('fuellt Stunden und Minuten auf zwei Stellen', () => {
+    expect(lineName(minutesOfDay('08:00'))).toBe('t0800');
+    expect(lineName(minutesOfDay('09:15'))).toBe('t0915');
+    expect(lineName(minutesOfDay('21:00'))).toBe('t2100');
+  });
+});
+
+describe('gridColumn', () => {
+  it('spannt zwischen den Linien der beiden Kanten', () => {
+    const range = visibleRange(axis, at('09:00'), at('13:00'), day)!;
+
+    expect(gridColumn(range)).toBe('t0900 / t1300');
+  });
+
+  it('klemmt eine Buchung vom Vortag auf den Fensterrand', () => {
+    const range = visibleRange(axis, at('20:00', '2026-08-02'), at('09:00'), day)!;
+
+    expect(gridColumn(range)).toBe('t0800 / t0900');
+    expect(range.clippedStart).toBe(true);
+  });
+
+  it('klemmt eine Buchung in die Nacht auf den Fensterrand', () => {
+    const range = visibleRange(axis, at('20:00'), at('09:00', '2026-08-04'), day)!;
+
+    expect(gridColumn(range)).toBe('t2000 / t2100');
+    expect(range.clippedEnd).toBe(true);
   });
 });

@@ -32,6 +32,44 @@ export function minutesOfDay(time: string): number {
   return hours * 60 + minutes;
 }
 
+/**
+ * Der auf das dargestellte Fenster beschnittene Zeitraum eines Blocks, in
+ * Minuten seit Mitternacht. Grundlage für beide Darstellungsarten: das
+ * Spaltenraster der Tagesansicht und die prozentualen Balken der komprimierten
+ * Ansichten.
+ */
+export interface VisibleRange {
+  startMinutes: number;
+  endMinutes: number;
+  /** Der Block beginnt vor dem dargestellten Fenster. */
+  clippedStart: boolean;
+  clippedEnd: boolean;
+}
+
+export function visibleRange(
+  axis: TimeAxis,
+  startsAt: Date,
+  endsAt: Date,
+  day: Date,
+): VisibleRange | null {
+  const start = minutesSinceMidnight(startsAt, day);
+  const end = minutesSinceMidnight(endsAt, day);
+
+  const startMinutes = Math.max(start, axis.opensAt);
+  const endMinutes = Math.min(end, axis.closesAt);
+
+  if (endMinutes <= startMinutes) {
+    return null;
+  }
+
+  return {
+    startMinutes,
+    endMinutes,
+    clippedStart: start < axis.opensAt,
+    clippedEnd: end > axis.closesAt,
+  };
+}
+
 /** Die Position eines Blocks auf der Achse, in Prozent der Gesamtbreite. */
 export interface BlockGeometry {
   leftPercent: number;
@@ -47,23 +85,59 @@ export function blockGeometry(
   endsAt: Date,
   day: Date,
 ): BlockGeometry | null {
-  const span = axis.closesAt - axis.opensAt;
-  const start = minutesSinceMidnight(startsAt, day);
-  const end = minutesSinceMidnight(endsAt, day);
+  const range = visibleRange(axis, startsAt, endsAt, day);
 
-  const visibleStart = Math.max(start, axis.opensAt);
-  const visibleEnd = Math.min(end, axis.closesAt);
-
-  if (visibleEnd <= visibleStart) {
+  if (!range) {
     return null;
   }
 
+  const span = axis.closesAt - axis.opensAt;
+
   return {
-    leftPercent: ((visibleStart - axis.opensAt) / span) * 100,
-    widthPercent: ((visibleEnd - visibleStart) / span) * 100,
-    clippedStart: start < axis.opensAt,
-    clippedEnd: end > axis.closesAt,
+    leftPercent: ((range.startMinutes - axis.opensAt) / span) * 100,
+    widthPercent: ((range.endMinutes - range.startMinutes) / span) * 100,
+    clippedStart: range.clippedStart,
+    clippedEnd: range.clippedEnd,
   };
+}
+
+/**
+ * Der Name einer Rasterlinie zu einem Zeitpunkt, z.B. "t0915".
+ *
+ * Benannte Linien machen die Platzierung im Stylesheet und in den Dev-Tools
+ * lesbar: `grid-column: t0900 / t1300` statt zweier Prozentwerte.
+ */
+export function lineName(minutesSinceMidnight: number): string {
+  const hours = Math.floor(minutesSinceMidnight / 60);
+  const minutes = minutesSinceMidnight % 60;
+
+  return `t${String(hours).padStart(2, '0')}${String(minutes).padStart(2, '0')}`;
+}
+
+/**
+ * Das Spaltenraster der Tagesansicht: eine Spalte je Viertelstunde, dazwischen
+ * benannte Linien. Muss zur Laufzeit entstehen, weil die Öffnungszeiten
+ * konfigurierbar sind.
+ */
+export function gridTemplateColumns(axis: TimeAxis): string {
+  const parts: string[] = [];
+
+  for (let minutes = axis.opensAt; minutes < axis.closesAt; minutes += GRID_MINUTES) {
+    parts.push(`[${lineName(minutes)}] 1fr`);
+  }
+
+  parts.push(`[${lineName(axis.closesAt)}]`);
+
+  return parts.join(' ');
+}
+
+/**
+ * Die Platzierung eines Blocks im Spaltenraster. Weil beide Kanten auf dem
+ * 15-Minuten-Raster liegen müssen, ist das Einrasten hier strukturell statt
+ * gerechnet — eine Buchung kann gar nicht daneben landen.
+ */
+export function gridColumn(range: VisibleRange): string {
+  return `${lineName(range.startMinutes)} / ${lineName(range.endMinutes)}`;
 }
 
 /**
