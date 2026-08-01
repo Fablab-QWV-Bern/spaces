@@ -5,12 +5,14 @@ import { Workplace } from '../api/models';
 import { Block, blocksFor } from './blocks';
 import { CalendarStore, isoDate } from './calendar-store';
 import { CalendarToolbar } from './calendar-toolbar';
+import { syncDateWithUrl } from './date-in-url';
 import { DayTrack } from './day-track';
 import { gridTemplateColumns, instantAt, lineName, percentOfAxis } from './time-axis';
+import { WorkplaceLabel } from './workplace-label';
 
 @Component({
   selector: 'app-day-calendar',
-  imports: [CalendarToolbar, DayTrack],
+  imports: [CalendarToolbar, DayTrack, WorkplaceLabel],
   templateUrl: './day-calendar.html',
   styleUrl: './day-calendar.scss',
 })
@@ -21,6 +23,8 @@ export class DayCalendar {
   protected readonly now = signal(new Date());
 
   constructor() {
+    this.store.span.set('day');
+    syncDateWithUrl();
     this.store.load();
 
     // Die Jetzt-Linie bewegt sich viertelstündlich weiter; häufiger wäre für ein
@@ -106,10 +110,6 @@ export class DayCalendar {
     }
 
     return `${lineName(hour * 60)} / ${lineName(Math.min(hour * 60 + 60, axis.closesAt))}`;
-  }
-
-  protected statusLabel(workplace: Workplace): string | null {
-    return { DEFECT: 'defekt', DISABLED: 'deaktiviert', OK: null }[workplace.status];
   }
 
   /** Nur wo tatsächlich gebucht werden kann, ist die Fläche anklickbar. */

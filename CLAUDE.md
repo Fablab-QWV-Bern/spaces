@@ -45,11 +45,23 @@ Englisch. Kommentare erklären das *Warum*, nicht das *Was*.
 - **Zeiten sind UTC** — mit einer Ausnahme: `booking_series` speichert lokale
   Wanduhrzeit, damit eine Serie über die Zeitumstellung hinweg zur selben Uhrzeit
   stattfindet. Diese Spalten sind bewusst ungecastet.
-- **Zwei Platzierungsarten im Kalender.** Die Tagesansicht setzt Blöcke über
-  benannte Rasterlinien (`grid-column: t0900 / t1300`), die komprimierten Ansichten
-  und die Formularvorschau über Prozentwerte. Beide bauen auf `visibleRange()` in
+- **Zwei Platzierungsarten im Kalender.** Blöcke sitzen auf benannten Rasterlinien
+  (`grid-column: t0900 / t1300`), die Formularvorschau und die Jetzt-Linie auf
+  Prozentwerten. Beide bauen auf `visibleRange()` in
   `frontend/src/app/calendar/time-axis.ts` auf — die Beschneidungslogik existiert
   nur einmal.
+- **Eine Zelle für alle Zoomstufen.** `DayTrack` ist ein Zeitstrahl über die
+  Öffnungszeiten *eines* Tages. Die Tagesansicht hat eine davon je Zeile, die
+  Wochenansicht sieben. Weil jede Zelle ihr eigenes Raster mitbringt, meint
+  `t0900` überall dasselbe; die Linien brauchen keine Tagesangabe. Was sich
+  zwischen den Stufen unterscheidet, ist nur die Dichte — sie wird über
+  CSS-Variablen gesetzt (`--columns`, `--bar-padding`, `--quarter-line`), nicht
+  über Fallunterscheidungen im Code.
+- **Jede Zoomstufe ist eine eigene Route** (`/tag`, `/woche`), damit eine Ansicht
+  verlinkbar ist und der Zurück-Knopf zur vorigen Stufe führt. Das Datum reist als
+  `?datum=` mit; `date-in-url.ts` hält es in beide Richtungen synchron.
+- **In der Woche wird nicht gebucht.** Eine Viertelstunde wäre dort keine zwei
+  Pixel breit. Ein Klick auf freie Fläche öffnet stattdessen den Tag.
 - **Die Detailkarte klappt die Plattform auf, nicht wir.** Der Balken ist ein
   `<button popovertarget>`, die Karte das benannte Popover — Umschalten, Escape,
   Klick daneben und Tastatur kommen vom Browser. Daraus folgen zwei Dinge, die
@@ -120,6 +132,6 @@ Periodische läuft über Cron, nicht über Queue-Worker.
 ## Offen
 
 - Deploy-Test auf hosttech (grösstes ungetestetes Risiko)
-- Wochen- und Monatsansicht, Übersichtskarte, Admin-Ansichten
+- Monatsansicht, Übersichtskarte, Admin-Ansichten
 - Ansichten zum Bearbeiten von Bereichen / Arbeitsplätzen (letzteres mit image-upload)
 - Serienbuchungen, iCal-Abo (Modellreferenz steht aus)

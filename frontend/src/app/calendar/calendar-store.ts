@@ -11,6 +11,9 @@ import { TimeAxis, buildTimeAxis } from './time-axis';
 /** Ein Tag, wie ihn der Kalender braucht: lokales Datum ohne Zeitanteil. */
 export type IsoDate = string;
 
+/** Die Zoomstufe des Kalenders. Sie bestimmt, welche Tage geladen werden. */
+export type Span = 'day' | 'week';
+
 @Injectable({ providedIn: 'root' })
 export class CalendarStore {
   private readonly http = inject(HttpClient);
@@ -18,8 +21,14 @@ export class CalendarStore {
   private readonly sessionService = inject(SessionService);
 
   readonly date = signal<IsoDate>(todayIso());
+  readonly span = signal<Span>('day');
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
+
+  /** Die dargestellten Tage — einer im Tag, sieben in der Woche. */
+  readonly days = computed<IsoDate[]>(() =>
+    this.span() === 'week' ? weekOf(this.date()) : [this.date()],
+  );
 
   readonly config = signal<Config | null>(null);
   readonly areas = signal<Area[]>([]);
@@ -93,16 +102,18 @@ export class CalendarStore {
     return map;
   });
 
-  /** Lädt Stammdaten und Buchungen für den gewählten Tag. */
+  /** Lädt Stammdaten und Buchungen für den dargestellten Zeitraum. */
   load(): void {
     this.loading.set(true);
     this.error.set(null);
 
-    const date = this.date();
-    // Grosszügiges Fenster: eine über Nacht laufende Buchung des Vortags ragt in
-    // diesen Tag hinein und muss mitkommen.
-    const from = new Date(`${date}T00:00:00`);
-    const to = new Date(from.getTime() + 24 * 60 * 60 * 1000);
+    const days = this.days();
+    // Die API liefert jede Buchung, die das Fenster *überlappt*. Eine über Nacht
+    // laufende Buchung des Vortags kommt darum mit, ohne dass der Rand hier
+    // vorsorglich vergrössert werden müsste.
+    const from = new Date(`${days[0]}T00:00:00`);
+    const to = new Date(`${days.at(-1)}T00:00:00`);
+    to.setDate(to.getDate() + 1);
 
     forkJoin({
       config: getConfig(this.http, this.rootUrl).pipe(map((r) => r.body)),
@@ -141,12 +152,35 @@ export class CalendarStore {
     this.load();
   }
 
+  /** Ein Blätterschritt in der Einheit der Zoomstufe: ein Tag bzw. eine Woche. */
+  shift(steps: number): void {
+    this.shiftDays(steps * (this.span() === 'week' ? 7 : 1));
+  }
+
   shiftDays(days: number): void {
     const next = new Date(`${this.date()}T12:00:00`);
     next.setDate(next.getDate() + days);
     this.date.set(isoDate(next));
     this.load();
   }
+}
+
+/**
+ * Die sieben Tage der Woche, in der das Datum liegt — Montag zuerst.
+ *
+ * `getDay()` zählt ab Sonntag; die Verschiebung um sechs rückt den Sonntag ans
+ * Ende seiner Woche statt an den Anfang der nächsten.
+ */
+export function weekOf(date: IsoDate): IsoDate[] {
+  const monday = new Date(`${date}T12:00:00`);
+  monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
+
+  return Array.from({ length: 7 }, (_, index) => {
+    const day = new Date(monday);
+    day.setDate(day.getDate() + index);
+
+    return isoDate(day);
+  });
 }
 
 export function todayIso(): IsoDate {

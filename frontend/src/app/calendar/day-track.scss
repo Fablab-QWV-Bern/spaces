@@ -7,7 +7,10 @@
   position: relative;
   height: var(--row-height);
 
-  // Viertelstunden-Raster als Hintergrund, Stunden kräftiger.
+  // Viertelstunden-Raster als Hintergrund, Stunden kräftiger. Die dichten
+  // Zoomstufen schalten die Viertelstundenlinien über `--quarter-line` ab —
+  // dort lägen sie zwei Pixel auseinander und verschluckten jede Tönung der
+  // Zelle, statt etwas zu zeigen.
   background-image:
     repeating-linear-gradient(
       to right,
@@ -18,8 +21,8 @@
     ),
     repeating-linear-gradient(
       to right,
-      #f1f5f9 0,
-      #f1f5f9 1px,
+      var(--quarter-line, #f1f5f9) 0,
+      var(--quarter-line, #f1f5f9) 1px,
       transparent 1px,
       transparent var(--quarter)
     );

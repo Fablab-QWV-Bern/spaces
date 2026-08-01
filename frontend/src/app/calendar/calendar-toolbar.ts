@@ -1,16 +1,21 @@
 import { Component, computed, input, output } from '@angular/core';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 
 import { SessionBar } from '../shared/session-bar';
 
 /**
- * Kopfzeile des Kalenders: Zeitraum, Blättern, Datumswahl, Anmeldung.
+ * Kopfzeile des Kalenders: Zeitraum, Blättern, Datumswahl, Zoomstufe, Anmeldung.
  *
  * Was "ein Schritt" bedeutet, entscheidet die Ansicht — die Leiste meldet nur
  * Richtungen und beschriftet ihre Pfeile mit der Einheit, die sie bekommt.
+ *
+ * Der Umschalter der Zoomstufe sind Links und keine Schaltflächen: jede Stufe
+ * ist eine eigene Route, damit sie verlinkbar bleibt und der Zurück-Knopf tut,
+ * was man erwartet. Das Datum reist als Abfrageparameter mit.
  */
 @Component({
   selector: 'app-calendar-toolbar',
-  imports: [SessionBar],
+  imports: [RouterLink, RouterLinkActive, SessionBar],
   template: `
     <h1>{{ heading() }}</h1>
 
@@ -26,6 +31,25 @@ import { SessionBar } from '../shared/session-bar';
         (change)="dateSelected.emit($any($event.target).value)"
         aria-label="Datum wählen"
       />
+
+      <span class="spans">
+        <a
+          routerLink="/tag"
+          [queryParams]="{ datum: date() }"
+          routerLinkActive="active"
+          #tag="routerLinkActive"
+          [attr.aria-current]="tag.isActive ? 'page' : null"
+          >Tag</a
+        >
+        <a
+          routerLink="/woche"
+          [queryParams]="{ datum: date() }"
+          routerLinkActive="active"
+          #woche="routerLinkActive"
+          [attr.aria-current]="woche.isActive ? 'page' : null"
+          >Woche</a
+        >
+      </span>
 
       <app-session-bar />
     </nav>
@@ -67,6 +91,39 @@ import { SessionBar } from '../shared/session-bar';
 
       input {
         cursor: text;
+      }
+    }
+
+    .spans {
+      display: flex;
+      margin-left: 0.5rem;
+
+      a {
+        border: 1px solid #cbd5e1;
+        background: #fff;
+        padding: 0.35rem 0.7rem;
+        font-size: 0.9rem;
+        color: inherit;
+        text-decoration: none;
+
+        &:hover {
+          background: #f1f5f9;
+        }
+
+        &:first-child {
+          border-radius: 0.25rem 0 0 0.25rem;
+        }
+
+        &:last-child {
+          border-radius: 0 0.25rem 0.25rem 0;
+          margin-left: -1px;
+        }
+
+        &.active {
+          background: #475569;
+          border-color: #475569;
+          color: #fff;
+        }
       }
     }
   `,

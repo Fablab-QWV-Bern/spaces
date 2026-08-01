@@ -1,7 +1,7 @@
 <app-calendar-toolbar
   [heading]="heading()"
   [date]="store.date()"
-  unit="Tag"
+  unit="Woche"
   (shift)="store.shift($event)"
   (today)="store.goToToday()"
   (tomorrow)="store.goToTomorrow()"
@@ -17,14 +17,16 @@
 } @else if (store.axis(); as axis) {
   <div class="calendar">
     <div class="grid">
-      <!-- Kopfzeile: Stundenbeschriftung -->
+      <!-- Kopfzeile: die sieben Tage -->
       <div class="row header">
         <div class="label">Arbeitsplatz</div>
-        <div class="hours" [style.gridTemplateColumns]="gridTemplate()">
-          @for (hour of axis.hours; track hour) {
-            <span class="hour" [style.gridColumn]="hourColumn(hour)">{{ hour }}:00</span>
-          }
-        </div>
+
+        @for (day of days(); track day.date) {
+          <div class="day" [class.weekend]="day.isWeekend" [class.selected]="day.isSelected">
+            <span class="weekday">{{ day.weekday }}</span>
+            <span class="date">{{ day.label }}</span>
+          </div>
+        }
       </div>
 
       @for (group of store.rows(); track group.area.id) {
@@ -37,19 +39,25 @@
           <div class="row workplace">
             <app-workplace-label [workplace]="workplace" />
 
-            <app-day-track
-              [axis]="axis"
-              [blocks]="blocks(workplace)"
-              [clickable]="isBookable(workplace)"
-              (slotClick)="onSlotClick(workplace, $event)"
-            />
+            @for (day of days(); track day.date) {
+              <app-day-track
+                [class.weekend]="day.isWeekend"
+                [class.selected]="day.isSelected"
+                [axis]="axis"
+                [blocks]="blocks(workplace, day.date)"
+                [clickable]="isBookable(workplace)"
+                (slotClick)="openDay(day.date)"
+              />
+            }
           </div>
         }
       }
 
-      @if (nowPercent() !== null) {
+      @if (nowMark(); as mark) {
         <div class="now-layer">
-          <div class="now" [style.left.%]="nowPercent()"></div>
+          <div class="now-column" [style.gridColumn]="mark.column">
+            <div class="now" [style.left.%]="mark.percent"></div>
+          </div>
         </div>
       }
     </div>
