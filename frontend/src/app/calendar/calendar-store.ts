@@ -6,6 +6,7 @@ import { ApiConfiguration } from '../api/api-configuration';
 import { getConfig, listAreas, listBookings, listWorkplaces } from '../api/functions';
 import { Area, Booking, Config, Workplace } from '../api/models';
 import { SessionService } from '../shared/session-service';
+import { TimeAxis, buildTimeAxis } from './time-axis';
 
 /** Ein Tag, wie ihn der Kalender braucht: lokales Datum ohne Zeitanteil. */
 export type IsoDate = string;
@@ -28,9 +29,23 @@ export class CalendarStore {
   /** Eine Quelle für die Rolle: der SessionService, den auch die Anmeldeleiste nutzt. */
   readonly canManageBookings = this.sessionService.canManageBookings;
 
+  /** Die Zeitachse aus den konfigurierten Öffnungszeiten. */
+  readonly axis = computed<TimeAxis | null>(() => {
+    const config = this.config();
+
+    return config ? buildTimeAxis(config.opensAt, config.closesAt) : null;
+  });
+
   readonly workplaceById = computed(
     () => new Map(this.workplaces().map((workplace) => [workplace.id, workplace])),
   );
+
+  /** Name eines Arbeitsplatzes, mit der Kennung als Rückfallebene. */
+  readonly nameOf = computed(() => {
+    const byId = this.workplaceById();
+
+    return (workplaceId: string) => byId.get(workplaceId)?.name ?? workplaceId;
+  });
 
   /** Arbeitsplätze in der Reihenfolge der Bereiche, mit Gruppenkopf. */
   readonly rows = computed(() => {
@@ -122,24 +137,24 @@ export class CalendarStore {
   goToTomorrow(): void {
     const tomorrow = new Date(`${todayIso()}T12:00:00`);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    this.date.set(isoOf(tomorrow));
+    this.date.set(isoDate(tomorrow));
     this.load();
   }
 
   shiftDays(days: number): void {
     const next = new Date(`${this.date()}T12:00:00`);
     next.setDate(next.getDate() + days);
-    this.date.set(isoOf(next));
+    this.date.set(isoDate(next));
     this.load();
   }
 }
 
 export function todayIso(): IsoDate {
-  return isoOf(new Date());
+  return isoDate(new Date());
 }
 
 /** Lokales Datum als ISO-Tag — toISOString() allein würde in UTC umrechnen. */
-function isoOf(date: Date): IsoDate {
+export function isoDate(date: Date): IsoDate {
   const offset = date.getTimezoneOffset() * 60_000;
 
   return new Date(date.getTime() - offset).toISOString().slice(0, 10);

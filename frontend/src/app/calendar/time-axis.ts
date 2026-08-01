@@ -70,6 +70,18 @@ export function visibleRange(
   };
 }
 
+/**
+ * Die Lage eines Zeitpunkts auf der Achse, in Prozent der Gesamtbreite. Null,
+ * wenn er ausserhalb der Öffnungszeiten liegt und darum nicht dargestellt wird.
+ */
+export function percentOfAxis(axis: TimeAxis, minutesSinceMidnight: number): number | null {
+  if (minutesSinceMidnight < axis.opensAt || minutesSinceMidnight > axis.closesAt) {
+    return null;
+  }
+
+  return ((minutesSinceMidnight - axis.opensAt) / (axis.closesAt - axis.opensAt)) * 100;
+}
+
 /** Die Position eines Blocks auf der Achse, in Prozent der Gesamtbreite. */
 export interface BlockGeometry {
   leftPercent: number;

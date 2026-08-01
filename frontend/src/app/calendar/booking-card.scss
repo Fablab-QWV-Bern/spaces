@@ -1,0 +1,69 @@
+:host {
+  // Popover-Standardstile des Browsers zurücksetzen: die zentrieren das Element
+  // im Viewport, wir hängen es stattdessen an den überfahrenen Block.
+  // Kein Aussenabstand: die Karte liegt lückenlos am Block, damit der Zeiger
+  // ohne Zwischenraum hinüberwandern kann.
+  inset: auto;
+  margin: 0;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #cbd5e1;
+
+  position-anchor: --hovered-block;
+  position-area: block-end span-inline-end;
+  // Am Viewport-Rand nach oben bzw. zur anderen Seite umklappen.
+  position-try-fallbacks:
+    flip-block,
+    flip-inline,
+    flip-block flip-inline;
+
+  min-width: 12rem;
+  max-width: 20rem;
+  background: #fff;
+  border-radius: 0.35rem;
+  box-shadow: 0 6px 20px rgb(15 23 42 / 0.15);
+  font-family: system-ui, sans-serif;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  color: #0f172a;
+}
+
+p {
+  margin: 0 0 0.15rem;
+}
+
+.card-kind {
+  font-weight: 600;
+}
+
+.card-time {
+  color: #475569;
+}
+
+.card-who {
+  margin-top: 0.35rem;
+}
+
+.card-contact,
+.card-series {
+  color: #475569;
+}
+
+.muted {
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.card-edit {
+  margin-top: 0.5rem;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  border-radius: 0.25rem;
+  padding: 0.25rem 0.6rem;
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+
+  &:hover {
+    background: #f1f5f9;
+  }
+}

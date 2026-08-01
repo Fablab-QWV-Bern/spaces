@@ -1,0 +1,27 @@
+@if (hover.details(); as details) {
+  @if (details.isBlockage) {
+    <p class="card-kind">Blockiert durch {{ details.bookedWorkplaceName }}</p>
+  } @else {
+    <p class="card-kind">{{ details.workplaceName }}</p>
+  }
+
+  <p class="card-time">{{ details.timeRange }}</p>
+
+  <p class="card-who">{{ details.booking.name }}</p>
+
+  @if (details.booking.contact) {
+    <p class="card-contact">{{ details.booking.contact }}</p>
+  } @else {
+    <p class="card-contact muted">Kontakt nicht sichtbar</p>
+  }
+
+  @if (details.booking.bookingSeriesId) {
+    <p class="card-series">↻ Teil einer Serie</p>
+  }
+
+  @if (store.canManageBookings()) {
+    <button type="button" class="card-edit" (click)="editBooking(details.booking)">
+      ✎ Bearbeiten
+    </button>
+  }
+}

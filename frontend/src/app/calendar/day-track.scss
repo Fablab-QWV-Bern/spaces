@@ -1,0 +1,90 @@
+:host {
+  // Ein Raster mit einer Spalte je Viertelstunde. Die Blöcke werden über
+  // benannte Linien platziert (grid-column: t0900 / t1300) — das Einrasten auf
+  // die Viertelstunde ist damit strukturell und nicht gerechnet.
+  display: grid;
+  grid-auto-rows: 1fr;
+  position: relative;
+  height: var(--row-height);
+
+  // Viertelstunden-Raster als Hintergrund, Stunden kräftiger.
+  background-image:
+    repeating-linear-gradient(
+      to right,
+      var(--border) 0,
+      var(--border) 1px,
+      transparent 1px,
+      transparent calc(var(--quarter) * 4)
+    ),
+    repeating-linear-gradient(
+      to right,
+      #f1f5f9 0,
+      #f1f5f9 1px,
+      transparent 1px,
+      transparent var(--quarter)
+    );
+}
+
+:host(.clickable) {
+  cursor: copy;
+
+  &:hover {
+    background-color: #f0f9ff;
+  }
+}
+
+.block {
+  // Alle Blöcke teilen sich dieselbe Rasterzeile und überlagern sich damit;
+  // die Reihenfolge macht z-index.
+  grid-row: 1;
+  margin: 3px 0;
+  margin-left: 1px;
+  min-width: 0;
+  cursor: default;
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0 0.35rem;
+  border-radius: 0.4rem;
+  font-size: 0.78rem;
+  overflow: hidden;
+  white-space: nowrap;
+
+  &.clipped-start {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+  }
+
+  &.clipped-end {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 1px;
+  }
+}
+
+.booking {
+  z-index: 1;
+  color: #0f172a;
+  // Ein zusätzliches Muster wäre hier falsch — die Buchung ist der Normalfall.
+  // Unterscheidbar bleibt sie durch die Beschriftung.
+
+  .text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .series {
+    flex: none;
+    opacity: 0.7;
+  }
+}
+
+.blockage {
+  // Blockierungen tragen ein Schraffurmuster, damit sie sich nicht allein über
+  // die Farbe von freien Flächen unterscheiden.
+  background: repeating-linear-gradient(45deg, #cbd5e1, #cbd5e1 4px, #e2e8f0 4px, #e2e8f0 8px);
+}

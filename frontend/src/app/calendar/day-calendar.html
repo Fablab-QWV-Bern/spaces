@@ -1,22 +1,11 @@
-<header class="toolbar">
-  <h1>{{ heading() }}</h1>
-
-  <nav class="controls">
-    <button type="button" (click)="shift(-1)" aria-label="Ein Tag zurück">‹</button>
-    <button type="button" (click)="today()">Heute</button>
-    <button type="button" (click)="tomorrow()">Morgen</button>
-    <button type="button" (click)="shift(1)" aria-label="Ein Tag vorwärts">›</button>
-
-    <input
-      type="date"
-      [value]="store.date()"
-      (change)="onDateChange($any($event.target).value)"
-      aria-label="Datum wählen"
-    />
-
-    <app-session-bar />
-  </nav>
-</header>
+<app-calendar-toolbar
+  [heading]="heading()"
+  [date]="store.date()"
+  (shift)="store.shiftDays($event)"
+  (today)="store.goToToday()"
+  (tomorrow)="store.goToTomorrow()"
+  (dateSelected)="onDateChange($event)"
+/>
 
 @if (store.error(); as error) {
   <p class="error" role="alert">{{ error }}</p>
@@ -24,13 +13,13 @@
 
 @if (store.loading()) {
   <p class="hint">Wird geladen …</p>
-} @else if (axis(); as axis) {
+} @else if (store.axis(); as axis) {
   <div class="calendar">
-    <div class="grid" [style.--quarter]="quarterHourPercent() + '%'">
+    <div class="grid">
       <!-- Kopfzeile: Stundenbeschriftung -->
       <div class="row header">
         <div class="label">Arbeitsplatz</div>
-        <div class="track" [style.gridTemplateColumns]="gridTemplate()">
+        <div class="hours" [style.gridTemplateColumns]="gridTemplate()">
           @for (hour of axis.hours; track hour) {
             <span class="hour" [style.gridColumn]="hourColumn(hour)">{{ hour }}:00</span>
           }
@@ -40,7 +29,7 @@
       @for (group of store.rows(); track group.area.id) {
         <div class="row group">
           <div class="label">{{ group.area.name }}</div>
-          <div class="track" [style.gridTemplateColumns]="gridTemplate()"></div>
+          <div class="filler"></div>
         </div>
 
         @for (workplace of group.workplaces; track workplace.id) {
@@ -64,50 +53,12 @@
               }
             </div>
 
-            <div
-              class="track"
-              [style.gridTemplateColumns]="gridTemplate()"
-              [class.clickable]="isBookable(workplace)"
-              (click)="onTrackClick(workplace, $event)"
-            >
-              @for (block of blockageBlocks(workplace); track block.booking.id) {
-                <div
-                  class="block blockage"
-                  tabindex="0"
-                  [attr.aria-label]="block.title"
-                  [style.gridColumn]="block.gridColumn"
-                  [class.clipped-start]="block.clippedStart"
-                  [class.clipped-end]="block.clippedEnd"
-                  (mouseenter)="showCard(block, workplace, $event)"
-                  (focus)="showCard(block, workplace, $event)"
-                  (mouseleave)="hideCard($event)"
-                  (blur)="hideCard($event)"
-                  (click)="$event.stopPropagation()"
-                ></div>
-              }
-
-              @for (block of bookingBlocks(workplace); track block.booking.id) {
-                <div
-                  class="block booking"
-                  tabindex="0"
-                  [attr.aria-label]="block.title"
-                  [style.gridColumn]="block.gridColumn"
-                  [style.background]="areaColor(workplace.areaId)"
-                  [class.clipped-start]="block.clippedStart"
-                  [class.clipped-end]="block.clippedEnd"
-                  (mouseenter)="showCard(block, workplace, $event)"
-                  (focus)="showCard(block, workplace, $event)"
-                  (mouseleave)="hideCard($event)"
-                  (blur)="hideCard($event)"
-                  (click)="$event.stopPropagation()"
-                >
-                  @if (block.isSeries) {
-                    <span class="series" aria-label="Teil einer Serie">↻</span>
-                  }
-                  <span class="text">{{ block.label }}</span>
-                </div>
-              }
-            </div>
+            <app-day-track
+              [axis]="axis"
+              [blocks]="blocks(workplace)"
+              [clickable]="isBookable(workplace)"
+              (slotClick)="onSlotClick(workplace, $event)"
+            />
           </div>
         }
       }
@@ -130,35 +81,4 @@
   <p class="hint">Keine Konfiguration geladen.</p>
 }
 
-<!-- Natives Popover, immer im DOM und darum jederzeit über showPopover()
-     ansteuerbar. Liegt im Top Layer und wird deshalb vom scrollenden
-     Kalendercontainer nicht beschnitten. -->
-<div #card class="card" popover="auto" role="tooltip" (mouseleave)="hideCard($event)">
-  @if (hover(); as details) {
-    @if (details.isBlockage) {
-      <p class="card-kind">Blockiert durch {{ details.bookedWorkplaceName }}</p>
-    } @else {
-      <p class="card-kind">{{ details.workplaceName }}</p>
-    }
-
-    <p class="card-time">{{ details.timeRange }}</p>
-
-    <p class="card-who">{{ details.booking.name }}</p>
-
-    @if (details.booking.contact) {
-      <p class="card-contact">{{ details.booking.contact }}</p>
-    } @else {
-      <p class="card-contact muted">Kontakt nicht sichtbar</p>
-    }
-
-    @if (details.booking.bookingSeriesId) {
-      <p class="card-series">↻ Teil einer Serie</p>
-    }
-
-    @if (store.canManageBookings()) {
-      <button type="button" class="card-edit" (click)="editBooking(details.booking)">
-        ✎ Bearbeiten
-      </button>
-    }
-  }
-</div>
+<app-booking-card />

@@ -1,51 +1,17 @@
-import { Component, ElementRef, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
-import { SessionBar } from '../shared/session-bar';
-
-import { Booking, Workplace } from '../api/models';
-import { CalendarStore } from './calendar-store';
-import {
-  GRID_MINUTES,
-  TimeAxis,
-  buildTimeAxis,
-  formatTime,
-  gridColumn,
-  gridTemplateColumns,
-  instantAt,
-  lineName,
-  minutesOfDay,
-  slotAtOffset,
-  visibleRange,
-} from './time-axis';
-
-interface Block {
-  booking: Booking;
-  label: string;
-  title: string;
-  /** Platzierung im Spaltenraster, z.B. "t0900 / t1300". */
-  gridColumn: string;
-  clippedStart: boolean;
-  clippedEnd: boolean;
-  isSeries: boolean;
-  isBlockage: boolean;
-}
-
-/** Muss mit dem `position-anchor` im Stylesheet übereinstimmen. */
-const ANCHOR_NAME = '--hovered-block';
-
-/** Die aufgeklappte Detailkarte zu einem Block. */
-interface HoverCard {
-  booking: Booking;
-  workplaceName: string;
-  bookedWorkplaceName: string;
-  timeRange: string;
-  isBlockage: boolean;
-}
+import { Workplace } from '../api/models';
+import { BookingCard } from './booking-card';
+import { Block, blocksFor } from './blocks';
+import { CalendarStore, isoDate } from './calendar-store';
+import { CalendarToolbar } from './calendar-toolbar';
+import { DayTrack } from './day-track';
+import { gridTemplateColumns, instantAt, lineName, percentOfAxis } from './time-axis';
 
 @Component({
   selector: 'app-day-calendar',
-  imports: [SessionBar],
+  imports: [BookingCard, CalendarToolbar, DayTrack],
   templateUrl: './day-calendar.html',
   styleUrl: './day-calendar.scss',
 })
@@ -54,7 +20,6 @@ export class DayCalendar {
   private readonly router = inject(Router);
 
   protected readonly now = signal(new Date());
-  protected readonly hover = signal<HoverCard | null>(null);
 
   constructor() {
     this.store.load();
@@ -63,12 +28,6 @@ export class DayCalendar {
     // 15-Minuten-Raster ohne Aussage.
     setInterval(() => this.now.set(new Date()), 60_000);
   }
-
-  protected readonly axis = computed<TimeAxis | null>(() => {
-    const config = this.store.config();
-
-    return config ? buildTimeAxis(config.opensAt, config.closesAt) : null;
-  });
 
   protected readonly heading = computed(() =>
     new Date(`${this.store.date()}T12:00:00`).toLocaleDateString('de-CH', {
@@ -81,88 +40,67 @@ export class DayCalendar {
 
   /** Position der Jetzt-Linie, oder null wenn heute nicht dargestellt wird. */
   protected readonly nowPercent = computed<number | null>(() => {
-    const axis = this.axis();
+    const axis = this.store.axis();
     const now = this.now();
 
     if (!axis || this.store.date() !== isoDate(now)) {
       return null;
     }
 
-    const minutes = now.getHours() * 60 + now.getMinutes();
-
-    if (minutes < axis.opensAt || minutes > axis.closesAt) {
-      return null;
-    }
-
-    return ((minutes - axis.opensAt) / (axis.closesAt - axis.opensAt)) * 100;
+    return percentOfAxis(axis, now.getHours() * 60 + now.getMinutes());
   });
 
-  protected bookingBlocks(workplace: Workplace): Block[] {
-    return this.blocksFor(this.store.bookingsByWorkplace().get(workplace.id) ?? [], false);
-  }
-
-  /** Graue Blöcke: Buchungen auf anderen Plätzen, die diesen mitbelegen. */
-  protected blockageBlocks(workplace: Workplace): Block[] {
-    return this.blocksFor(this.store.blockagesByWorkplace().get(workplace.id) ?? [], true);
-  }
-
-  protected areaColor(areaId: string): string {
-    return this.store.areas().find((area) => area.id === areaId)?.color ?? '#94a3b8';
-  }
-
-  private blocksFor(bookings: Booking[], blockage: boolean): Block[] {
-    const axis = this.axis();
+  /**
+   * Die Balken je Arbeitsplatz, einmal berechnet. Als Methode im Template
+   * würden sie bei jedem Change-Detection-Durchlauf neu entstehen.
+   */
+  private readonly blocksByWorkplace = computed(() => {
+    const axis = this.store.axis();
+    const map = new Map<string, Block[]>();
 
     if (!axis) {
-      return [];
+      return map;
     }
 
     const day = new Date(`${this.store.date()}T12:00:00`);
+    const nameOf = this.store.nameOf();
+    const bookings = this.store.bookingsByWorkplace();
+    const blockages = this.store.blockagesByWorkplace();
 
-    return bookings
-      .map((booking) => {
-        const start = new Date(booking.startTime);
-        const end = new Date(booking.endTime);
-        const range = visibleRange(axis, start, end, day);
+    for (const group of this.store.rows()) {
+      for (const workplace of group.workplaces) {
+        const context = {
+          axis,
+          day,
+          workplaceName: workplace.name,
+          color: group.area.color,
+          nameOf,
+        };
 
-        if (!range) {
-          return null;
-        }
+        map.set(
+          workplace.id,
+          blocksFor(context, bookings.get(workplace.id) ?? [], blockages.get(workplace.id) ?? []),
+        );
+      }
+    }
 
-        const who = booking.name;
-        const time = `${formatTime(start)}–${formatTime(end)}`;
+    return map;
+  });
 
-        return {
-          booking,
-          label: blockage ? '' : who,
-          title: blockage ? `Blockiert durch ${who}, ${time}` : `${who}, ${time}`,
-          gridColumn: gridColumn(range),
-          clippedStart: range.clippedStart,
-          clippedEnd: range.clippedEnd,
-          isSeries: booking.bookingSeriesId !== null,
-          isBlockage: blockage,
-        } satisfies Block;
-      })
-      .filter((block): block is Block => block !== null);
+  protected blocks(workplace: Workplace): Block[] {
+    return this.blocksByWorkplace().get(workplace.id) ?? [];
   }
 
-  /** Das Spaltenraster, aus den konfigurierten Öffnungszeiten erzeugt. */
+  /** Das Spaltenraster für die Stundenbeschriftung der Kopfzeile. */
   protected readonly gridTemplate = computed(() => {
-    const axis = this.axis();
+    const axis = this.store.axis();
 
     return axis ? gridTemplateColumns(axis) : '';
   });
 
-  /** Breite einer Viertelstunde — nur noch für die Rasterlinien im Hintergrund. */
-  protected readonly quarterHourPercent = computed(() => {
-    const axis = this.axis();
-
-    return axis ? (GRID_MINUTES / (axis.closesAt - axis.opensAt)) * 100 : 0;
-  });
-
   /** Eine Stundenbeschriftung spannt über ihre vier Viertelstunden. */
   protected hourColumn(hour: number): string {
-    const axis = this.axis();
+    const axis = this.store.axis();
 
     if (!axis) {
       return 'auto';
@@ -175,102 +113,12 @@ export class DayCalendar {
     return { DEFECT: 'defekt', DISABLED: 'deaktiviert', OK: null }[workplace.status];
   }
 
-  // --- Hover-Details --------------------------------------------------------
-  //
-  // Die Karte ist ein natives Popover und liegt damit im Top Layer. Das ist hier
-  // nicht Kosmetik: die Zeitachse scrollt in einem `overflow-x: auto`-Container,
-  // ein normal positioniertes Element würde am Rand beschnitten.
-  //
-  // Positioniert wird über CSS Anchor Positioning. Der überfahrene Block bekommt
-  // den `anchor-name`, die Karte hängt sich daran — keine Koordinatenrechnung,
-  // und am Viewport-Rand klappt sie von selbst um.
-
-  private readonly cardRef = viewChild<ElementRef<HTMLElement>>('card');
-
-  private anchoredBlock: HTMLElement | null = null;
-
-  protected showCard(block: Block, workplace: Workplace, event: Event): void {
-    this.anchorTo(event.currentTarget as HTMLElement);
-
-    const start = new Date(block.booking.startTime);
-    const end = new Date(block.booking.endTime);
-
-    this.hover.set({
-      booking: block.booking,
-      workplaceName: workplace.name,
-      // Bei einer Blockierung liegt die Buchung auf einem anderen Arbeitsplatz.
-      bookedWorkplaceName:
-        this.store.workplaceById().get(block.booking.workplaceId)?.name ??
-        block.booking.workplaceId,
-      timeRange: `${formatTime(start)}–${formatTime(end)}`,
-      isBlockage: block.isBlockage,
-    });
-
-    const card = this.cardRef()?.nativeElement;
-
-    // showPopover() wirft, wenn das Popover bereits offen ist — beim Wechsel von
-    // einem Block zum nächsten ist es das.
-    if (card && !card.matches(':popover-open')) {
-      card.showPopover();
-    }
-  }
-
-  /**
-   * Die Karte liegt lückenlos am Block, der Zeiger wechselt also direkt von
-   * einem zum anderen. `relatedTarget` sagt, wohin er geht: bleibt er innerhalb
-   * des Gespanns aus Block und Karte, bleibt die Karte offen.
-   */
-  protected hideCard(event: MouseEvent | FocusEvent): void {
-    const target = event.relatedTarget as Node | null;
-    const card = this.cardRef()?.nativeElement;
-
-    if (target && (card?.contains(target) || this.anchoredBlock?.contains(target))) {
-      return;
-    }
-
-    card?.hidePopover();
-    this.releaseAnchor();
-    this.hover.set(null);
-  }
-
-  /** Immer nur ein Block trägt den Ankernamen. */
-  private anchorTo(element: HTMLElement): void {
-    this.releaseAnchor();
-    element.style.setProperty('anchor-name', ANCHOR_NAME);
-    this.anchoredBlock = element;
-  }
-
-  private releaseAnchor(): void {
-    this.anchoredBlock?.style.removeProperty('anchor-name');
-    this.anchoredBlock = null;
-  }
-
-  protected editBooking(booking: Booking): void {
-    this.router.navigate(['/buchen'], { queryParams: { booking: booking.id } });
-  }
-
-  // --- Klick auf freie Fläche ----------------------------------------------
-
   /** Nur wo tatsächlich gebucht werden kann, ist die Fläche anklickbar. */
   protected isBookable(workplace: Workplace): boolean {
     return workplace.status === 'OK' && this.store.canManageBookings();
   }
 
-  protected onTrackClick(workplace: Workplace, event: MouseEvent): void {
-    if (!this.isBookable(workplace)) {
-      return;
-    }
-
-    const axis = this.axis();
-    const track = event.currentTarget as HTMLElement;
-
-    if (!axis) {
-      return;
-    }
-
-    const rect = track.getBoundingClientRect();
-    const minutes = slotAtOffset(axis, event.clientX - rect.left, rect.width);
-
+  protected onSlotClick(workplace: Workplace, minutes: number): void {
     this.router.navigate(['/buchen'], {
       queryParams: {
         workplace: workplace.id,
@@ -282,30 +130,10 @@ export class DayCalendar {
     });
   }
 
-  protected shift(days: number): void {
-    this.store.shiftDays(days);
-  }
-
-  protected today(): void {
-    this.store.goToToday();
-  }
-
-  protected tomorrow(): void {
-    this.store.goToTomorrow();
-  }
-
   protected onDateChange(value: string): void {
     this.store.date.set(value);
     this.store.load();
   }
-
-  protected readonly minutesOfDay = minutesOfDay;
-}
-
-function isoDate(date: Date): string {
-  const offset = date.getTimezoneOffset() * 60_000;
-
-  return new Date(date.getTime() - offset).toISOString().slice(0, 10);
 }
 
 /** "2026-07-31T14:00" — lokale Wanduhrzeit, bewusst ohne Zonenangabe. */
