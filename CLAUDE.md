@@ -111,5 +111,5 @@ Periodische läuft über Cron, nicht über Queue-Worker.
 
 - Deploy-Test auf hosttech (grösstes ungetestetes Risiko)
 - Wochen- und Monatsansicht, Übersichtskarte, Admin-Ansichten
+- Ansichten zum Bearbeiten von Bereichen / Arbeitsplätzen (letzteres mit image-upload)
 - Serienbuchungen, iCal-Abo (Modellreferenz steht aus)
-- Produktentscheidung: darf die anonyme Rolle Namen sehen? Aktuell ja, Kontakt nein.

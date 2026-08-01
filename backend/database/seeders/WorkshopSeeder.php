@@ -27,13 +27,13 @@ class WorkshopSeeder extends Seeder
         $areas = [
             'spezial' => [
                 'name' => 'Spezial',
-                'color' => '#8b5cf6',
+                'color' => 'oklch(0.8 0.1 130)',
                 'max_booking_duration_minutes' => 1440,
                 'sort_order' => 10,
             ],
             'kurse' => [
                 'name' => 'Kurse',
-                'color' => '#f59e0b',
+                'color' => 'oklch(0.8 0.1 70)',
                 'max_booking_duration_minutes' => 720,
                 // Kurse werden lange im Voraus geplant.
                 'max_booking_end_offset_days' => 365,
@@ -41,19 +41,19 @@ class WorkshopSeeder extends Seeder
             ],
             'holz' => [
                 'name' => 'Holz',
-                'color' => '#84cc16',
+                'color' => 'oklch(0.8 0.1 450)',
                 'max_booking_duration_minutes' => 480,
                 'sort_order' => 30,
             ],
             'metall' => [
                 'name' => 'Metall',
-                'color' => '#0ea5e9',
+                'color' => 'oklch(0.8 0.1 230)',
                 'max_booking_duration_minutes' => 480,
                 'sort_order' => 40,
             ],
             'fablab' => [
                 'name' => 'Fablab',
-                'color' => '#ec4899',
+                'color' => 'oklch(0.8 0.1 350)',
                 // Ein Druck läuft auch mal über Nacht.
                 'max_booking_duration_minutes' => 1440,
                 'allow_nightly_activities' => true,
@@ -61,7 +61,7 @@ class WorkshopSeeder extends Seeder
             ],
             'diverses' => [
                 'name' => 'Diverses',
-                'color' => '#64748b',
+                'color' => 'oklch(0.8 0 0)',
                 'max_booking_duration_minutes' => 2880,
                 // Ein Fahrzeug darf über Nacht stehen bleiben.
                 'allow_nightly_activities' => true,

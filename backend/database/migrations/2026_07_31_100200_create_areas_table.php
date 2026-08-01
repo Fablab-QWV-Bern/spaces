@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('areas', function (Blueprint $table) {
             $table->string('id', 26)->primary();
             $table->string('name', 100);
-            $table->char('color', 7);
+            $table->char('color', 30);
 
             $table->unsignedInteger('max_booking_duration_minutes');
 
