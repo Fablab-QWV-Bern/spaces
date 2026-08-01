@@ -2,6 +2,9 @@ import { Routes } from '@angular/router';
 
 import { AreaForm } from './admin/area-form';
 import { AreaList } from './admin/area-list';
+import { ConfigForm } from './admin/config-form';
+import { RoleForm } from './admin/role-form';
+import { RoleList } from './admin/role-list';
 import { WorkplaceForm } from './admin/workplace-form';
 import { WorkplaceList } from './admin/workplace-list';
 import { BookingForm } from './booking/booking-form';
@@ -36,4 +39,8 @@ export const routes: Routes = [
     component: WorkplaceForm,
     title: 'Arbeitsplatz bearbeiten',
   },
+  { path: 'verwaltung/rollen', component: RoleList, title: 'Rollen' },
+  { path: 'verwaltung/rollen/neu', component: RoleForm, title: 'Neue Rolle' },
+  { path: 'verwaltung/rollen/:id', component: RoleForm, title: 'Rolle bearbeiten' },
+  { path: 'verwaltung/konfiguration', component: ConfigForm, title: 'Konfiguration' },
 ];

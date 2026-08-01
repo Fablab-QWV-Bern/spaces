@@ -27,7 +27,12 @@ import { SessionService } from '../shared/session-service';
       @if (session.canManageWorkplaces()) {
         <a routerLink="/verwaltung/arbeitsplaetze" routerLinkActive="active">Arbeitsplätze</a>
       }
-      <a class="back" routerLink="/tag">Zum Kalender</a>
+      @if (session.canManageRoles()) {
+        <a routerLink="/verwaltung/rollen" routerLinkActive="active">Rollen</a>
+        <a routerLink="/verwaltung/konfiguration" routerLinkActive="active">Konfiguration</a>
+      }
+      <a class="feed" [href]="feedUrl" [title]="feedHint">Abonnieren</a>
+      <a routerLink="/tag">Zum Kalender</a>
     </nav>
   `,
   styles: `
@@ -76,7 +81,7 @@ import { SessionService } from '../shared/session-service';
         }
       }
 
-      .back {
+      .feed {
         margin-left: auto;
       }
     }
@@ -86,4 +91,15 @@ export class AdminHeader {
   readonly heading = input.required<string>();
 
   protected readonly session = inject(SessionService);
+
+  /**
+   * `webcal:` statt `https:`, damit ein Klick den Kalender abonniert statt eine
+   * einmalige Datei herunterzuladen — das Schema ist der ganze Unterschied
+   * zwischen Abo und Momentaufnahme. Wer die Adresse zum Einfügen braucht,
+   * findet sie im Titel des Links.
+   */
+  protected readonly feedUrl = `webcal://${location.host}/api/calendar.ics`;
+
+  protected readonly feedHint =
+    `Buchungen im eigenen Kalender abonnieren: ` + `${location.origin}/api/calendar.ics`;
 }

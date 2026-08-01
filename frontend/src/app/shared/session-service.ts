@@ -18,8 +18,12 @@ export class SessionService {
   readonly canManageWorkplaces = computed(
     () => this.session()?.permissions.manageWorkplaces ?? false,
   );
+  /** Deckt beides ab: Rollen und die globale Konfiguration. */
+  readonly canManageRoles = computed(() => this.session()?.permissions.manageRoles ?? false);
   /** Ob überhaupt eine Verwaltungsansicht offensteht. */
-  readonly canManageAnything = computed(() => this.canManageAreas() || this.canManageWorkplaces());
+  readonly canManageAnything = computed(
+    () => this.canManageAreas() || this.canManageWorkplaces() || this.canManageRoles(),
+  );
   readonly seesDetails = computed(() => this.session()?.permissions.viewBookingsDetails ?? false);
   readonly isAnonymous = computed(() => this.session()?.isAnonymous ?? true);
   readonly roleName = computed(() => this.session()?.roleName ?? '');

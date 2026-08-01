@@ -1,0 +1,43 @@
+@use './admin';
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  // Siehe workplace-form.scss: die klebende Leiste schliesst unten bündig ab.
+  padding: 0 1.5rem;
+  max-width: 40rem;
+}
+
+h2 {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #475569;
+}
+
+// Die Erklärung steht unter dem Kreuz, aber eingerückt auf der Höhe des Textes.
+.permission {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+
+  .note {
+    padding-left: 1.4rem;
+  }
+
+  &.locked {
+    opacity: 0.7;
+  }
+}
+
+.locked-note {
+  color: #92400e;
+}
+
+.warn {
+  color: #b45309;
+  font-size: 0.75rem;
+}

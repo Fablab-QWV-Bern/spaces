@@ -1,6 +1,6 @@
 /**
- * Name und Kontakt des Buchenden werden laut Spec als Cookie gespeichert, damit
- * man sie nicht bei jeder Buchung neu tippt.
+ * Name und Kontakt des Buchenden werden als Cookie gespeichert, damit
+ * man sie nicht bei jeder Buchung neu tippen muss
  */
 const NAME_KEY = 'qwv_booker_name';
 const CONTACT_KEY = 'qwv_booker_contact';

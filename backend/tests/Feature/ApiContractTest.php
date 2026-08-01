@@ -56,6 +56,17 @@ it('haelt den Vertrag fuer /session/roles', function () {
     $this->getJson('/api/session/roles')->assertValidRequest()->assertValidResponse(200);
 });
 
+it('haelt den Vertrag fuer /roles', function () {
+    $admin = Role::where('name', 'Admin')->firstOrFail();
+
+    $this->actingAs($admin)->getJson('/api/roles')->assertValidRequest()->assertValidResponse(200);
+
+    $this->actingAs($admin)
+        ->getJson("/api/roles/{$admin->id}")
+        ->assertValidRequest()
+        ->assertValidResponse(200);
+});
+
 it('haelt den Vertrag fuer /areas', function () {
     $this->getJson('/api/areas')->assertValidRequest()->assertValidResponse(200);
 });
@@ -84,6 +95,14 @@ it('haelt den Vertrag fuer /bookings/{id}', function () {
     $this->getJson("/api/bookings/{$this->booking->id}")
         ->assertValidRequest()
         ->assertValidResponse(200);
+});
+
+it('haelt den Vertrag fuer /calendar.ics', function () {
+    $this->get('/api/calendar.ics')->assertValidRequest()->assertValidResponse(200);
+
+    $this->get('/api/calendar.ics?workplaceId=holz-1')->assertValidRequest()->assertValidResponse(200);
+
+    $this->get('/api/calendar.ics?workplaceId=gibtsnicht')->assertValidResponse(404);
 });
 
 it('haelt den Vertrag fuer die Fehlerantworten', function () {

@@ -1,0 +1,91 @@
+<app-admin-header [heading]="heading()" />
+
+@if (loadError(); as message) {
+  <p class="error" role="alert">{{ message }}</p>
+} @else if (loading()) {
+  <p class="hint">Wird geladen …</p>
+} @else if (!session.canManageRoles()) {
+  <div class="notice">
+    <p>
+      Zum Verwalten der Rollen braucht es eine Rolle mit dem Recht dazu. Aktuell bist du
+      @if (session.isAnonymous()) {
+        nicht angemeldet.
+      } @else {
+        als <strong>{{ session.roleName() }}</strong> angemeldet, diese Rolle darf das nicht.
+      }
+    </p>
+  </div>
+} @else {
+  <!-- Natives submit-Ereignis: (ngSubmit) stammt aus FormsModule, das Signal
+       Forms nicht mehr braucht. -->
+  <form class="form" (submit)="$event.preventDefault(); submit()">
+    <section class="panel">
+      <label class="field">
+        <span>Name</span>
+        <input type="text" [formField]="roleForm.name" autocomplete="off" />
+        <span class="note">
+          Unter diesem Namen meldet man sich an. Mehrere Personen teilen sich eine Rolle.
+        </span>
+      </label>
+
+      @if (isAnonymous()) {
+        <p class="note">
+          Das ist die Rolle aller, die nicht angemeldet sind. Sie hat kein Kennwort und lässt sich
+          nicht löschen.
+        </p>
+      } @else {
+        <label class="field">
+          <span>Kennwort {{ passwordRequired() ? '' : '(nur zum Ändern)' }}</span>
+          <input
+            type="password"
+            [formField]="roleForm.password"
+            autocomplete="new-password"
+            [attr.placeholder]="passwordRequired() ? '' : 'unverändert lassen'"
+          />
+          @if (passwordTooShort()) {
+            <span class="warn">Mindestens 8 Zeichen.</span>
+          } @else if (!passwordRequired()) {
+            <span class="note">Leer lassen, um das bisherige Kennwort zu behalten.</span>
+          } @else {
+            <span class="note">Mindestens 8 Zeichen. Alle teilen sich dieses eine Kennwort.</span>
+          }
+        </label>
+      }
+    </section>
+
+    <section class="panel">
+      <h2>Berechtigungen</h2>
+
+      @for (permission of labels; track permission.key) {
+        <div class="permission" [class.locked]="locked(permission.key)">
+          <label class="field checkbox">
+            <input
+              type="checkbox"
+              [checked]="granted(permission.key)"
+              [disabled]="locked(permission.key)"
+              (change)="toggle(permission.key, $any($event.target).checked)"
+            />
+            <span>{{ permission.label }}</span>
+          </label>
+
+          @if (lockedReason(permission.key); as reason) {
+            <span class="note locked-note">{{ reason }}</span>
+          } @else if (permission.note; as note) {
+            <span class="note">{{ note }}</span>
+          }
+        </div>
+      }
+    </section>
+
+    <div class="actions sticky">
+      <button type="submit" class="primary" [disabled]="!canSubmit()">
+        {{ saving() ? 'Wird gespeichert …' : 'Speichern' }}
+      </button>
+      <button type="button" (click)="cancel()">Abbrechen</button>
+
+      @if (saveError(); as message) {
+        <span class="save-error" role="alert">{{ message }}</span>
+      }
+    </div>
+  </form>
+}

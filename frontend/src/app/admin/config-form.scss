@@ -1,0 +1,35 @@
+@use './admin';
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  // Siehe workplace-form.scss: die klebende Leiste schliesst unten bündig ab.
+  padding: 0 1.5rem;
+  max-width: 40rem;
+}
+
+h2 {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #475569;
+}
+
+// Zeit und Zahl brauchen nicht die ganze Spalte.
+.field input[type='time'],
+.field input[type='number'] {
+  max-width: 9rem;
+}
+
+.warn {
+  color: #b45309;
+  font-size: 0.75rem;
+}
+
+.saved {
+  color: #15803d;
+  font-size: 0.85rem;
+}

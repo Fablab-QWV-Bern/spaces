@@ -72,6 +72,10 @@ Englisch. Kommentare erklären das *Warum*, nicht das *Was*.
   der implizite Anker aus `popovertarget` greift in Chrome nicht, darum das
   ausdrückliche `anchor-name: --block`. Kein Nachbau mit eigenen Zeigerhandlern —
   das war einmal da und ist bewusst verschwunden.
+- **Die anonyme Rolle darf `manageRoles` nicht bekommen.** Die Spec verlangt das
+  nicht, aber mit diesem Recht könnte sich jeder ohne Anmeldung selbst zum
+  Verwalter machen. Die Invariante „mindestens eine Rolle hat `manageRoles`"
+  zählt dadurch nur Rollen, an denen eine Anmeldung möglich ist.
 - **Die Verwaltung hat keinen Route-Guard.** `frontend/src/app/admin/` lädt die
   Sitzung und zeigt einen Hinweis, wenn die Rolle nicht darf. Ein Guard könnte nur
   wiederholen, was das Backend ohnehin durchsetzt — und müsste raten, solange die
@@ -82,6 +86,15 @@ Englisch. Kommentare erklären das *Warum*, nicht das *Was*.
 - **Bilder rechnet GD**, nicht eine Bibliothek aus Composer: das Hosting bringt GD
   mit, und `vendor/` reist per FTP mit. Vorschaubild und verkleinertes Original
   entstehen beide aus der Originaldatei — zweimal skalieren kostet Schärfe.
+- **Der iCal-Feed rendert immer als anonyme Rolle**, auch mit Sitzungscookie. Ein
+  Kalenderclient hat keines; würde der Feed die angemeldete Rolle berücksichtigen,
+  zeigte die Vorschau im Browser mehr als das Abo danach liefert. So ist er für
+  alle dasselbe Dokument, und ein weitergegebener Link kann keine Kontaktdaten
+  ausspielen. Er prüft `viewBookings` deshalb selbst statt über die Middleware.
+- **Je Buchung ein VEVENT, kein RRULE** — auch wenn es Serien gibt. Eine
+  Serieninstanz ist eine eigene Buchung mit eigener ID; RRULE verlangte zusätzlich
+  Lokalzeit mit mitgelieferter VTIMEZONE. Solange jede Instanz einzeln in der
+  Datenbank steht, sind UTC-Zeitpunkte die ehrlichere Abbildung.
 
 ## Umgebung
 
@@ -152,5 +165,6 @@ SSH braucht es dafür denselben Trigger wie für die Migrationen. Ungetestet.
 - Deploy-Test auf hosttech (grösstes ungetestetes Risiko), inklusive
   `public/storage`-Symlink
 - Monatsansicht, Übersichtskarte
-- Rollen- und Konfigurationsverwaltung
-- Serienbuchungen, iCal-Abo (Modellreferenz steht aus)
+- Serienbuchungen
+- Abo-Link in der Verwaltung mit Filter (Bereich, Arbeitsplatz) — der Feed kann
+  es, die Oberfläche bietet bisher nur den ungefilterten Kalender an

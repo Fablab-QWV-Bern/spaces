@@ -1529,15 +1529,35 @@ paths:
       operationId: getCalendarFeed
       summary: iCalendar subscription feed
       description: |
-        Read-only feed for calendar clients. Filterable by area or workplace. Exact event mapping
-        (SUMMARY, DESCRIPTION, UID, recurrence handling) still to be defined — a reference model
-        will follow.
+        Read-only RFC 5545 feed for calendar clients, modelled on the feed of the system this one
+        replaces. Covers a sliding window of three months either side of the moment of the request.
 
-        Open: how the feed authenticates. Calendar clients cannot log in interactively, so this
-        likely needs an unguessable feed token rather than the session cookie.
+        The feed always renders as the anonymous role, even when the request carries a session
+        cookie — a calendar client never has one, so rendering anything else would make the browser
+        preview disagree with the actual subscription. Consequently the feed is the same document
+        for everybody, it is cacheable, and `contact` only ever appears in it if the anonymous role
+        itself holds viewBookingsDetails. If that role lacks viewBookings, the feed is 403 for
+        everybody.
+
+        Event mapping, one VEVENT per booking:
+
+        | Property | Source |
+        | --- | --- |
+        | `UID` | booking id, plus the request host |
+        | `DTSTART` / `DTEND` | booking start and end, UTC (`Z` form) |
+        | `SUMMARY` | `"<workplace name>: <booking name>"` |
+        | `LOCATION` | workplace location, else workplace name and area name |
+        | `DESCRIPTION` | `contact`, omitted without viewBookingsDetails |
+        | `LAST-MODIFIED` | booking updated timestamp |
+        | `STATUS` | always `CONFIRMED` |
+
+        Series instances are separate bookings and therefore separate VEVENTs, each with its own
+        UID — no RRULE. The feed does not need to know that series exist, and editing a series
+        (which drops and recreates its future instances) simply yields new events.
       parameters:
         - name: areaId
           in: query
+          description: Unknown id is a 404, so a typo in a subscription URL surfaces at once.
           schema:
             type: string
         - name: workplaceId
@@ -1551,3 +1571,7 @@ paths:
             text/calendar:
               schema:
                 type: string
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'

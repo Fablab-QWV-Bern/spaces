@@ -1,0 +1,74 @@
+<app-admin-header heading="Rollen" />
+
+@if (loading()) {
+  <p class="hint">Wird geladen …</p>
+} @else if (!session.canManageRoles()) {
+  <div class="notice">
+    <p>
+      Zum Verwalten der Rollen braucht es eine Rolle mit dem Recht dazu. Aktuell bist du
+      @if (session.isAnonymous()) {
+        nicht angemeldet.
+      } @else {
+        als <strong>{{ session.roleName() }}</strong> angemeldet, diese Rolle darf das nicht.
+      }
+    </p>
+  </div>
+} @else {
+  @if (error(); as message) {
+    <p class="error" role="alert">{{ message }}</p>
+  }
+
+  <div class="content">
+    <div class="actions">
+      <a class="button primary" routerLink="/verwaltung/rollen/neu">Neue Rolle</a>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Darf</th>
+          <th><span class="sr-only">Aktionen</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (role of roles(); track role.id) {
+          <tr>
+            <td class="name">
+              {{ role.name }}
+              @if (role.isAnonymous) {
+                <span class="badge">ohne Anmeldung</span>
+              }
+            </td>
+            <td>
+              <div class="grants">
+                @for (grant of granted(role); track grant) {
+                  <span class="grant">{{ grant }}</span>
+                } @empty {
+                  <span class="muted">nichts</span>
+                }
+              </div>
+            </td>
+            <td class="row-actions">
+              <a class="button" [routerLink]="['/verwaltung/rollen', role.id]">Bearbeiten</a>
+              <button
+                type="button"
+                class="danger"
+                [disabled]="!deletable(role)"
+                [title]="reason(role)"
+                (click)="remove(role)"
+              >
+                Löschen
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <p class="hint note">
+      Eine Rolle teilen sich mehrere Personen; wer gebucht hat, steht als Name und Kontakt auf der
+      Buchung. Die anonyme Rolle gilt für alle, die nicht angemeldet sind.
+    </p>
+  </div>
+}

@@ -8,6 +8,9 @@ import { StrictHttpResponse } from '../../strict-http-response';
 import { RequestBuilder } from '../../request-builder';
 
 export interface GetCalendarFeed$Params {
+  /**
+   * Unknown id is a 404, so a typo in a subscription URL surfaces at once.
+   */
   areaId?: string;
   workplaceId?: string;
 }

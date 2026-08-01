@@ -1,0 +1,95 @@
+@use './admin';
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0 1.5rem 2rem;
+  max-width: 60rem;
+}
+
+table {
+  border-collapse: collapse;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  font-size: 0.9rem;
+  // Rundung schneidet die Ecken der Zellen ab, sonst stünden sie über.
+  overflow: hidden;
+
+  th,
+  td {
+    padding: 0.5rem 0.7rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  th {
+    background: #f8fafc;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #475569;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  .name {
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .muted {
+    color: #64748b;
+  }
+}
+
+.badge {
+  margin-left: 0.4rem;
+  padding: 0.05rem 0.35rem;
+  border-radius: 0.2rem;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 0.7rem;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.grants {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.grant {
+  padding: 0.05rem 0.3rem;
+  border-radius: 0.2rem;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 0.75rem;
+}
+
+.row-actions {
+  display: flex;
+  gap: 0.4rem;
+  justify-content: flex-end;
+}
+
+.note {
+  padding: 0;
+  max-width: 40rem;
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

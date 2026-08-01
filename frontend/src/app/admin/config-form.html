@@ -1,0 +1,91 @@
+<app-admin-header heading="Konfiguration" />
+
+@if (loadError(); as message) {
+  <p class="error" role="alert">{{ message }}</p>
+} @else if (loading()) {
+  <p class="hint">Wird geladen …</p>
+} @else if (!session.canManageRoles()) {
+  <div class="notice">
+    <p>
+      Zum Ändern der globalen Konfiguration braucht es eine Rolle mit dem Recht dazu. Aktuell bist
+      du
+      @if (session.isAnonymous()) {
+        nicht angemeldet.
+      } @else {
+        als <strong>{{ session.roleName() }}</strong> angemeldet, diese Rolle darf das nicht.
+      }
+    </p>
+  </div>
+} @else {
+  <!-- Natives submit-Ereignis: (ngSubmit) stammt aus FormsModule, das Signal
+       Forms nicht mehr braucht. -->
+  <form class="form" (submit)="$event.preventDefault(); submit()" (input)="touched()">
+    <section class="panel">
+      <h2>Öffnungszeiten</h2>
+
+      <div class="row">
+        <label class="field">
+          <span>Öffnet um</span>
+          <input type="time" step="900" [formField]="configForm.opensAt" />
+        </label>
+
+        <label class="field">
+          <span>Schliesst um</span>
+          <input type="time" step="900" [formField]="configForm.closesAt" />
+        </label>
+      </div>
+
+      @if (offGrid()) {
+        <span class="warn">Nur volle Viertelstunden: 00, 15, 30 oder 45 Minuten.</span>
+      } @else if (wrongOrder()) {
+        <span class="warn">Der Schluss muss nach der Öffnung liegen.</span>
+      }
+
+      <span class="note">
+        Gilt an allen Wochentagen und bestimmt, welchen Ausschnitt der Kalender zeigt. Bestehende
+        Buchungen ausserhalb der neuen Zeiten bleiben stehen.
+      </span>
+    </section>
+
+    <section class="panel">
+      <h2>Buchen</h2>
+
+      <label class="field">
+        <span>Vorlauf (Tage)</span>
+        <input type="number" [formField]="configForm.maxBookingEndOffsetDays" />
+        <span class="note">
+          So weit im Voraus darf eine Buchung enden. Bereiche können einen eigenen Wert setzen.
+        </span>
+      </label>
+    </section>
+
+    <section class="panel">
+      <h2>Zeitzone</h2>
+
+      <label class="field">
+        <span>Zeitzone</span>
+        <select [formField]="configForm.timezone">
+          @for (zone of timezones(); track zone) {
+            <option [value]="zone">{{ zone }}</option>
+          }
+        </select>
+        <span class="note">
+          In dieser Zone werden alle Zeiten angezeigt. Gespeichert wird in UTC, darum verschieben
+          sich bestehende Buchungen nicht — sie erscheinen nur zu einer anderen Uhrzeit.
+        </span>
+      </label>
+    </section>
+
+    <div class="actions sticky">
+      <button type="submit" class="primary" [disabled]="!canSubmit()">
+        {{ saving() ? 'Wird gespeichert …' : 'Speichern' }}
+      </button>
+
+      @if (saveError(); as message) {
+        <span class="save-error" role="alert">{{ message }}</span>
+      } @else if (saved()) {
+        <span class="saved" role="status">Gespeichert.</span>
+      }
+    </div>
+  </form>
+}
