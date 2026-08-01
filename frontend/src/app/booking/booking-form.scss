@@ -153,7 +153,7 @@
 
 .preview-track {
   position: relative;
-  height: 2.5rem;
+  height: 3.3rem;
   min-width: 30rem;
   border: 1px solid var(--border);
   border-radius: 0.25rem;
@@ -174,7 +174,7 @@
 
 .preview-block {
   position: absolute;
-  top: 0.9rem;
+  height: 1.2rem;
   bottom: 3px;
   display: flex;
   align-items: center;
@@ -196,6 +196,7 @@
     // des Formulars.
     z-index: 1;
     background: #2563eb;
+    top: 1.2rem;
     color: #fff;
     box-shadow: 0 0 0 2px #fff;
 
