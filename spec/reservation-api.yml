@@ -268,7 +268,12 @@ components:
           type: string
         color:
           type: string
-          pattern: '^#[0-9a-fA-F]{6}$'
+          maxLength: 30
+          description: |
+            Any CSS colour the browser understands, used as-is as the background of this area's
+            blocks. The seeded areas use `oklch(0.8 0.1 <hue>)` so that they differ in hue alone
+            and share a lightness — a hex value works just as well.
+          example: oklch(0.8 0.1 130)
         maxBookingDurationMinutes:
           type: integer
           minimum: 15
@@ -302,7 +307,8 @@ components:
           minLength: 1
         color:
           type: string
-          pattern: '^#[0-9a-fA-F]{6}$'
+          maxLength: 30
+          example: oklch(0.8 0.1 130)
         maxBookingDurationMinutes:
           type: integer
           minimum: 15

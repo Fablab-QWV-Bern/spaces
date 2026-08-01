@@ -1,0 +1,234 @@
+<?php
+
+use App\Models\Booking;
+use App\Models\Role;
+use App\Models\Workplace;
+use Carbon\CarbonImmutable;
+use Database\Seeders\DatabaseSeeder;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+use Spectator\Spectator;
+
+beforeEach(function () {
+    Spectator::using('reservation-api.yml');
+    $this->seed(DatabaseSeeder::class);
+
+    $this->travelTo(CarbonImmutable::parse('2026-08-03 07:00', 'Europe/Zurich'));
+
+    $this->admin = Role::where('name', 'Admin')->firstOrFail();
+    $this->member = Role::where('name', 'Mitglied')->firstOrFail();
+    $this->areaId = Workplace::findOrFail('holz-1')->area_id;
+});
+
+/**
+ * Die echte public-Disk liefert absolute URLs (APP_URL + /storage); die Attrappe
+ * ohne diese Angabe nur "/storage/…", und das ist laut Spec keine URI. Damit der
+ * Vertragstest die Wahrheit prüft und nicht die Attrappe, bekommt sie dieselbe
+ * Grundadresse.
+ */
+function fakePhotoDisk(): void
+{
+    Storage::fake('public', ['url' => config('filesystems.disks.public.url')]);
+}
+
+function workplacePayload(array $overrides = []): array
+{
+    return array_merge([
+        'id' => 'hobelbank-1',
+        'name' => 'Hobelbank 1',
+        'status' => 'OK',
+        'areaId' => test()->areaId,
+    ], $overrides);
+}
+
+it('legt einen Arbeitsplatz an', function () {
+    $this->actingAs($this->admin)
+        ->postJson('/api/workplaces', workplacePayload([
+            'description' => 'Lange Bank am Fenster.',
+            'tags' => ['#Laut', 'laut', 'Staubig'],
+            'blocksWorkplaceIds' => ['holz-2'],
+            'blocksWorkplacesWithTag' => ['leise'],
+            'sortOrder' => 5,
+        ]))
+        ->assertValidRequest()
+        ->assertValidResponse(201)
+        ->assertJsonPath('id', 'hobelbank-1')
+        // Tags kommen ohne "#" und ohne Dublette zurück, die erste Schreibweise gewinnt.
+        ->assertJsonPath('tags', ['Laut', 'Staubig'])
+        ->assertJsonPath('blocksWorkplaceIds', ['holz-2'])
+        ->assertJsonPath('blocksWorkplacesWithTag', ['leise'])
+        ->assertHeader('Location');
+});
+
+it('weist eine doppelte Kennung mit 409 ab', function () {
+    $this->actingAs($this->admin)
+        ->postJson('/api/workplaces', workplacePayload(['id' => 'holz-1']))
+        ->assertValidResponse(409);
+});
+
+it('weist eine Kennung ab, die nicht in eine URL passt', function () {
+    $this->actingAs($this->admin)
+        ->postJson('/api/workplaces', workplacePayload(['id' => 'Hobelbank 1']))
+        ->assertValidResponse(422);
+});
+
+it('aendert einen Arbeitsplatz', function () {
+    $this->actingAs($this->admin)
+        ->putJson('/api/workplaces/holz-1', workplacePayload([
+            'name' => 'Holz 1 neu',
+            'status' => 'DEFECT',
+            'wikiUrl' => 'https://wiki.example.org/holz-1',
+            'maxBookingDurationMinutes' => 120,
+        ]))
+        ->assertValidRequest()
+        ->assertValidResponse(200)
+        ->assertJsonPath('id', 'holz-1')
+        ->assertJsonPath('name', 'Holz 1 neu')
+        ->assertJsonPath('status', 'DEFECT')
+        ->assertJsonPath('maxBookingDurationMinutes', 120);
+});
+
+// Die Kennung steht im Pfad; eine im Rumpf mitgeschickte wird nicht beachtet.
+it('aendert die Kennung nicht mit', function () {
+    $this->actingAs($this->admin)
+        ->putJson('/api/workplaces/holz-1', workplacePayload(['id' => 'ganz-anders']))
+        ->assertValidResponse(200)
+        ->assertJsonPath('id', 'holz-1');
+
+    expect(Workplace::find('ganz-anders'))->toBeNull();
+});
+
+it('blockiert sich nicht selbst', function () {
+    $this->actingAs($this->admin)
+        ->putJson('/api/workplaces/holz-1', workplacePayload([
+            'blocksWorkplaceIds' => ['holz-1', 'holz-2'],
+        ]))
+        ->assertValidResponse(200)
+        ->assertJsonPath('blocksWorkplaceIds', ['holz-2']);
+});
+
+it('loescht einen Arbeitsplatz und raeumt ihn aus fremden Blockierlisten', function () {
+    $this->actingAs($this->admin)
+        ->putJson('/api/workplaces/holz-2', workplacePayload([
+            'id' => 'holz-2',
+            'name' => 'Holz 2',
+            'blocksWorkplaceIds' => ['holz-3'],
+        ]))
+        ->assertValidResponse(200);
+
+    $this->actingAs($this->admin)
+        ->deleteJson('/api/workplaces/holz-3')
+        ->assertValidRequest()
+        ->assertValidResponse(204);
+
+    expect(Workplace::find('holz-3'))->toBeNull();
+    expect(Workplace::findOrFail('holz-2')->blocksWorkplaces()->pluck('id')->all())->toBe([]);
+});
+
+it('verweigert das Loeschen bei kuenftigen Buchungen', function () {
+    Booking::create([
+        'workplace_id' => 'holz-3',
+        'name' => 'Später', 'contact' => 'spaeter@example.org',
+        'start_time' => CarbonImmutable::parse('2026-08-03 09:00', 'Europe/Zurich')->utc(),
+        'end_time' => CarbonImmutable::parse('2026-08-03 11:00', 'Europe/Zurich')->utc(),
+        'chargeable_duration_minutes' => 120,
+    ]);
+
+    $this->actingAs($this->admin)
+        ->deleteJson('/api/workplaces/holz-3')
+        ->assertValidResponse(422);
+
+    expect(Workplace::find('holz-3'))->not->toBeNull();
+});
+
+it('laesst nur manageWorkplaces schreiben', function () {
+    $this->actingAs($this->member)
+        ->postJson('/api/workplaces', workplacePayload())
+        ->assertValidResponse(403);
+
+    $this->deleteJson('/api/workplaces/holz-1')->assertValidResponse(403);
+});
+
+// Nur die Antwort wird gegen die Spec geprüft: Spectator vergleicht den
+// Medientyp der Anfrage buchstäblich und stolpert über das "; boundary=…", das
+// jede multipart-Anfrage mitführt.
+it('nimmt ein Foto entgegen und leitet ein Vorschaubild ab', function () {
+    fakePhotoDisk();
+
+    $response = $this->actingAs($this->admin)
+        ->post(
+            '/api/workplaces/holz-1/photo',
+            ['file' => UploadedFile::fake()->image('werkbank.jpg', 2400, 1200)],
+            ['Accept' => 'application/json'],
+        )
+        ->assertValidResponse(200);
+
+    $photo = $response->json('photoUrl');
+    $thumbnail = $response->json('photoThumbnailUrl');
+
+    expect($photo)->not->toBeNull()
+        ->and($thumbnail)->not->toBeNull()
+        ->and($photo)->not->toBe($thumbnail);
+
+    $workplace = Workplace::findOrFail('holz-1');
+
+    Storage::disk('public')->assertExists($workplace->photo_path);
+    Storage::disk('public')->assertExists($workplace->photo_thumbnail_path);
+
+    // Auf die längere Kante heruntergerechnet, Seitenverhältnis erhalten.
+    $size = getimagesizefromstring(Storage::disk('public')->get($workplace->photo_thumbnail_path));
+    expect($size[0])->toBe(400)->and($size[1])->toBe(200);
+});
+
+it('ersetzt ein vorhandenes Foto und laesst nichts liegen', function () {
+    fakePhotoDisk();
+
+    $upload = fn () => $this->actingAs($this->admin)->post(
+        '/api/workplaces/holz-1/photo',
+        ['file' => UploadedFile::fake()->image('werkbank.jpg', 800, 600)],
+        ['Accept' => 'application/json'],
+    );
+
+    $upload()->assertValidResponse(200);
+    $first = Workplace::findOrFail('holz-1')->photo_path;
+
+    $this->travel(1)->seconds();
+
+    $upload()->assertValidResponse(200);
+    $second = Workplace::findOrFail('holz-1')->photo_path;
+
+    expect($second)->not->toBe($first);
+    Storage::disk('public')->assertMissing($first);
+});
+
+it('loescht das Foto', function () {
+    fakePhotoDisk();
+
+    $this->actingAs($this->admin)->post(
+        '/api/workplaces/holz-1/photo',
+        ['file' => UploadedFile::fake()->image('werkbank.jpg', 800, 600)],
+        ['Accept' => 'application/json'],
+    );
+
+    $path = Workplace::findOrFail('holz-1')->photo_path;
+
+    $this->actingAs($this->admin)
+        ->deleteJson('/api/workplaces/holz-1/photo')
+        ->assertValidRequest()
+        ->assertValidResponse(204);
+
+    Storage::disk('public')->assertMissing($path);
+    expect(Workplace::findOrFail('holz-1')->photo_path)->toBeNull();
+});
+
+it('weist eine Datei ab, die kein Bild ist', function () {
+    fakePhotoDisk();
+
+    $this->actingAs($this->admin)
+        ->post(
+            '/api/workplaces/holz-1/photo',
+            ['file' => UploadedFile::fake()->create('handbuch.pdf', 100, 'application/pdf')],
+            ['Accept' => 'application/json'],
+        )
+        ->assertValidResponse(422);
+});
