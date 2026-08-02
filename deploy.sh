@@ -103,6 +103,11 @@ else
     echo 'composer.lock unverändert, vendor/ bleibt wie es ist.'
 fi
 
+# Vor der Migration die Verbindung zeigen. Ohne Shell ist das Log die einzige
+# Auskunft, und „migrate ist gescheitert" allein hilft niemandem weiter: hier
+# steht, gegen welchen Host, welche Datenbank und welchen Benutzer es ging.
+"$PHP" artisan db:show
+
 "$PHP" artisan migrate --force
 "$PHP" artisan optimize
 
