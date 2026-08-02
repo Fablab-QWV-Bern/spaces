@@ -6,7 +6,7 @@
   inset: auto;
   margin: 0;
   padding: 0.6rem 0.75rem;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--line-strong);
 
   // Gegenstück zum `anchor-name` in calendar-block.scss.
   position-anchor: --block;
@@ -19,13 +19,13 @@
 
   min-width: 12rem;
   max-width: 20rem;
-  background: #fff;
+  background: var(--paper);
   border-radius: 0.35rem;
-  box-shadow: 0 6px 20px rgb(15 23 42 / 0.15);
+  box-shadow: 0 6px 20px var(--shadow);
   font-family: system-ui, sans-serif;
   font-size: 0.82rem;
   line-height: 1.35;
-  color: #0f172a;
+  color: var(--ink);
   // Der Balken schreibt seinen Inhalt einzeilig; die Karte liegt in seinem
   // Teilbaum und erbt das.
   white-space: normal;
@@ -40,7 +40,7 @@ p {
 }
 
 .card-time {
-  color: #475569;
+  color: var(--text-muted);
 }
 
 .card-who {
@@ -49,18 +49,18 @@ p {
 
 .card-contact,
 .card-series {
-  color: #475569;
+  color: var(--text-muted);
 }
 
 .muted {
-  color: #94a3b8;
+  color: var(--text-faint);
   font-style: italic;
 }
 
 .card-edit {
   margin-top: 0.5rem;
-  border: 1px solid #cbd5e1;
-  background: #fff;
+  border: 1px solid var(--line-strong);
+  background: var(--paper);
   border-radius: 0.25rem;
   padding: 0.25rem 0.6rem;
   font: inherit;
@@ -68,6 +68,6 @@ p {
   cursor: pointer;
 
   &:hover {
-    background: #f1f5f9;
+    background: var(--surface-muted);
   }
 }

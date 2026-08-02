@@ -1,3 +1,5 @@
+@use 'colors';
+
 // Ohne border-box addiert sich das Padding eines Blocks auf dessen prozentuale
 // Breite — die Buchungen ragten dadurch über das Zeitraster hinaus.
 *,
@@ -17,5 +19,5 @@ html {
 html,
 body {
   margin: 0;
-  background: #f8fafc;
+  background: var(--surface-sunken);
 }

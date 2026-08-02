@@ -15,7 +15,7 @@ h2 {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #475569;
+  color: var(--text-muted);
 }
 
 // Die Erklärung steht unter dem Kreuz, aber eingerückt auf der Höhe des Textes.
@@ -34,10 +34,10 @@ h2 {
 }
 
 .locked-note {
-  color: #92400e;
+  color: var(--warning-text);
 }
 
 .warn {
-  color: #b45309;
+  color: var(--warning-text);
   font-size: 0.75rem;
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { weekOf } from './calendar-store';
+import { monthOf, weekOf } from './calendar-store';
 
 describe('weekOf', () => {
   it('beginnt am Montag', () => {
@@ -35,5 +35,31 @@ describe('weekOf', () => {
       '2026-03-28',
       '2026-03-29',
     ]);
+  });
+});
+
+describe('monthOf', () => {
+  it('reicht vom Ersten bis zum Letzten', () => {
+    const days = monthOf('2026-07-15');
+
+    expect(days).toHaveLength(31);
+    expect(days[0]).toBe('2026-07-01');
+    expect(days.at(-1)).toBe('2026-07-31');
+  });
+
+  it('kennt die Länge kurzer Monate', () => {
+    expect(monthOf('2026-02-10')).toHaveLength(28);
+    expect(monthOf('2028-02-10')).toHaveLength(29);
+    expect(monthOf('2026-04-30').at(-1)).toBe('2026-04-30');
+  });
+
+  // Wie bei der Woche: über Mitternacht gerechnet wäre der Tag der Umstellung
+  // 23 Stunden lang und käme doppelt in der Liste vor.
+  it('übersteht die Zeitumstellung', () => {
+    const days = monthOf('2026-03-01');
+
+    expect(days).toHaveLength(31);
+    expect(new Set(days).size).toBe(31);
+    expect(days).toContain('2026-03-29');
   });
 });

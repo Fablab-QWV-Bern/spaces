@@ -7,18 +7,13 @@ import { CalendarStore, isoDate } from './calendar-store';
 import { CalendarToolbar } from './calendar-toolbar';
 import { syncDateWithUrl } from './date-in-url';
 import { DayTrack } from './day-track';
-import {
-  DEFAULT_DURATION_MINUTES,
-  gridTemplateColumns,
-  instantAt,
-  lineName,
-  percentOfAxis,
-} from './time-axis';
+import { HourHeader } from './hour-header';
+import { DEFAULT_DURATION_MINUTES, instantAt, percentOfAxis, toLocalIso } from './time-axis';
 import { WorkplaceLabel } from './workplace-label';
 
 @Component({
   selector: 'app-day-calendar',
-  imports: [CalendarToolbar, DayTrack, WorkplaceLabel],
+  imports: [CalendarToolbar, DayTrack, HourHeader, WorkplaceLabel],
   templateUrl: './day-calendar.html',
   styleUrl: './day-calendar.scss',
 })
@@ -104,24 +99,6 @@ export class DayCalendar {
     return this.blocksByWorkplace().get(workplace.id) ?? [];
   }
 
-  /** Das Spaltenraster für die Stundenbeschriftung der Kopfzeile. */
-  protected readonly gridTemplate = computed(() => {
-    const axis = this.store.axis();
-
-    return axis ? gridTemplateColumns(axis) : '';
-  });
-
-  /** Eine Stundenbeschriftung spannt über ihre vier Viertelstunden. */
-  protected hourColumn(hour: number): string {
-    const axis = this.store.axis();
-
-    if (!axis) {
-      return 'auto';
-    }
-
-    return `${lineName(hour * 60)} / ${lineName(Math.min(hour * 60 + 60, axis.closesAt))}`;
-  }
-
   /** Nur wo tatsächlich gebucht werden kann, ist die Fläche anklickbar. */
   protected isBookable(workplace: Workplace): boolean {
     return workplace.status === 'OK' && this.store.canManageBookings();
@@ -131,8 +108,6 @@ export class DayCalendar {
     this.router.navigate(['/buchen'], {
       queryParams: {
         workplace: workplace.id,
-        // Lokale Zeit ohne Zone: das Formular arbeitet in Anzeige-Zeit, die
-        // Umrechnung nach UTC passiert erst beim Speichern.
         start: toLocalIso(instantAt(this.store.date(), minutes)),
         // Keine Dauer mitgeben: das Formular setzt selbst seine Standarddauer.
       },
@@ -143,11 +118,4 @@ export class DayCalendar {
     this.store.date.set(value);
     this.store.load();
   }
-}
-
-/** "2026-07-31T14:00" — lokale Wanduhrzeit, bewusst ohne Zonenangabe. */
-function toLocalIso(date: Date): string {
-  const offset = date.getTimezoneOffset() * 60_000;
-
-  return new Date(date.getTime() - offset).toISOString().slice(0, 16);
 }

@@ -84,26 +84,26 @@ import { SessionService } from './session-service';
       align-items: center;
       gap: 0.5rem;
       font-size: 0.85rem;
-      color: #475569;
+      color: var(--text-muted);
     }
 
     button {
       padding: 0.35rem 0.7rem;
       font: inherit;
       font-size: 0.85rem;
-      border: 1px solid #cbd5e1;
+      border: 1px solid var(--line-strong);
       border-radius: 0.25rem;
-      background: #fff;
+      background: var(--paper);
       cursor: pointer;
 
       &:hover {
-        background: #f1f5f9;
+        background: var(--surface-muted);
       }
 
       &.primary {
-        background: #2563eb;
-        border-color: #2563eb;
-        color: #fff;
+        background: var(--accent);
+        border-color: var(--accent);
+        color: var(--paper);
       }
 
       &:disabled {
@@ -113,13 +113,13 @@ import { SessionService } from './session-service';
     }
 
     .login {
-      border: 1px solid #cbd5e1;
+      border: 1px solid var(--line-strong);
       border-radius: 0.4rem;
       padding: 1.25rem;
       min-width: 18rem;
 
       &::backdrop {
-        background: rgb(15 23 42 / 0.35);
+        background: var(--scrim);
       }
 
       h2 {
@@ -151,7 +151,7 @@ import { SessionService } from './session-service';
       input {
         padding: 0.4rem 0.5rem;
         font: inherit;
-        border: 1px solid #cbd5e1;
+        border: 1px solid var(--line-strong);
         border-radius: 0.25rem;
       }
 
@@ -163,13 +163,13 @@ import { SessionService } from './session-service';
 
       .error {
         margin: 0;
-        color: #b91c1c;
+        color: var(--danger-text);
         font-size: 0.85rem;
       }
 
       .hint {
         margin: 0;
-        color: #64748b;
+        color: var(--text-soft);
         font-size: 0.85rem;
       }
     }

@@ -29,6 +29,9 @@ export function syncDateWithUrl(): void {
     void router.navigate([], {
       relativeTo: route,
       queryParams: { datum: store.date() },
+      // Ohne `merge` ersetzt jede Datumsänderung die ganze Abfrage — die
+      // Einzelansicht verlöre bei jedem Blätterschritt ihren Arbeitsplatz.
+      queryParamsHandling: 'merge',
       replaceUrl: true,
     });
   });

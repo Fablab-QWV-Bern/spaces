@@ -1,11 +1,13 @@
 import { Component, computed, inject, input, output } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 
 import { SessionBar } from '../shared/session-bar';
 import { SessionService } from '../shared/session-service';
+import { CalendarStore } from './calendar-store';
 
 /**
- * Kopfzeile des Kalenders: Zeitraum, Blättern, Datumswahl, Zoomstufe, Anmeldung.
+ * Kopfzeile des Kalenders: Arbeitsplatz, Zeitraum, Blättern, Datumswahl,
+ * Zoomstufe, Anmeldung.
  *
  * Was "ein Schritt" bedeutet, entscheidet die Ansicht — die Leiste meldet nur
  * Richtungen und beschriftet ihre Pfeile mit der Einheit, die sie bekommt.
@@ -13,6 +15,10 @@ import { SessionService } from '../shared/session-service';
  * Der Umschalter der Zoomstufe sind Links und keine Schaltflächen: jede Stufe
  * ist eine eigene Route, damit sie verlinkbar bleibt und der Zurück-Knopf tut,
  * was man erwartet. Das Datum reist als Abfrageparameter mit.
+ *
+ * Die Arbeitsplatzwahl blättert nicht, sie wechselt die Ansicht — und tut das
+ * darum selbst, statt es an drei Ansichten zu melden, die alle dasselbe täten.
+ * Sie ist zugleich der Weg zurück: "Alle Arbeitsplätze" führt in die Tagesansicht.
  */
 @Component({
   selector: 'app-calendar-toolbar',
@@ -21,6 +27,28 @@ import { SessionService } from '../shared/session-service';
     <h1>{{ heading() }}</h1>
 
     <nav class="controls">
+      <select
+        class="workplace"
+        aria-label="Arbeitsplatz wählen"
+        (change)="onWorkplaceChange($any($event.target).value)"
+      >
+        <!-- Die Auswahl steht auf den Optionen und nicht als [value] auf dem
+             Feld: die Arbeitsplätze treffen erst nach dem ersten Zeichnen ein,
+             und ein Wert, der zu diesem Zeitpunkt keine Option hat, fiele
+             stillschweigend auf den ersten Eintrag zurück. -->
+        <option value="" [selected]="!workplaceId()">Alle Arbeitsplätze</option>
+
+        @for (group of store.rows(); track group.area.id) {
+          <optgroup [label]="group.area.name">
+            @for (workplace of group.workplaces; track workplace.id) {
+              <option [value]="workplace.id" [selected]="workplace.id === workplaceId()">
+                {{ workplace.name }}
+              </option>
+            }
+          </optgroup>
+        }
+      </select>
+
       <button type="button" (click)="shift.emit(-1)" [attr.aria-label]="backLabel()">‹</button>
       <button type="button" (click)="today.emit()">Heute</button>
       <button type="button" (click)="shift.emit(1)" [attr.aria-label]="forwardLabel()">›</button>
@@ -32,24 +60,26 @@ import { SessionService } from '../shared/session-service';
         aria-label="Datum wählen"
       />
 
-      <span class="spans">
-        <a
-          routerLink="/tag"
-          [queryParams]="{ datum: date() }"
-          routerLinkActive="active"
-          #tag="routerLinkActive"
-          [attr.aria-current]="tag.isActive ? 'page' : null"
-          >Tag</a
-        >
-        <a
-          routerLink="/woche"
-          [queryParams]="{ datum: date() }"
-          routerLinkActive="active"
-          #woche="routerLinkActive"
-          [attr.aria-current]="woche.isActive ? 'page' : null"
-          >Woche</a
-        >
-      </span>
+      @if (zoomable()) {
+        <span class="spans">
+          <a
+            routerLink="/tag"
+            [queryParams]="{ datum: date() }"
+            routerLinkActive="active"
+            #tag="routerLinkActive"
+            [attr.aria-current]="tag.isActive ? 'page' : null"
+            >Tag</a
+          >
+          <a
+            routerLink="/woche"
+            [queryParams]="{ datum: date() }"
+            routerLinkActive="active"
+            #woche="routerLinkActive"
+            [attr.aria-current]="woche.isActive ? 'page' : null"
+            >Woche</a
+          >
+        </span>
+      }
 
       @if (session.canManageAnything()) {
         <a class="admin" routerLink="/verwaltung">Verwaltung</a>
@@ -79,9 +109,10 @@ import { SessionService } from '../shared/session-service';
       gap: 0.25rem;
 
       button,
-      input {
-        border: 1px solid #cbd5e1;
-        background: #fff;
+      input,
+      select {
+        border: 1px solid var(--line-strong);
+        background: var(--paper);
         padding: 0.35rem 0.7rem;
         font: inherit;
         font-size: 0.9rem;
@@ -89,12 +120,17 @@ import { SessionService } from '../shared/session-service';
         cursor: pointer;
 
         &:hover {
-          background: #f1f5f9;
+          background: var(--surface-muted);
         }
       }
 
-      input {
+      input[type='date'] {
         cursor: text;
+      }
+
+      .workplace {
+        max-width: 14rem;
+        margin-right: 0.5rem;
       }
     }
 
@@ -102,10 +138,10 @@ import { SessionService } from '../shared/session-service';
       align-self: center;
       margin-left: 0.5rem;
       font-size: 0.85rem;
-      color: #475569;
+      color: var(--text-muted);
 
       &:hover {
-        color: #0f172a;
+        color: var(--ink);
       }
     }
 
@@ -114,15 +150,15 @@ import { SessionService } from '../shared/session-service';
       margin-left: 0.5rem;
 
       a {
-        border: 1px solid #cbd5e1;
-        background: #fff;
+        border: 1px solid var(--line-strong);
+        background: var(--paper);
         padding: 0.35rem 0.7rem;
         font-size: 0.9rem;
         color: inherit;
         text-decoration: none;
 
         &:hover {
-          background: #f1f5f9;
+          background: var(--surface-muted);
         }
 
         &:first-child {
@@ -135,9 +171,9 @@ import { SessionService } from '../shared/session-service';
         }
 
         &.active {
-          background: #475569;
-          border-color: #475569;
-          color: #fff;
+          background: var(--text-muted);
+          border-color: var(--text-muted);
+          color: var(--paper);
         }
       }
     }
@@ -145,11 +181,20 @@ import { SessionService } from '../shared/session-service';
 })
 export class CalendarToolbar {
   protected readonly session = inject(SessionService);
+  protected readonly store = inject(CalendarStore);
+  private readonly router = inject(Router);
 
   readonly heading = input.required<string>();
   readonly date = input.required<string>();
   /** Die Einheit eines Blätterschritts, für die Beschriftung der Pfeile. */
   readonly unit = input<'Tag' | 'Woche' | 'Monat'>('Tag');
+  /** Der dargestellte Arbeitsplatz; null in den Ansichten über alle. */
+  readonly workplaceId = input<string | null>(null);
+  /**
+   * Ob der Umschalter der Zoomstufe erscheint. Die Einzelansicht zeigt fix
+   * einen Monat — dort gäbe es nichts umzuschalten.
+   */
+  readonly zoomable = input(true);
 
   readonly shift = output<number>();
   readonly today = output<void>();
@@ -168,4 +213,17 @@ export class CalendarToolbar {
         this.unit()
       ],
   );
+
+  /** Der leere Wert steht für "alle" und führt zurück in die Tagesansicht. */
+  protected onWorkplaceChange(workplaceId: string): void {
+    if (workplaceId) {
+      void this.router.navigate(['/arbeitsplatz'], {
+        queryParams: { arbeitsplatz: workplaceId, datum: this.date() },
+      });
+
+      return;
+    }
+
+    void this.router.navigate(['/tag'], { queryParams: { datum: this.date() } });
+  }
 }

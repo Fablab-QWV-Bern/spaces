@@ -75,12 +75,12 @@ import { Component, ElementRef, computed, input, model, signal, viewChild } from
       align-items: center;
       gap: 0.3rem;
       padding: 0.25rem 0.35rem;
-      border: 1px solid #cbd5e1;
+      border: 1px solid var(--line-strong);
       border-radius: 0.25rem;
-      background: #fff;
+      background: var(--paper);
 
       &:focus-within {
-        outline: 2px solid #2563eb;
+        outline: 2px solid var(--accent);
         outline-offset: -1px;
       }
     }
@@ -91,7 +91,7 @@ import { Component, ElementRef, computed, input, model, signal, viewChild } from
       gap: 0.2rem;
       padding: 0.1rem 0.2rem 0.1rem 0.4rem;
       border-radius: 0.2rem;
-      background: #e2e8f0;
+      background: var(--line);
       font-size: 0.8rem;
 
       button {
@@ -101,11 +101,11 @@ import { Component, ElementRef, computed, input, model, signal, viewChild } from
         font: inherit;
         font-size: 0.9rem;
         line-height: 1;
-        color: #475569;
+        color: var(--text-muted);
         cursor: pointer;
 
         &:hover {
-          color: #b91c1c;
+          color: var(--danger-text);
         }
       }
     }
@@ -134,19 +134,19 @@ import { Component, ElementRef, computed, input, model, signal, viewChild } from
 
     .suggestion {
       padding: 0.1rem 0.4rem;
-      border: 1px dashed #cbd5e1;
+      border: 1px dashed var(--line-strong);
       border-radius: 0.2rem;
       background: none;
       font: inherit;
       font-size: 0.8rem;
-      color: #475569;
+      color: var(--text-muted);
       cursor: pointer;
 
       &:hover,
       &:focus-visible {
         border-style: solid;
-        background: #e2e8f0;
-        color: #0f172a;
+        background: var(--line);
+        color: var(--ink);
       }
     }
   `,

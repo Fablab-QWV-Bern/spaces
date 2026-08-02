@@ -7,9 +7,7 @@
 
 :host {
   --label-width: 10rem;
-  --row-height: 2.25rem;
-  --border: #e2e8f0;
-  --border-strong: #cbd5e1;
+  --row-height: 2rem;
   --columns: 1fr;
 
   // Die Ansicht füllt das Fenster und scrollt nicht selbst — gescrollt wird in
@@ -21,7 +19,7 @@
   flex-direction: column;
   height: 100dvh;
   font-family: system-ui, sans-serif;
-  color: #0f172a;
+  color: var(--ink);
 }
 
 .hint,
@@ -30,7 +28,7 @@
 }
 
 .error {
-  color: #b91c1c;
+  color: var(--danger-text);
 }
 
 .calendar {
@@ -44,15 +42,15 @@
 .grid {
   position: relative;
   min-width: 48rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--line);
   border-radius: 0.25rem;
-  background: #fff;
+  background: var(--paper);
 }
 
 .row {
   display: grid;
   grid-template-columns: var(--label-width) var(--columns);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--line);
 
   &:last-of-type {
     border-bottom: 0;
@@ -71,8 +69,8 @@
   gap: 0.4rem;
   height: var(--row-height);
   padding: 0 0.6rem;
-  background: #fff;
-  border-right: 1px solid var(--border-strong);
+  background: var(--paper);
+  border-right: 1px solid var(--line-strong);
   font-size: 0.85rem;
   text-align: right;
   margin-right: -1px;
@@ -85,26 +83,26 @@
   position: sticky;
   top: 0;
   z-index: 4;
-  background: #fff;
-  border-bottom: 1px solid var(--border-strong);
+  background: var(--paper);
+  border-bottom: 1px solid var(--line-strong);
 
   .label {
     font-weight: 600;
-    color: #475569;
+    color: var(--text-muted);
   }
 }
 
 .group {
-  background: #f8fafc;
+  background: var(--surface-sunken);
 
   .label {
     justify-content: flex-start;
-    background: #f8fafc;
+    background: var(--surface-sunken);
     font-weight: 600;
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: #475569;
+    color: var(--text-muted);
   }
 }
 
@@ -122,7 +120,7 @@
   top: 0;
   bottom: 0;
   width: 2px;
-  background: #2563eb;
+  background: var(--accent);
 }
 
 .legend {
@@ -131,7 +129,7 @@
   gap: 0.4rem;
   padding: 0 1.5rem 1.5rem;
   font-size: 0.8rem;
-  color: #475569;
+  color: var(--text-muted);
 
   .swatch {
     display: inline-block;
@@ -145,16 +143,16 @@
     }
 
     &.booking {
-      background: #84cc16;
+      background: var(--booking);
     }
 
     &.blockage {
-      background: repeating-linear-gradient(45deg, #cbd5e1, #cbd5e1 4px, #e2e8f0 4px, #e2e8f0 8px);
+      background: var(--blockage-hatch);
     }
 
     &.free {
-      background: #fff;
-      box-shadow: inset 0 0 0 1px var(--border-strong);
+      background: var(--paper);
+      box-shadow: inset 0 0 0 1px var(--line-strong);
     }
   }
 }

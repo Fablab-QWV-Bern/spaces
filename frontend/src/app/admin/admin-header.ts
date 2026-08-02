@@ -60,23 +60,23 @@ import { SessionService } from '../shared/session-service';
       display: flex;
       gap: 1rem;
       margin-top: 0.75rem;
-      border-bottom: 1px solid #e2e8f0;
+      border-bottom: 1px solid var(--line);
       font-size: 0.9rem;
 
       a {
         padding: 0.4rem 0.1rem;
-        color: #475569;
+        color: var(--text-muted);
         text-decoration: none;
         border-bottom: 2px solid transparent;
         margin-bottom: -1px;
 
         &:hover {
-          color: #0f172a;
+          color: var(--ink);
         }
 
         &.active {
-          color: #0f172a;
-          border-bottom-color: #2563eb;
+          color: var(--ink);
+          border-bottom-color: var(--accent);
           font-weight: 600;
         }
       }

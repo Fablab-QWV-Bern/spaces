@@ -1,0 +1,29 @@
+@use './calendar-chrome';
+
+// Eine Tageszeile ist der Bezug ihrer eigenen Jetzt-Linie. In Tag und Woche
+// liegt die Linie über dem ganzen Raster, weil dort jede Zeile denselben Tag
+// zeigt; hier zeigt jede Zeile einen anderen.
+.row.day {
+  position: relative;
+}
+
+// Wochenenden grau, heute hervorgehoben — wie in der Wochenansicht. Die
+// Beschriftung klebt links und bringt ihren eigenen weissen Hintergrund mit,
+// darum wird sie eigens getönt.
+.weekend {
+  background-color: var(--surface-muted);
+
+  .label {
+    background-color: var(--surface-muted);
+  }
+}
+
+.today {
+  background-color: var(--accent-wash);
+
+  .label {
+    background-color: var(--accent-wash);
+    font-weight: 600;
+    color: var(--accent-deep);
+  }
+}

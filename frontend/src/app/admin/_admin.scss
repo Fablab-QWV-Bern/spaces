@@ -2,12 +2,9 @@
 // als dem Kalender: eine schmale Spalte mit Kopfzeile, Tabelle oder Formular.
 
 :host {
-  --border: #e2e8f0;
-  --border-strong: #cbd5e1;
-
   display: block;
   font-family: system-ui, sans-serif;
-  color: #0f172a;
+  color: var(--ink);
 }
 
 .hint,
@@ -16,7 +13,7 @@
 }
 
 .error {
-  color: #b91c1c;
+  color: var(--danger-text);
 }
 
 .notice {
@@ -27,8 +24,8 @@
   margin: 0 1.5rem;
   padding: 1rem;
   max-width: 52rem;
-  background: #fffbeb;
-  border: 1px solid #fde68a;
+  background: var(--warning-wash);
+  border: 1px solid var(--warning-line);
   border-radius: 0.4rem;
   font-size: 0.9rem;
 
@@ -42,8 +39,8 @@
   flex-direction: column;
   gap: 0.75rem;
   padding: 1rem;
-  background: #fff;
-  border: 1px solid var(--border);
+  background: var(--paper);
+  border: 1px solid var(--line);
   border-radius: 0.4rem;
 }
 
@@ -54,7 +51,7 @@
   font-size: 0.85rem;
 
   > span {
-    color: #475569;
+    color: var(--text-muted);
   }
 
   input,
@@ -63,9 +60,9 @@
     padding: 0.4rem 0.5rem;
     font: inherit;
     font-size: 0.9rem;
-    border: 1px solid var(--border-strong);
+    border: 1px solid var(--line-strong);
     border-radius: 0.25rem;
-    background: #fff;
+    background: var(--paper);
   }
 
   textarea {
@@ -74,7 +71,7 @@
   }
 
   .note {
-    color: #64748b;
+    color: var(--text-soft);
     font-size: 0.75rem;
   }
 }
@@ -101,33 +98,33 @@ button,
   padding: 0.4rem 0.8rem;
   font: inherit;
   font-size: 0.85rem;
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--line-strong);
   border-radius: 0.25rem;
-  background: #fff;
+  background: var(--paper);
   color: inherit;
   text-decoration: none;
   cursor: pointer;
 
   &:hover {
-    background: #f1f5f9;
+    background: var(--surface-muted);
   }
 
   &.primary {
-    background: #2563eb;
-    border-color: #2563eb;
-    color: #fff;
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--paper);
 
     &:hover {
-      background: #1d4ed8;
+      background: var(--accent-deep);
     }
   }
 
   &.danger {
-    color: #b91c1c;
-    border-color: #fca5a5;
+    color: var(--danger-text);
+    border-color: var(--danger-line);
 
     &:hover {
-      background: #fef2f2;
+      background: var(--danger-wash);
     }
   }
 
@@ -154,15 +151,15 @@ button,
   bottom: 0;
   margin: 0 -1.5rem;
   padding: 0.75rem 1.5rem;
-  border-top: 1px solid var(--border);
-  background: rgb(248 250 252 / 0.9);
+  border-top: 1px solid var(--line);
+  background: color-mix(in srgb, var(--surface-sunken) 90%, transparent);
   backdrop-filter: blur(6px);
 }
 
 // Der Fehler gehört in die Leiste: er entsteht beim Speichern, und dort schaut
 // man in dem Moment hin.
 .save-error {
-  color: #b91c1c;
+  color: var(--danger-text);
   font-size: 0.85rem;
 }
 

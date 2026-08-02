@@ -45,6 +45,15 @@ Englisch. Kommentare erklären das *Warum*, nicht das *Was*.
 - **Zeiten sind UTC** — mit einer Ausnahme: `booking_series` speichert lokale
   Wanduhrzeit, damit eine Serie über die Zeitumstellung hinweg zur selben Uhrzeit
   stattfindet. Diese Spalten sind bewusst ungecastet.
+- **Farben werden abgeleitet, nicht notiert.** `frontend/src/_colors.scss` hält
+  sieben Ausgangsfarben; alles andere entsteht daraus mit `color-mix` und steht
+  als CSS-Variable auf `:root`. Im übrigen Code kommt kein Hex-Wert mehr vor —
+  wer einen schreibt, hat entweder einen Namen übersehen oder braucht einen
+  neuen in der Palette. Zwei Regeln stecken in den Mischungen: gemischt wird in
+  `oklab`, und heller geht über `--paper`, dunkler über Schwarz. Über `--ink`
+  abzudunkeln zöge warme Töne ins Graue. Die Grautöne kommen nicht aus `--ink`
+  selbst, sondern aus `--shade` — `--ink` mit einem Hauch Akzent, weil ein
+  reiner Verlauf nach Weiss in der Mitte seinen blauen Stich verliert.
 - **Zwei Platzierungsarten im Kalender.** Blöcke sitzen auf benannten Rasterlinien
   (`grid-column: t0900 / t1300`), die Formularvorschau und die Jetzt-Linie auf
   Prozentwerten. Beide bauen auf `visibleRange()` in
@@ -62,6 +71,15 @@ Englisch. Kommentare erklären das *Warum*, nicht das *Was*.
   `?datum=` mit; `date-in-url.ts` hält es in beide Richtungen synchron.
 - **In der Woche wird nicht gebucht.** Eine Viertelstunde wäre dort keine zwei
   Pixel breit. Ein Klick auf freie Fläche öffnet stattdessen den Tag.
+- **Die Einzelansicht (`/arbeitsplatz`) ist keine dritte Zoomstufe**, sondern die
+  Tagesansicht mit vertauschten Achsen: ein Arbeitsplatz über allen Tagen des
+  Monats statt ein Tag über allen Arbeitsplätzen. Dieselbe Zelle, derselbe
+  Massstab — darum wird dort gebucht wie im Tag. Der Arbeitsplatz reist als
+  `?arbeitsplatz=` mit und wird *nur* aus der Adresse gelesen; das Dropdown in der
+  Kopfleiste schreibt ihn dorthin und navigiert selbst, statt es an jede Ansicht
+  zu melden. Es ist zugleich der Weg zurück zu allen Arbeitsplätzen. Damit das
+  Blättern den Arbeitsplatz nicht abräumt, schreibt `date-in-url.ts` mit
+  `queryParamsHandling: 'merge'`.
 - **Die Detailkarte klappt die Plattform auf, nicht wir.** Der Balken ist ein
   `<button popovertarget>`, die Karte das benannte Popover — Umschalten, Escape,
   Klick daneben und Tastatur kommen vom Browser. Daraus folgen zwei Dinge, die

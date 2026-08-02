@@ -11,8 +11,13 @@ import { TimeAxis, buildTimeAxis } from './time-axis';
 /** Ein Tag, wie ihn der Kalender braucht: lokales Datum ohne Zeitanteil. */
 export type IsoDate = string;
 
-/** Die Zoomstufe des Kalenders. Sie bestimmt, welche Tage geladen werden. */
-export type Span = 'day' | 'week';
+/**
+ * Die Zoomstufe des Kalenders. Sie bestimmt, welche Tage geladen werden.
+ *
+ * `month` gehört der Einzelansicht: dort steht ein Arbeitsplatz je Ansicht und
+ * ein Tag je Zeile, deshalb hat ein ganzer Monat Platz.
+ */
+export type Span = 'day' | 'week' | 'month';
 
 @Injectable({ providedIn: 'root' })
 export class CalendarStore {
@@ -25,10 +30,17 @@ export class CalendarStore {
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
 
-  /** Die dargestellten Tage — einer im Tag, sieben in der Woche. */
-  readonly days = computed<IsoDate[]>(() =>
-    this.span() === 'week' ? weekOf(this.date()) : [this.date()],
-  );
+  /** Die dargestellten Tage — einer im Tag, sieben in der Woche, alle im Monat. */
+  readonly days = computed<IsoDate[]>(() => {
+    switch (this.span()) {
+      case 'week':
+        return weekOf(this.date());
+      case 'month':
+        return monthOf(this.date());
+      default:
+        return [this.date()];
+    }
+  });
 
   readonly config = signal<Config | null>(null);
   readonly areas = signal<Area[]>([]);
@@ -144,8 +156,14 @@ export class CalendarStore {
     this.load();
   }
 
-  /** Ein Blätterschritt in der Einheit der Zoomstufe: ein Tag bzw. eine Woche. */
+  /** Ein Blätterschritt in der Einheit der Zoomstufe: Tag, Woche oder Monat. */
   shift(steps: number): void {
+    if (this.span() === 'month') {
+      this.shiftMonths(steps);
+
+      return;
+    }
+
     this.shiftDays(steps * (this.span() === 'week' ? 7 : 1));
   }
 
@@ -153,6 +171,22 @@ export class CalendarStore {
     const next = new Date(`${this.date()}T12:00:00`);
     next.setDate(next.getDate() + days);
     this.date.set(isoDate(next));
+    this.load();
+  }
+
+  /**
+   * Ein Monat weiter, unter Beibehaltung des Tages im Monat.
+   *
+   * Gerechnet wird über den Ersten des Zielmonats: `setMonth` allein schöbe den
+   * 31. Januar auf den 3. März, und die Ansicht spränge einen Monat zu weit.
+   */
+  private shiftMonths(steps: number): void {
+    const current = new Date(`${this.date()}T12:00:00`);
+    const target = new Date(current.getFullYear(), current.getMonth() + steps, 1, 12);
+    const lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+
+    target.setDate(Math.min(current.getDate(), lastDay));
+    this.date.set(isoDate(target));
     this.load();
   }
 }
@@ -173,6 +207,27 @@ export function weekOf(date: IsoDate): IsoDate[] {
 
     return isoDate(day);
   });
+}
+
+/**
+ * Alle Tage des Monats, in dem das Datum liegt.
+ *
+ * Wie `weekOf` über Mittag gerechnet: an einem Tag mit Zeitumstellung wäre der
+ * Schritt über Mitternacht 23 oder 25 Stunden lang und träfe den Vortag.
+ */
+export function monthOf(date: IsoDate): IsoDate[] {
+  const day = new Date(`${date}T12:00:00`);
+  day.setDate(1);
+
+  const month = day.getMonth();
+  const days: IsoDate[] = [];
+
+  while (day.getMonth() === month) {
+    days.push(isoDate(day));
+    day.setDate(day.getDate() + 1);
+  }
+
+  return days;
 }
 
 export function todayIso(): IsoDate {

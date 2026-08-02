@@ -199,6 +199,18 @@ export function instantAt(day: string, minutesSinceMidnight: number): Date {
   return instant;
 }
 
+/**
+ * "2026-07-31T14:00" — lokale Wanduhrzeit, bewusst ohne Zonenangabe.
+ *
+ * So reicht der Kalender eine Startzeit ans Buchungsformular weiter: das
+ * Formular arbeitet in Anzeige-Zeit, umgerechnet wird erst beim Speichern.
+ */
+export function toLocalIso(instant: Date): string {
+  const offset = instant.getTimezoneOffset() * 60_000;
+
+  return new Date(instant.getTime() - offset).toISOString().slice(0, 16);
+}
+
 /** Die Staffelung aus der Spec, in Minuten. */
 const DURATION_LADDER = [15, 30, 45, 60, 90, 120, 180, 240, 360, 480, 720, 1440];
 

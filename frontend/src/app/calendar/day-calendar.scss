@@ -1,19 +1,1 @@
 @use './calendar-chrome';
-
-.header {
-  .hours {
-    display: grid;
-    grid-auto-rows: 1fr;
-    height: var(--row-height);
-  }
-
-  .hour {
-    grid-row: 1;
-    padding-left: 0.25rem;
-    font-size: 0.75rem;
-    color: #64748b;
-    border-left: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-  }
-}

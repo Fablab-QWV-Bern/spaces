@@ -15,7 +15,7 @@ h2 {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #475569;
+  color: var(--text-muted);
 }
 
 // Zeit und Zahl brauchen nicht die ganze Spalte.
@@ -25,11 +25,11 @@ h2 {
 }
 
 .warn {
-  color: #b45309;
+  color: var(--warning-text);
   font-size: 0.75rem;
 }
 
 .saved {
-  color: #15803d;
+  color: var(--success);
   font-size: 0.85rem;
 }

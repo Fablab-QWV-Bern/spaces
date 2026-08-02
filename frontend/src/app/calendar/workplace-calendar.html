@@ -1,0 +1,59 @@
+<app-calendar-toolbar
+  [heading]="heading()"
+  [date]="store.date()"
+  [workplaceId]="workplaceId()"
+  [zoomable]="false"
+  unit="Monat"
+  (shift)="store.shift($event)"
+  (today)="store.goToToday()"
+  (dateSelected)="onDateChange($event)"
+/>
+
+@if (store.error(); as error) {
+  <p class="error" role="alert">{{ error }}</p>
+}
+
+@if (store.loading()) {
+  <p class="hint">Wird geladen …</p>
+} @else if (!store.axis()) {
+  <p class="hint">Keine Konfiguration geladen.</p>
+} @else if (!selection()) {
+  <p class="hint">Oben einen Arbeitsplatz wählen.</p>
+} @else if (store.axis(); as axis) {
+  <div class="calendar">
+    <div class="grid">
+      <!-- Kopfzeile: Stundenbeschriftung -->
+      <div class="row header">
+        <div class="label">Tag</div>
+        <app-hour-header [axis]="axis" />
+      </div>
+
+      @for (day of days(); track day.date) {
+        <div class="row day" [class.weekend]="day.isWeekend" [class.today]="day.isToday">
+          <div class="label">{{ day.label }}</div>
+
+          <app-day-track
+            [axis]="axis"
+            [blocks]="blocks(day.date)"
+            [clickable]="isBookable()"
+            [previewMinutes]="previewMinutes"
+            (slotClick)="onSlotClick(day.date, $event)"
+          />
+
+          <!-- Die Jetzt-Linie steht in der Zeile des heutigen Tages, nicht über
+               dem ganzen Raster: jede andere Zeile ist ein anderer Tag. -->
+          @if (day.isToday && nowPercent() !== null) {
+            <div class="now-layer">
+              <div class="now" [style.left.%]="nowPercent()"></div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <p class="legend">
+    <span class="swatch booking"></span> Buchung <span class="swatch blockage"></span> durch andere
+    Buchung blockiert <span class="swatch free"></span> frei
+  </p>
+}

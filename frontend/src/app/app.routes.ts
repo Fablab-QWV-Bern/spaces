@@ -10,6 +10,7 @@ import { WorkplaceList } from './admin/workplace-list';
 import { BookingForm } from './booking/booking-form';
 import { DayCalendar } from './calendar/day-calendar';
 import { WeekCalendar } from './calendar/week-calendar';
+import { WorkplaceCalendar } from './calendar/workplace-calendar';
 
 // Jede Zoomstufe ist eine eigene Route: so bleibt eine Ansicht verlinkbar, und
 // der Zurück-Knopf führt zur vorigen Stufe statt zum vorigen Datum. Das Datum
@@ -18,6 +19,11 @@ export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'tag' },
   { path: 'tag', component: DayCalendar, title: 'Alle Arbeitsplätze — Tag' },
   { path: 'woche', component: WeekCalendar, title: 'Alle Arbeitsplätze — Woche' },
+
+  // Die Einzelansicht ist keine dritte Zoomstufe, sondern eine eigene Sicht:
+  // fix ein Monat, ein Tag je Zeile. Der Arbeitsplatz reist als `arbeitsplatz`
+  // mit, damit auch sie verlinkbar ist.
+  { path: 'arbeitsplatz', component: WorkplaceCalendar, title: 'Einzelner Arbeitsplatz' },
   { path: 'buchen', component: BookingForm, title: 'Buchung' },
 
   // Die Verwaltung ist nicht durch einen Guard geschützt, sondern durch das

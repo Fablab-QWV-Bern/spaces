@@ -17,7 +17,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #475569;
+  color: var(--text-muted);
 }
 
 .swatch {
@@ -25,7 +25,7 @@
   width: 0.9rem;
   height: 0.9rem;
   border-radius: 0.2rem;
-  box-shadow: inset 0 0 0 1px rgb(15 23 42 / 0.1);
+  box-shadow: inset 0 0 0 1px var(--hairline);
 }
 
 .places {
@@ -42,13 +42,13 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.6rem 0.75rem;
-  background: #fff;
-  border: 1px solid var(--border);
+  background: var(--paper);
+  border: 1px solid var(--line);
   border-radius: 0.4rem;
 
   &.inactive {
-    background: #f8fafc;
-    color: #64748b;
+    background: var(--surface-sunken);
+    color: var(--text-soft);
   }
 }
 
@@ -61,7 +61,7 @@
   justify-content: center;
   overflow: hidden;
   border-radius: 0.25rem;
-  background: #f1f5f9;
+  background: var(--surface-muted);
 
   img {
     width: 100%;
@@ -88,7 +88,7 @@
 
   code {
     font-size: 0.75rem;
-    color: #64748b;
+    color: var(--text-soft);
   }
 }
 
@@ -98,17 +98,17 @@
   letter-spacing: 0.03em;
   padding: 0.05rem 0.35rem;
   border-radius: 0.2rem;
-  background: #f1f5f9;
-  color: #475569;
+  background: var(--surface-muted);
+  color: var(--text-muted);
 
   &.DEFECT {
-    background: #fef2f2;
-    color: #b91c1c;
+    background: var(--danger-wash);
+    color: var(--danger-text);
   }
 
   &.DISABLED {
-    background: #f1f5f9;
-    color: #64748b;
+    background: var(--surface-muted);
+    color: var(--text-soft);
   }
 
   // Der Normalfall braucht keine Auszeichnung.
@@ -121,7 +121,7 @@
   margin: 0.2rem 0 0;
 
   &.muted {
-    color: #64748b;
+    color: var(--text-soft);
     font-size: 0.8rem;
   }
 }
@@ -134,8 +134,8 @@
 
 .tag {
   font-size: 0.75rem;
-  color: #475569;
-  background: #f1f5f9;
+  color: var(--text-muted);
+  background: var(--surface-muted);
   border-radius: 0.2rem;
   padding: 0.05rem 0.3rem;
 }

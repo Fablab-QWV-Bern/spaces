@@ -118,8 +118,7 @@ Die Kalenderkomponente wird selbst gebaut, nicht zugekauft.
 
 ### Kalenderansicht "Einzelner Arbeitsplatz"
 
-- Dieselbe UI-Komponente wie bei "Alle Arbeitsplätze", aber hier: horizontaler zeitbereich nicht uneingeschränkt wie bei
-  Alle Arbeitsplätze, sondern nur im Buchbaren Zeitbereich pro Tag (e.g 8 bis 21)
+- Dieselbe UI-Komponente wie bei "Alle Arbeitsplätze"
 - keine Zoomstufeneinstellung, sondern fix auf 1 monat, 1 tag pro zeile
 - Zeigt einen Kalender für einen einzelnen Arbeitsplatz
 - Oben Auswahl des Arbeitsplatzes (Dropdown)

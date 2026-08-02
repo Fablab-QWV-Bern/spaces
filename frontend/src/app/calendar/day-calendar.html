@@ -19,11 +19,7 @@
       <!-- Kopfzeile: Stundenbeschriftung -->
       <div class="row header">
         <div class="label">Arbeitsplatz</div>
-        <div class="hours" [style.gridTemplateColumns]="gridTemplate()">
-          @for (hour of axis.hours; track hour) {
-            <span class="hour" [style.gridColumn]="hourColumn(hour)">{{ hour }}:00</span>
-          }
-        </div>
+        <app-hour-header [axis]="axis" />
       </div>
 
       @for (group of store.rows(); track group.area.id) {

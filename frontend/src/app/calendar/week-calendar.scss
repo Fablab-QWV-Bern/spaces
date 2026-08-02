@@ -25,36 +25,36 @@
   justify-content: center;
   gap: 0.1rem;
   padding: 0.3rem 0.5rem;
-  border-left: 1px solid var(--border);
+  border-left: 1px solid var(--line);
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--text-soft);
 
   .weekday {
     font-weight: 600;
-    color: #475569;
+    color: var(--text-muted);
   }
 }
 
 app-day-track {
-  border-left: 1px solid var(--border);
+  border-left: 1px solid var(--line);
 }
 
 // Wochenenden liegen grau hinterlegt, heute hebt sich ab. Beides hinter dem
 // Stundenraster der Zelle, das durchscheinend gezeichnet ist.
 .weekend {
-  background-color: #f1f5f9;
+  background-color: var(--surface-muted);
 }
 
 .today {
-  background-color: #eff6ff;
+  background-color: var(--accent-wash);
 }
 
 .header .today {
-  background-color: #2563eb;
-  color: #dbeafe;
+  background-color: var(--accent);
+  color: var(--accent-tint);
 
   .weekday {
-    color: #fff;
+    color: var(--paper);
   }
 }
 
@@ -63,16 +63,16 @@ app-day-track {
 // die `DayTrack` für die Zelle unter dem Zeiger setzt — die Spalte wirkt
 // dadurch aus einem Stück. Nach den Tönungen oben, damit sie gewinnt.
 .hovered {
-  background-color: #f0f9ff;
+  background-color: var(--accent-wash-strong);
 }
 
 // Ausser auf heute: dessen Kopfzelle bleibt blau, sonst verlöre man beim
 // Überfahren die einzige Marke, die die Woche hat.
 .header .hovered:not(.today) {
-  color: #0f172a;
+  color: var(--ink);
 
   .weekday {
-    color: #0f172a;
+    color: var(--ink);
   }
 }
 
