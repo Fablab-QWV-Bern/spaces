@@ -233,6 +233,15 @@ zurückrollen lassen. Drei Dinge stecken darin, die man von aussen nicht sieht:
 - **Nach einem Fehler bleibt die Wartungsseite stehen.** Ab der Migration ist
   der Code neu und das Schema womöglich noch alt; eine kaputte Anwendung
   auszuliefern wäre die schlechtere Auskunft als eine abwesende.
+- **Composer ist optional.** In der Bereitstellungsaktion ist er nicht
+  zuverlässig erreichbar — Plesks eigener liegt je nach Installation woanders,
+  und der `PATH` einer Aktion ist kürzer als der einer Anmeldeschale. Fehlt er,
+  läuft die Bereitstellung trotzdem durch, solange `vendor/` zum aktuellen
+  `composer.lock` gehört; die Prüfsumme dazu liegt in
+  `storage/framework/composer-lock.sha256`. Erst wenn sich die Abhängigkeiten
+  geändert haben, hält das Skript an und verlangt den Composer-Knopf in Plesk.
+  Einen bekannten Pfad kann man der Aktion mit `COMPOSER_BIN=… bash deploy.sh`
+  mitgeben.
 
 `.env` und der Inhalt von `storage/` liegen nicht im Repository und werden
 einmalig von Hand angelegt; die Bereitstellung fasst sie nicht an. Fotos liegen
