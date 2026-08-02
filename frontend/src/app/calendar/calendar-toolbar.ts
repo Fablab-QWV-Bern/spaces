@@ -1,13 +1,12 @@
 import { Component, computed, inject, input, output } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 
 import { SessionBar } from '../shared/session-bar';
 import { SessionService } from '../shared/session-service';
-import { CalendarStore } from './calendar-store';
 
 /**
- * Kopfzeile des Kalenders: Arbeitsplatz, Zeitraum, Blättern, Datumswahl,
- * Zoomstufe, Anmeldung.
+ * Kopfzeile des Kalenders: Zeitraum, Blättern, Datumswahl, Zoomstufe,
+ * Anmeldung.
  *
  * Was "ein Schritt" bedeutet, entscheidet die Ansicht — die Leiste meldet nur
  * Richtungen und beschriftet ihre Pfeile mit der Einheit, die sie bekommt.
@@ -16,9 +15,9 @@ import { CalendarStore } from './calendar-store';
  * ist eine eigene Route, damit sie verlinkbar bleibt und der Zurück-Knopf tut,
  * was man erwartet. Das Datum reist als Abfrageparameter mit.
  *
- * Die Arbeitsplatzwahl blättert nicht, sie wechselt die Ansicht — und tut das
- * darum selbst, statt es an drei Ansichten zu melden, die alle dasselbe täten.
- * Sie ist zugleich der Weg zurück: "Alle Arbeitsplätze" führt in die Tagesansicht.
+ * In die Einzelansicht führt der Name in der Arbeitsplatzzeile, nicht die
+ * Kopfleiste — wer einen Arbeitsplatz meint, hat ihn dort vor sich. Zurück
+ * führt hier ein Knopf, den nur die Einzelansicht zeigt.
  */
 @Component({
   selector: 'app-calendar-toolbar',
@@ -27,27 +26,11 @@ import { CalendarStore } from './calendar-store';
     <h1>{{ heading() }}</h1>
 
     <nav class="controls">
-      <select
-        class="workplace"
-        aria-label="Arbeitsplatz wählen"
-        (change)="onWorkplaceChange($any($event.target).value)"
-      >
-        <!-- Die Auswahl steht auf den Optionen und nicht als [value] auf dem
-             Feld: die Arbeitsplätze treffen erst nach dem ersten Zeichnen ein,
-             und ein Wert, der zu diesem Zeitpunkt keine Option hat, fiele
-             stillschweigend auf den ersten Eintrag zurück. -->
-        <option value="" [selected]="!workplaceId()">Alle Arbeitsplätze</option>
-
-        @for (group of store.rows(); track group.area.id) {
-          <optgroup [label]="group.area.name">
-            @for (workplace of group.workplaces; track workplace.id) {
-              <option [value]="workplace.id" [selected]="workplace.id === workplaceId()">
-                {{ workplace.name }}
-              </option>
-            }
-          </optgroup>
-        }
-      </select>
+      @if (overview()) {
+        <a class="overview" routerLink="/tag" [queryParams]="{ datum: date() }"
+          >Zurück zur Übersicht</a
+        >
+      }
 
       <button type="button" (click)="shift.emit(-1)" [attr.aria-label]="backLabel()">‹</button>
       <button type="button" (click)="today.emit()">Heute</button>
@@ -81,7 +64,9 @@ import { CalendarStore } from './calendar-store';
         </span>
       }
 
-      @if (session.canManageAnything()) {
+      <!-- Die anonyme Rolle kann Rechte tragen, ohne dass jemand angemeldet
+           wäre; der Zugang zur Verwaltung gehört trotzdem hinter die Anmeldung. -->
+      @if (!session.isAnonymous() && session.canManageAnything()) {
         <a class="admin" routerLink="/verwaltung">Verwaltung</a>
       }
 
@@ -110,7 +95,7 @@ import { CalendarStore } from './calendar-store';
 
       button,
       input,
-      select {
+      .overview {
         border: 1px solid var(--line-strong);
         background: var(--paper);
         padding: 0.35rem 0.7rem;
@@ -128,9 +113,11 @@ import { CalendarStore } from './calendar-store';
         cursor: text;
       }
 
-      .workplace {
-        max-width: 14rem;
+      .overview {
         margin-right: 0.5rem;
+        color: inherit;
+        text-decoration: none;
+        white-space: nowrap;
       }
     }
 
@@ -181,15 +168,13 @@ import { CalendarStore } from './calendar-store';
 })
 export class CalendarToolbar {
   protected readonly session = inject(SessionService);
-  protected readonly store = inject(CalendarStore);
-  private readonly router = inject(Router);
 
   readonly heading = input.required<string>();
   readonly date = input.required<string>();
   /** Die Einheit eines Blätterschritts, für die Beschriftung der Pfeile. */
   readonly unit = input<'Tag' | 'Woche' | 'Monat'>('Tag');
-  /** Der dargestellte Arbeitsplatz; null in den Ansichten über alle. */
-  readonly workplaceId = input<string | null>(null);
+  /** Ob der Weg zurück zu allen Arbeitsplätzen angeboten wird. */
+  readonly overview = input(false);
   /**
    * Ob der Umschalter der Zoomstufe erscheint. Die Einzelansicht zeigt fix
    * einen Monat — dort gäbe es nichts umzuschalten.
@@ -213,17 +198,4 @@ export class CalendarToolbar {
         this.unit()
       ],
   );
-
-  /** Der leere Wert steht für "alle" und führt zurück in die Tagesansicht. */
-  protected onWorkplaceChange(workplaceId: string): void {
-    if (workplaceId) {
-      void this.router.navigate(['/arbeitsplatz'], {
-        queryParams: { arbeitsplatz: workplaceId, datum: this.date() },
-      });
-
-      return;
-    }
-
-    void this.router.navigate(['/tag'], { queryParams: { datum: this.date() } });
-  }
 }

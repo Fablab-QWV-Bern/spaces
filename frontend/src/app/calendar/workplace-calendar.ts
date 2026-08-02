@@ -27,11 +27,11 @@ interface DayRow {
  * Monats. Die Zellen sind dieselben `app-day-track` mit demselben Massstab,
  * darum wird hier auch gebucht wie im Tag.
  *
- * Eine Zoomstufe gibt es nicht: die Ansicht *ist* der Monat. Gewechselt wird
- * über die Arbeitsplatzwahl in der Kopfleiste, die auch der Weg zurück zu allen
- * Arbeitsplätzen ist. Sie schreibt den Arbeitsplatz in die Adresszeile, von wo
- * ihn diese Ansicht liest — die Adresse ist die einzige Quelle, sonst gäbe es
- * zwei, die auseinanderlaufen könnten.
+ * Eine Zoomstufe gibt es nicht: die Ansicht *ist* der Monat. Hierher führt der
+ * Name in einer Arbeitsplatzzeile, zurück der Knopf "Alle Arbeitsplätze" in der
+ * Kopfleiste. Der Arbeitsplatz steht in der Adresszeile, von wo ihn diese
+ * Ansicht liest — die Adresse ist die einzige Quelle, sonst gäbe es zwei, die
+ * auseinanderlaufen könnten.
  */
 @Component({
   selector: 'app-workplace-calendar',
@@ -63,13 +63,21 @@ export class WorkplaceCalendar {
     setInterval(() => this.now.set(new Date()), 60_000);
   }
 
-  /** "Juli 2026" — welcher Arbeitsplatz gemeint ist, sagt das Dropdown. */
-  protected readonly heading = computed(() =>
-    new Date(`${this.store.date()}T12:00:00`).toLocaleDateString('de-CH', {
+  /**
+   * "Werkbank / Juli 2026". Der Name steht in der Überschrift, weil ihn sonst
+   * nichts mehr nennt: hierher führt der Klick auf eine Arbeitsplatzzeile.
+   * Solange keiner feststeht, bleibt der Monat allein stehen.
+   */
+  protected readonly heading = computed(() => {
+    const month = new Date(`${this.store.date()}T12:00:00`).toLocaleDateString('de-CH', {
       month: 'long',
       year: 'numeric',
-    }),
-  );
+    });
+
+    const selection = this.selection();
+
+    return selection ? `${selection.workplace.name} / ${month}` : month;
+  });
 
   protected readonly days = computed<DayRow[]>(() => {
     const today = isoDate(this.now());

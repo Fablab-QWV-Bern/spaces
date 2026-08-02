@@ -1,7 +1,7 @@
 <app-calendar-toolbar
   [heading]="heading()"
   [date]="store.date()"
-  [workplaceId]="workplaceId()"
+  [overview]="true"
   [zoomable]="false"
   unit="Monat"
   (shift)="store.shift($event)"
@@ -18,7 +18,7 @@
 } @else if (!store.axis()) {
   <p class="hint">Keine Konfiguration geladen.</p>
 } @else if (!selection()) {
-  <p class="hint">Oben einen Arbeitsplatz wählen.</p>
+  <p class="hint">Kein Arbeitsplatz gewählt — oben zurück zu allen Arbeitsplätzen.</p>
 } @else if (store.axis(); as axis) {
   <div class="calendar">
     <div class="grid">

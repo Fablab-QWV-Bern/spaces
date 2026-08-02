@@ -75,9 +75,10 @@ Englisch. Kommentare erklären das *Warum*, nicht das *Was*.
   Tagesansicht mit vertauschten Achsen: ein Arbeitsplatz über allen Tagen des
   Monats statt ein Tag über allen Arbeitsplätzen. Dieselbe Zelle, derselbe
   Massstab — darum wird dort gebucht wie im Tag. Der Arbeitsplatz reist als
-  `?arbeitsplatz=` mit und wird *nur* aus der Adresse gelesen; das Dropdown in der
-  Kopfleiste schreibt ihn dorthin und navigiert selbst, statt es an jede Ansicht
-  zu melden. Es ist zugleich der Weg zurück zu allen Arbeitsplätzen. Damit das
+  `?arbeitsplatz=` mit und wird *nur* aus der Adresse gelesen. Hin führt der Name
+  in der Arbeitsplatzzeile — wer einen Arbeitsplatz meint, hat ihn dort vor sich;
+  eine Auswahlliste in der Kopfleiste zählte dieselben Namen ein zweites Mal auf.
+  Zurück führt ein Knopf, den nur diese Ansicht in der Kopfleiste zeigt. Damit das
   Blättern den Arbeitsplatz nicht abräumt, schreibt `date-in-url.ts` mit
   `queryParamsHandling: 'merge'`.
 - **Die Detailkarte klappt die Plattform auf, nicht wir.** Der Balken ist ein
