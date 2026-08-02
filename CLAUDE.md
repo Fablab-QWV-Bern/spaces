@@ -13,7 +13,7 @@ System, dessen Oberfläche als Referenz dient (Screenshots in `spec/`).
 ## Sprache
 
 Kommentare, Commit-Messages und Oberfläche auf **Deutsch**. Bezeichner im Code auf
-Englisch. Kommentare erklären das *Warum*, nicht das *Was*.
+Englisch. Kommentare erklären das _Warum_, nicht das _Was_.
 
 ## Die Spec ist der Vertrag
 
@@ -72,7 +72,7 @@ Englisch. Kommentare erklären das *Warum*, nicht das *Was*.
   `frontend/src/app/calendar/time-axis.ts` auf — die Beschneidungslogik existiert
   nur einmal.
 - **Eine Zelle für alle Zoomstufen.** `DayTrack` ist ein Zeitstrahl über die
-  Öffnungszeiten *eines* Tages. Die Tagesansicht hat eine davon je Zeile, die
+  Öffnungszeiten _eines_ Tages. Die Tagesansicht hat eine davon je Zeile, die
   Wochenansicht sieben. Weil jede Zelle ihr eigenes Raster mitbringt, meint
   `t0900` überall dasselbe; die Linien brauchen keine Tagesangabe. Was sich
   zwischen den Stufen unterscheidet, ist nur die Dichte — sie wird über
@@ -87,7 +87,7 @@ Englisch. Kommentare erklären das *Warum*, nicht das *Was*.
   Tagesansicht mit vertauschten Achsen: ein Arbeitsplatz über allen Tagen des
   Monats statt ein Tag über allen Arbeitsplätzen. Dieselbe Zelle, derselbe
   Massstab — darum wird dort gebucht wie im Tag. Der Arbeitsplatz reist als
-  `?arbeitsplatz=` mit und wird *nur* aus der Adresse gelesen. Hin führt der Name
+  `?arbeitsplatz=` mit und wird _nur_ aus der Adresse gelesen. Hin führt der Name
   in der Arbeitsplatzzeile — wer einen Arbeitsplatz meint, hat ihn dort vor sich;
   eine Auswahlliste in der Kopfleiste zählte dieselben Namen ein zweites Mal auf.
   Zurück führt ein Knopf, den nur diese Ansicht in der Kopfleiste zeigt. Damit das
@@ -96,7 +96,7 @@ Englisch. Kommentare erklären das *Warum*, nicht das *Was*.
 - **Die Detailkarte klappt die Plattform auf, nicht wir.** Der Balken ist ein
   `<button popovertarget>`, die Karte das benannte Popover — Umschalten, Escape,
   Klick daneben und Tastatur kommen vom Browser. Daraus folgen zwei Dinge, die
-  sonst wie Umwege aussehen: die Karte steht *neben* dem Balken statt in ihm
+  sonst wie Umwege aussehen: die Karte steht _neben_ dem Balken statt in ihm
   (ein `<button>` darf keine Schaltfläche enthalten, und die Karte hat eine),
   und `CalendarBlock` trägt `display: contents`, damit der Balken das
   Rasterelement der Zelle bleibt. Positioniert wird über CSS Anchor Positioning;
@@ -126,6 +126,29 @@ Englisch. Kommentare erklären das *Warum*, nicht das *Was*.
   Serieninstanz ist eine eigene Buchung mit eigener ID; RRULE verlangte zusätzlich
   Lokalzeit mit mitgelieferter VTIMEZONE. Solange jede Instanz einzeln in der
   Datenbank steht, sind UTC-Zeitpunkte die ehrlichere Abbildung.
+- **Der Grundriss ist eine ausgelieferte Datei, kein Quelltext.**
+  `frontend/public/karte.svg` wird zur Laufzeit geholt und von Hand in den Baum
+  gehängt — nicht über `innerHTML`, weil Angulars Bereinigung `id`-Attribute
+  entfernt und genau die die Zuordnung zu den Arbeitsplätzen tragen. Wer die
+  Werkstatt umstellt, tauscht die Datei und baut nichts neu; nebenbei bleiben
+  ihre 300 kB aus dem Bündel jeder anderen Ansicht.
+- **Die Figur wird nicht gezeichnet, sondern geliehen.** Der Plan bringt unter
+  `#figur` eine mit, im Massstab der Karte und in ihrer Farbe. Nach dem Messen
+  wandert sie in die `defs` — dort wird sie nicht mehr gezeichnet, bleibt für
+  `<use>` aber erreichbar. Erst messen, dann verstecken: was nicht gezeichnet
+  wird, hat auch keinen Kasten. Ein eigener Pfad wäre eine zweite Wahrheit und
+  wanderte beim nächsten Austausch der Datei nicht mit.
+- **Die Karte bekommt genau das Seitenverhältnis ihrer `viewBox`**, statt dass
+  das SVG sich in einen beliebigen Kasten einpasst. Die Figuren stehen in
+  Prozent der Kartenfläche; bliebe rundherum ein Rand, zeigten dieselben
+  Prozente daneben. Die Karte nimmt darum die volle Breite und wird so hoch,
+  wie das Verhältnis es verlangt — beim hochkant gezeichneten Grundriss höher
+  als das Fenster, also wird gescrollt. Lieber gross und geblättert als ganz
+  sichtbar und unleserlich.
+- **Die Karte ist keine dritte Zoomstufe.** Sie hat kein Datum, sondern den
+  Augenblick, und fragt ihn jede Minute neu nach — darum steht ihr Knopf neben
+  dem Umschalter und nicht in ihm, und ihre Kopfleiste trägt weder Blättern
+  noch Datumswahl.
 
 ## Umgebung
 
@@ -195,7 +218,10 @@ SSH braucht es dafür denselben Trigger wie für die Migrationen. Ungetestet.
 
 - Deploy-Test auf hosttech (grösstes ungetestetes Risiko), inklusive
   `public/storage`-Symlink
-- Monatsansicht, Übersichtskarte
+- Die Kennungen in `frontend/public/karte.svg` an die Arbeitsplatz-Kennungen
+  angleichen — Liste in `spec/karte-kennungen.markdown`. Bis dahin bleiben zehn
+  Plätze auf der Karte leer, was kein Fehler ist, aber auch nichts zeigt.
+- Farbige Markierung der Zustände auf der Karte (frei/belegt/defekt/deaktiviert)
 - Serienbuchungen
 - Abo-Link in der Verwaltung mit Filter (Bereich, Arbeitsplatz) — der Feed kann
   es, die Oberfläche bietet bisher nur den ungefilterten Kalender an

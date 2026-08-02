@@ -1,0 +1,66 @@
+:host {
+  --gutter: 1.5rem;
+
+  // Wie die Kalenderansichten: die Ansicht füllt das Fenster und scrollt nicht
+  // selbst — gescrollt wird in `.stage`. Genau dadurch bleibt die Kopfleiste
+  // stehen, ohne dafür kleben zu müssen: sie liegt ausserhalb des
+  // Scrollcontainers und kommt gar nicht erst in Bewegung.
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  font-family: system-ui, sans-serif;
+  color: var(--ink);
+}
+
+.error {
+  margin: 0;
+  padding: 0 var(--gutter) 0.5rem;
+  color: var(--danger-text);
+}
+
+.stage {
+  flex: 1;
+  // Ohne das wächst ein Flex-Element auf seinen Inhalt statt zu scrollen.
+  min-height: 0;
+  padding: 0;
+  overflow-y: auto;
+}
+
+// Der Plan nimmt die volle Breite und wird so hoch, wie sein Seitenverhältnis
+// es verlangt — bei einem hochkant gezeichneten Grundriss ist das mehr als das
+// Fenster hergibt, und man scrollt. Lieber gross und geblättert als ganz
+// sichtbar und unleserlich: auf einem Plan will man Beschriftungen lesen.
+//
+// Das Seitenverhältnis ist dabei nicht Kosmetik, sondern die Bedingung dafür,
+// dass die Figuren sitzen. Sie stehen in Prozent der Kartenfläche; bliebe
+// irgendwo ein Rand, weil das SVG in einem Kasten anderen Zuschnitts steckt,
+// zeigten dieselben Prozente daneben. Darum bekommt der Kasten das Verhältnis
+// der `viewBox` — und nicht das SVG einen Kasten, in den es sich einpassen
+// müsste.
+.plan {
+  position: relative;
+  aspect-ratio: var(--aspect-number, 1);
+  width: 100%;
+  background: var(--paper);
+  overflow: hidden;
+}
+
+// Der eingehängte Grundriss. Absolut gesetzt, damit seine Höhe von 100% einen
+// festen Bezug hat — eine aus dem Seitenverhältnis abgeleitete Höhe ist nicht
+// überall eine, an der sich Prozente ausrechnen lassen.
+//
+// Er ist Hintergrund und fängt keine Klicks; anklickbar sind allein die Figuren
+// darüber. Das erspart einen Selektor, der in den eingehängten Baum hineinragt:
+// `pointer-events` vererbt sich.
+.drawing {
+  position: absolute;
+  inset: 0;
+  line-height: 0;
+  pointer-events: none;
+}
+
+.hint {
+  margin: 0;
+  padding: 1rem;
+  color: var(--text-muted);
+}

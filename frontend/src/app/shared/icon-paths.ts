@@ -9,6 +9,7 @@ export type IconName =
   | 'forward'
   | 'settings'
   | 'calendar'
+  | 'map'
   | 'series'
   | 'edit'
   | 'external'
@@ -17,13 +18,25 @@ export type IconName =
 
 export const ICON_PATHS: Record<IconName, readonly string[]> = {
   // log-in
-  login: ['m10 17 5-5-5-5', 'M15 12H3', 'M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4'],
+  login: [
+    'm10 17 5-5-5-5',
+    'M15 12H3',
+    'M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4',
+  ],
   // log-out
-  logout: ['m16 17 5-5-5-5', 'M21 12H9', 'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4'],
+  logout: [
+    'm16 17 5-5-5-5',
+    'M21 12H9',
+    'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4',
+  ],
   // chevron-left
-  back: ['m15 18-6-6 6-6'],
+  back: [
+    'm15 18-6-6 6-6',
+  ],
   // chevron-right
-  forward: ['m9 18 6-6-6-6'],
+  forward: [
+    'm9 18 6-6-6-6',
+  ],
   // settings
   settings: [
     'M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915',
@@ -35,6 +48,12 @@ export const ICON_PATHS: Record<IconName, readonly string[]> = {
     'M16 2v3',
     'M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2z',
     'M3 9h18',
+  ],
+  // map
+  map: [
+    'M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z',
+    'M15 5.764v15',
+    'M9 3.236v15',
   ],
   // repeat
   series: [
@@ -49,9 +68,15 @@ export const ICON_PATHS: Record<IconName, readonly string[]> = {
     'm15 5 4 4',
   ],
   // arrow-up-right
-  external: ['M7 7h10v10', 'M7 17 17 7'],
+  external: [
+    'M7 7h10v10',
+    'M7 17 17 7',
+  ],
   // x
-  remove: ['M18 6 6 18', 'm6 6 12 12'],
+  remove: [
+    'M18 6 6 18',
+    'm6 6 12 12',
+  ],
   // image
   photo: [
     'M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2z',

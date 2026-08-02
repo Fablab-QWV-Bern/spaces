@@ -33,33 +33,35 @@ import { SessionService } from '../shared/session-service';
         >
       }
 
-      <button type="button" (click)="shift.emit(-1)" [attr.aria-label]="backLabel()">
-        <app-icon name="back" />
-      </button>
-      <button type="button" (click)="today.emit()">Heute</button>
-      <button type="button" (click)="shift.emit(1)" [attr.aria-label]="forwardLabel()">
-        <app-icon name="forward" />
-      </button>
+      @if (navigable()) {
+        <button type="button" (click)="shift.emit(-1)" [attr.aria-label]="backLabel()">
+          <app-icon name="back" />
+        </button>
+        <button type="button" (click)="today.emit()">Heute</button>
+        <button type="button" (click)="shift.emit(1)" [attr.aria-label]="forwardLabel()">
+          <app-icon name="forward" />
+        </button>
 
-      <!-- Schmal schrumpft das Feld auf sein Symbol: das Datum steht als
-           Überschrift schon da, ein zweites Mal ausgeschrieben kostet nur
-           Breite. Das Feld selbst bleibt liegen und deckt das Symbol
-           durchsichtig zu — so öffnet der Griff weiterhin den Auswähler des
-           Geräts, statt dass wir einen nachbauen. -->
-      <label class="date">
-        <span #icon class="icon date-icon" aria-hidden="true">
-          <app-icon name="calendar" />
-        </span>
+        <!-- Schmal schrumpft das Feld auf sein Symbol: das Datum steht als
+             Überschrift schon da, ein zweites Mal ausgeschrieben kostet nur
+             Breite. Das Feld selbst bleibt liegen und deckt das Symbol
+             durchsichtig zu — so öffnet der Griff weiterhin den Auswähler des
+             Geräts, statt dass wir einen nachbauen. -->
+        <label class="date">
+          <span #icon class="icon date-icon" aria-hidden="true">
+            <app-icon name="calendar" />
+          </span>
 
-        <input
-          #picker
-          type="date"
-          [value]="date()"
-          (change)="dateSelected.emit($any($event.target).value)"
-          (click)="openPicker(icon, picker)"
-          aria-label="Datum wählen"
-        />
-      </label>
+          <input
+            #picker
+            type="date"
+            [value]="date()"
+            (change)="dateSelected.emit($any($event.target).value)"
+            (click)="openPicker(icon, picker)"
+            aria-label="Datum wählen"
+          />
+        </label>
+      }
 
       @if (zoomable()) {
         <span class="spans">
@@ -80,6 +82,22 @@ import { SessionService } from '../shared/session-service';
             >Woche</a
           >
         </span>
+
+        <!-- Die Karte steht neben dem Umschalter, nicht in ihm: sie ist keine
+             dritte Zoomstufe, sondern eine andere Frage — nicht „wann", sondern
+             „wer ist jetzt da". Ein Symbol genügt; ausgeschrieben stünde sie
+             mit den Zeiträumen auf einer Stufe. -->
+        <a
+          class="map"
+          routerLink="/karte"
+          routerLinkActive="active"
+          #karte="routerLinkActive"
+          [attr.aria-current]="karte.isActive ? 'page' : null"
+          title="Übersichtskarte"
+          aria-label="Übersichtskarte"
+        >
+          <app-icon name="map" />
+        </a>
       }
 
       <!-- Die anonyme Rolle kann Rechte tragen, ohne dass jemand angemeldet
@@ -155,6 +173,27 @@ import { SessionService } from '../shared/session-service';
 
       &:hover {
         color: var(--ink);
+      }
+    }
+
+    .map {
+      display: flex;
+      align-items: center;
+      margin-left: 0.25rem;
+      border: 1px solid var(--line-strong);
+      background: var(--paper);
+      border-radius: 0.25rem;
+      padding: 0.35rem 0.6rem;
+      color: inherit;
+
+      &:hover {
+        background: var(--surface-muted);
+      }
+
+      &.active {
+        background: var(--text-muted);
+        border-color: var(--text-muted);
+        color: var(--paper);
       }
     }
 
@@ -245,6 +284,12 @@ export class CalendarToolbar {
   readonly unit = input<'Tag' | 'Woche' | 'Monat'>('Tag');
   /** Ob der Weg zurück zu allen Arbeitsplätzen angeboten wird. */
   readonly overview = input(false);
+  /**
+   * Ob geblättert und ein Datum gewählt werden kann. Die Übersichtskarte zeigt
+   * den Augenblick — dort gäbe es kein Datum zu wählen und nichts, wohin ein
+   * Blätterschritt führte.
+   */
+  readonly navigable = input(true);
   /**
    * Ob der Umschalter der Zoomstufe erscheint. Die Einzelansicht zeigt fix
    * einen Monat — dort gäbe es nichts umzuschalten.

@@ -11,6 +11,7 @@ import { BookingForm } from './booking/booking-form';
 import { DayCalendar } from './calendar/day-calendar';
 import { WeekCalendar } from './calendar/week-calendar';
 import { WorkplaceCalendar } from './calendar/workplace-calendar';
+import { MapView } from './map/map-view';
 
 // Jede Zoomstufe ist eine eigene Route: so bleibt eine Ansicht verlinkbar, und
 // der Zurück-Knopf führt zur vorigen Stufe statt zum vorigen Datum. Das Datum
@@ -24,6 +25,10 @@ export const routes: Routes = [
   // fix ein Monat, ein Tag je Zeile. Der Arbeitsplatz reist als `arbeitsplatz`
   // mit, damit auch sie verlinkbar ist.
   { path: 'arbeitsplatz', component: WorkplaceCalendar, title: 'Einzelner Arbeitsplatz' },
+
+  // Die Karte trägt kein Datum: sie zeigt, wer jetzt da ist, und fragt das jede
+  // Minute neu nach.
+  { path: 'karte', component: MapView, title: 'Übersichtskarte' },
   { path: 'buchen', component: BookingForm, title: 'Buchung' },
 
   // Die Verwaltung ist nicht durch einen Guard geschützt, sondern durch das

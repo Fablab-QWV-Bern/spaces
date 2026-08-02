@@ -32,6 +32,7 @@ const ICONS = {
   forward: 'chevron-right',
   settings: 'settings',
   calendar: 'calendar',
+  map: 'map',
   series: 'repeat',
   edit: 'pencil',
   external: 'arrow-up-right',

@@ -1,0 +1,22 @@
+<app-calendar-toolbar [heading]="heading()" [date]="store.date()" [navigable]="false" />
+
+@if (planError() ?? store.error(); as error) {
+  <p class="error" role="alert">{{ error }}</p>
+}
+
+<!-- Die Bühne steht immer, auch während der stündlich wiederkehrenden Ladung:
+     würde sie an `store.loading()` hängen, räumte jede Auffrischung den
+     eingehängten Grundriss weg und er müsste neu geholt und vermessen werden. -->
+<div class="stage">
+  <div class="plan" [style.--aspect-number]="aspect()">
+    <div class="drawing" #drawing></div>
+
+    @if (figureBox(); as box) {
+      @for (figure of figures(); track figure.workplaceId) {
+        <app-map-figure [placement]="figure.placement" [details]="figure.details" [figure]="box" />
+      }
+    } @else if (!planError()) {
+      <p class="hint">Wird geladen …</p>
+    }
+  </div>
+</div>
