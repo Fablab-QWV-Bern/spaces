@@ -18,10 +18,10 @@ import { SessionService } from './session-service';
   selector: 'app-session-bar',
   imports: [FormsModule],
   template: `
-    <!-- Schmal bleibt von der Leiste nur je ein Zeichen übrig: der Satz
-         "Angemeldet als …" erklärt sich auf einem Telefon nicht so viel besser,
-         dass er die halbe Zeile wert wäre. Beschriftet sind die Knöpfe
-         trotzdem — über aria-label und title, nicht über sichtbaren Text. -->
+    <!-- Der Rollenname steht für sich: neben einem Abmelden-Knopf sagt "Angemeldet
+         als" nichts, was nicht schon dasteht. Schmal bleibt von den Knöpfen nur je
+         ein Zeichen übrig; beschriftet sind sie trotzdem — über aria-label und
+         title, nicht über sichtbaren Text. -->
     <div class="bar">
       @if (session.isAnonymous()) {
         <button type="button" (click)="open()" title="Anmelden" aria-label="Anmelden">
@@ -29,9 +29,7 @@ import { SessionService } from './session-service';
           <span class="text">Anmelden</span>
         </button>
       } @else {
-        <span class="role"
-          ><span class="text">Angemeldet als </span><strong>{{ session.roleName() }}</strong></span
-        >
+        <strong class="role">{{ session.roleName() }}</strong>
         <button type="button" (click)="logout()" title="Abmelden" aria-label="Abmelden">
           <span class="icon" aria-hidden="true">⇤</span>
           <span class="text">Abmelden</span>
