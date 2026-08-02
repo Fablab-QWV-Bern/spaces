@@ -18,6 +18,17 @@
     font-size: 1.5rem;
     font-weight: 600;
   }
+
+  // Wie der Weg in die Verwaltung im Kalender: ein zurückhaltender Textlink,
+  // keine zweite Überschrift neben der ersten.
+  a {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+
+    &:hover {
+      color: var(--ink);
+    }
+  }
 }
 
 .notice {
@@ -246,8 +257,9 @@
 }
 
 button {
-  padding: 0.5rem 1rem;
+  padding: 0.35rem 0.9rem;
   font: inherit;
+  font-size: 0.9rem;
   border-radius: 0.25rem;
   border: 1px solid var(--line-strong);
   background: var(--paper);
@@ -279,8 +291,12 @@ button {
 }
 
 .cancel {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: var(--text-muted);
+
+  &:hover {
+    color: var(--ink);
+  }
 }
 
 .hint,
