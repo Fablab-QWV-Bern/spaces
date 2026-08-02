@@ -11,38 +11,41 @@ class RoleSeeder extends Seeder
     {
         // Anonym: darf den Kalender sehen, aber keine Namen und keine Kontakte,
         // und darf nichts anlegen. Wer vor Ort bucht, meldet sich als Mitglied an.
-        Role::updateOrCreate(
-            ['name' => 'Anonym'],
-            [
-                'is_anonymous' => true,
-                'password' => null,
-                'view_bookings' => true,
-            ],
-        );
+        $this->role('Anonym', ['viewBookings'], [
+            'is_anonymous' => true,
+            'password' => null,
+        ]);
 
-        Role::updateOrCreate(
-            ['name' => 'Mitglied'],
-            [
-                'password' => 'mitglied-kennwort',
-                'view_bookings' => true,
-                'view_bookings_details' => true,
-                'manage_bookings' => true,
-            ],
-        );
+        $this->role('Mitglied', [
+            'viewBookings',
+            'viewBookingsDetails',
+            'manageBookings',
+        ], ['password' => 'mitglied-kennwort']);
 
-        Role::updateOrCreate(
-            ['name' => 'Admin'],
-            [
-                'password' => 'admin-kennwort',
-                'view_bookings' => true,
-                'view_bookings_details' => true,
-                'manage_bookings' => true,
-                'no_time_restrictions' => true,
-                'manage_booking_series' => true,
-                'manage_workplaces' => true,
-                'manage_areas' => true,
-                'manage_roles' => true,
-            ],
-        );
+        $this->role('Admin', array_keys(Role::PERMISSIONS), [
+            'password' => 'admin-kennwort',
+        ]);
+    }
+
+    /**
+     * Legt eine Rolle an oder richtet eine bestehende neu aus.
+     *
+     * Nicht genannte Berechtigungen werden ausdrücklich entzogen: `updateOrCreate`
+     * lässt weggelassene Spalten stehen, und die Spalten-Defaults greifen nur beim
+     * ersten Anlegen. Ein Seeder-Lauf auf eine bestehende Datenbank soll aber den
+     * hier beschriebenen Zustand herstellen, nicht bloss ergänzen.
+     *
+     * @param  list<string>  $permissions  Namen aus Role::PERMISSIONS
+     * @param  array<string, mixed>  $attributes
+     */
+    private function role(string $name, array $permissions, array $attributes = []): void
+    {
+        $granted = [];
+
+        foreach (Role::PERMISSIONS as $key => $column) {
+            $granted[$column] = in_array($key, $permissions, true);
+        }
+
+        Role::updateOrCreate(['name' => $name], [...$granted, ...$attributes]);
     }
 }
