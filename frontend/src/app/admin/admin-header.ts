@@ -31,8 +31,8 @@ import { SessionService } from '../shared/session-service';
         <a routerLink="/verwaltung/rollen" routerLinkActive="active">Rollen</a>
         <a routerLink="/verwaltung/konfiguration" routerLinkActive="active">Konfiguration</a>
       }
-      <a class="feed" [href]="feedUrl" [title]="feedHint">Abonnieren</a>
-      <a routerLink="/tag">Zum Kalender</a>
+      <a class="feed" [href]="feedUrl" [title]="feedHint">iCal-Feed</a>
+      <a routerLink="/tag">Zurück zur Übersicht</a>
     </nav>
   `,
   styles: `
