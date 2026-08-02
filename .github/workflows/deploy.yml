@@ -1,0 +1,94 @@
+name: Bereitstellen
+
+# Plesk zieht per Pull von GitHub, kann aber selbst kein Angular bauen — auf dem
+# Server liegt kein Node. Also baut dieser Lauf die Oberfläche und legt das
+# Ergebnis auf den Branch `deploy`: das Laravel-Verzeichnis als Wurzel, die
+# gebaute SPA in `public/`. Genau diesen Branch holt sich Plesk.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Zwei Läufe gleichzeitig schrieben sich gegenseitig den Branch um. Nicht
+# abbrechen, sondern anstehen lassen — ein abgebrochener Lauf hinterliesse eine
+# Bereitstellung ohne passende Oberfläche.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Abhängigkeiten holen
+        working-directory: frontend
+        run: npm ci
+
+      - name: Oberfläche bauen
+        working-directory: frontend
+        run: npm run build
+
+      - name: Deploy-Branch schreiben
+        env:
+          REPO: https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git
+        run: |
+          set -euo pipefail
+
+          # Was auf den Server gehört. Frontend-Quellen, Spec, docker-compose und
+          # die Workflows bleiben zurück; `backend/.gitignore` hält ausserdem
+          # `vendor/`, `.env` und den Inhalt von `storage/` draussen — Composer
+          # läuft auf dem Server, die anderen beiden gehören dorthin und nicht
+          # ins Repository.
+          baum="$(mktemp -d)"
+          cp -R backend/. "$baum"/
+          cp -R frontend/dist/frontend/browser/. "$baum"/public/
+
+          # Fortlaufende Historie statt Force-Push: Plesk hält einen eigenen Klon
+          # und zieht mit `git pull` — ein umgeschriebener Branch bliebe dort
+          # stecken. Darum in einem frischen Klon arbeiten und nur anhängen.
+          ziel="$(mktemp -d)"
+          if git ls-remote --exit-code --heads "$REPO" deploy >/dev/null 2>&1; then
+            git clone --depth=1 --branch deploy "$REPO" "$ziel"
+            git -C "$ziel" ls-files -z | xargs -0 --no-run-if-empty rm -f --
+          else
+            git clone --depth=1 "$REPO" "$ziel"
+            git -C "$ziel" switch --orphan deploy
+          fi
+
+          cp -R "$baum"/. "$ziel"/
+          cd "$ziel"
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo 'Nichts geändert, kein neuer Stand.'
+          else
+            git commit -m "Bereitstellung aus ${GITHUB_SHA:0:7}"
+            git push origin deploy
+          fi
+
+      # Ohne hinterlegten Webhook zieht Plesk von sich aus (Knopf oder eigener
+      # Zeitplan); der Lauf gilt trotzdem als geglückt.
+      - name: Plesk anstossen
+        env:
+          HOOK: ${{ secrets.PLESK_DEPLOY_HOOK }}
+        run: |
+          if [ -n "$HOOK" ]; then
+            curl -fsS -X POST "$HOOK"
+          else
+            echo 'Kein PLESK_DEPLOY_HOOK hinterlegt — Plesk muss selbst ziehen.'
+          fi

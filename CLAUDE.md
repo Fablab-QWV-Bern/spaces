@@ -158,8 +158,11 @@ Vor jedem Frontend-Befehl die richtige Node-Version aktivieren:
 . ~/.nvm/nvm.sh && nvm use
 ```
 
-Composer ist in `backend/composer.json` auf `platform.php = 8.3` festgenagelt, weil
-das Hosting nicht mehr kann. Lokal läuft eine neuere Version — nie entfernen.
+Composer ist in `backend/composer.json` auf `platform.php = 8.3` festgenagelt.
+Das Hosting kann inzwischen 8.5, die Fessel schützt also nicht mehr vor einer zu
+neuen Auflösung — sie hält `composer.lock` aber unabhängig davon, welche
+PHP-Version gerade lokal installiert ist. Nie ersatzlos entfernen; wer sie
+anhebt, hebt sie auf die Version, die für die Domain eingestellt ist.
 
 ## Befehle
 
@@ -195,14 +198,41 @@ Anmeldedaten der Entwicklungsumgebung: `Mitglied` / `mitglied-kennwort`,
 
 ## Hosting
 
-hosttech "Smart Deal": **kein SSH**, PHP maximal 8.3, MariaDB, 60 Sekunden
-Ausführungszeit, keine dauerhaft laufenden Prozesse. Deployment über FTP mit
-mitgeliefertem `vendor/`, Migrationen über einen Cron- bzw. Web-Trigger. Alles
-Periodische läuft über Cron, nicht über Queue-Worker.
+hosttech "Smart Deal" mit Plesk: PHP 8.5, MariaDB, 180 Sekunden Ausführungszeit
+(bis 600 einstellbar), keine dauerhaft laufenden Prozesse. Alles Periodische
+läuft über Cron, nicht über Queue-Worker.
 
-Fotos liegen unter `storage/app/public` und werden über den Symlink
-`public/storage` ausgeliefert. Den legt sonst `php artisan storage:link` an — ohne
-SSH braucht es dafür denselben Trigger wie für die Migrationen. Ungetestet.
+**Kein SSH, aber Shell zum Bereitstellungszeitpunkt.** Plesk zieht per Git von
+GitHub und führt danach hinterlegte Shell-Befehle aus. Das ist der einzige
+Zugang zur Kommandozeile — es gibt keine Sitzung, in der man nachschauen könnte,
+und was die Bereitstellungsaktionen ausgeben, steht nur im Plesk-Log.
+
+**Plesk zieht den Branch `deploy`, nicht `main`.** Auf dem Server läuft kein
+Node, die Oberfläche muss also gebaut ankommen. `.github/workflows/deploy.yml`
+baut sie bei jedem Push auf `main` und schreibt `backend/` mitsamt der SPA in
+`public/` auf `deploy` — das Laravel-Verzeichnis liegt dort in der Wurzel, der
+Document Root zeigt auf dessen `public/`. Der Branch wird angehängt und nie
+umgeschrieben, weil Plesks Klon einen Force-Push nicht verdaut.
+
+`vendor/` reist nicht mit: `composer install` läuft als Bereitstellungsaktion
+auf dem Server. Die Aktionen, in dieser Reihenfolge:
+
+```
+/opt/plesk/php/8.5/bin/php artisan down --render=errors::503
+composer install --no-dev --optimize-autoloader --no-interaction
+/opt/plesk/php/8.5/bin/php artisan migrate --force
+/opt/plesk/php/8.5/bin/php artisan optimize
+/opt/plesk/php/8.5/bin/php artisan storage:link
+/opt/plesk/php/8.5/bin/php artisan up
+```
+
+Der volle PHP-Pfad steht da, weil das blosse `php` in Plesks Aktionen das
+System-PHP meint und nicht das der Domain.
+
+`.env` und der Inhalt von `storage/` liegen nicht im Repository und werden
+einmalig von Hand angelegt; die Bereitstellung fasst sie nicht an. Fotos liegen
+unter `storage/app/public` und werden über den Symlink `public/storage`
+ausgeliefert, den `storage:link` bei jeder Bereitstellung erneuert.
 
 ## Arbeitsweise
 
@@ -216,11 +246,14 @@ SSH braucht es dafür denselben Trigger wie für die Migrationen. Ungetestet.
 
 ## Offen
 
-- Deploy-Test auf hosttech (grösstes ungetestetes Risiko), inklusive
-  `public/storage`-Symlink
-- Die Kennungen in `frontend/public/karte.svg` an die Arbeitsplatz-Kennungen
-  angleichen — Liste in `spec/karte-kennungen.markdown`. Bis dahin bleiben zehn
-  Plätze auf der Karte leer, was kein Fehler ist, aber auch nichts zeigt.
+- Deploy-Test auf hosttech (grösstes ungetestetes Risiko): läuft `composer` in
+  Plesks Bereitstellungsaktionen, und darf `symlink()` für `storage:link`?
+- Xdebug ist auf dem Server geladen (`50-xdebug.ini`). Wenn `xdebug.mode` nicht
+  `off` ist, kostet das spürbar Leistung.
+- Die vier `_3d-drucker-*` in `frontend/public/karte.svg`: auf dem Plan stehen
+  vier nebeneinander, die Konfiguration kennt neben dem XL nur drei. Bis das
+  entschieden ist, bleiben sie leer — kein Fehler, aber auch keine Auskunft.
+  Die übrige Umbenenn-Tabelle in `spec/karte-kennungen.markdown` ist erledigt.
 - Farbige Markierung der Zustände auf der Karte (frei/belegt/defekt/deaktiviert)
 - Serienbuchungen
 - Abo-Link in der Verwaltung mit Filter (Bereich, Arbeitsplatz) — der Feed kann

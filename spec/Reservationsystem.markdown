@@ -21,17 +21,16 @@
 
 hosttech Webhosting, Paket "Smart Deal" (CHF 6.90/Mt.). Daraus folgende Randbedingungen:
 
-- **Kein SSH.** Deployment läuft über FTP: `vendor/` wird mitgeliefert, Migrationen laufen über einen
-  geschützten Cron- bzw. Web-Trigger. `composer install` und `php artisan migrate` sind auf dem
-  Server nicht ausführbar.
-- Kein Node auf dem Server: Frontend-Assets werden lokal oder in CI gebaut und als statische Dateien
-  hochgeladen.
-- PHP maximal 8.3, MariaDB, Plesk als Control Panel (Document Root pro Domain auf `public/` setzbar).
-  Lokal läuft eine neuere PHP-Version, deshalb wird in `composer.json` `config.platform.php` auf 8.3
-  festgenagelt — sonst löst Composer Abhängigkeiten gegen eine Version auf, die es auf dem Server
-  nicht gibt.
-- `max_execution_time` 60 Sekunden, `memory_limit` 512 MB, 512 MB RAM. Der tägliche Serien-Lauf und
-  der CSV-Import müssen deshalb in Batches arbeiten und wiederaufsetzbar sein.
+- **Kein SSH, aber Shell zum Bereitstellungszeitpunkt.** Plesk zieht per Git von GitHub und führt
+  danach hinterlegte Shell-Befehle aus. `composer install` und `php artisan migrate` laufen darum
+  auf dem Server — nur eben ausschliesslich beim Bereitstellen, nicht auf Zuruf.
+- Kein Node auf dem Server: Die Oberfläche wird in GitHub Actions gebaut und landet fertig auf dem
+  Branch `deploy`, den Plesk zieht. Dort liegt das Laravel-Verzeichnis in der Wurzel und die SPA in
+  dessen `public/`.
+- PHP 8.5, MariaDB, Plesk als Control Panel (Document Root pro Domain auf `public/` setzbar).
+- `max_execution_time` 180 Sekunden, bis 600 einstellbar; `memory_limit` 512 MB, 512 MB RAM. Der
+  tägliche Serien-Lauf und der CSV-Import arbeiten trotzdem in Batches und wiederaufsetzbar — eine
+  Bereitstellungsaktion hat ihr eigenes, kürzeres Zeitbudget.
 - Keine dauerhaft laufenden Prozesse — keine Queue-Worker, alles Periodische über Cron.
 - Backup alle 24 h durch den Hoster. Foto-Uploads liegen ausserhalb des Deploy-Verzeichnisses, damit
   ein Release sie nicht überschreibt.
