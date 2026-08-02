@@ -2,6 +2,7 @@ import { Component, computed, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { Workplace } from '../api/models';
+import { Icon } from '../shared/icon';
 import { CalendarStore } from './calendar-store';
 
 /**
@@ -19,7 +20,7 @@ import { CalendarStore } from './calendar-store';
  */
 @Component({
   selector: 'app-workplace-label',
-  imports: [RouterLink],
+  imports: [Icon, RouterLink],
   host: { class: 'label' },
   template: `
     <a
@@ -42,8 +43,9 @@ import { CalendarStore } from './calendar-store';
         target="_blank"
         rel="noopener"
         [attr.aria-label]="'Wiki zu ' + workplace().name"
-        >↗</a
       >
+        <app-icon name="external" />
+      </a>
     }
   `,
   styles: `

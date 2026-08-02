@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 
 // Umbenannt, damit das generierte Modell das globale Error nicht verdeckt.
 import { Error as ApiError } from '../api/models';
+import { Icon } from './icon';
 import { SessionService } from './session-service';
 
 /**
@@ -16,7 +17,7 @@ import { SessionService } from './session-service';
  */
 @Component({
   selector: 'app-session-bar',
-  imports: [FormsModule],
+  imports: [FormsModule, Icon],
   template: `
     <!-- Der Rollenname steht für sich: neben einem Abmelden-Knopf sagt "Angemeldet
          als" nichts, was nicht schon dasteht. Schmal bleibt von den Knöpfen nur je
@@ -25,13 +26,13 @@ import { SessionService } from './session-service';
     <div class="bar">
       @if (session.isAnonymous()) {
         <button type="button" (click)="open()" title="Anmelden" aria-label="Anmelden">
-          <span class="icon" aria-hidden="true">⇥</span>
+          <app-icon class="icon" name="login" />
           <span class="text">Anmelden</span>
         </button>
       } @else {
         <strong class="role">{{ session.roleName() }}</strong>
         <button type="button" (click)="logout()" title="Abmelden" aria-label="Abmelden">
-          <span class="icon" aria-hidden="true">⇤</span>
+          <app-icon class="icon" name="logout" />
           <span class="text">Abmelden</span>
         </button>
       }
@@ -103,9 +104,8 @@ import { SessionService } from './session-service';
     @media (width < 48rem) {
       .bar {
         .icon {
-          display: inline;
+          display: inline-flex;
           font-size: 1rem;
-          line-height: 1;
         }
 
         .text {

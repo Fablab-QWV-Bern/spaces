@@ -54,6 +54,18 @@ Englisch. Kommentare erklären das *Warum*, nicht das *Was*.
   abzudunkeln zöge warme Töne ins Graue. Die Grautöne kommen nicht aus `--ink`
   selbst, sondern aus `--shade` — `--ink` mit einem Hauch Akzent, weil ein
   reiner Verlauf nach Weiss in der Mitte seinen blauen Stich verliert.
+- **Symbole sind eingebettetes SVG in `currentColor`**, keine Icon-Font und kein
+  Emoji. Ein farbiges Emoji brächte eine Farbe mit, die keine Palette kennt, und
+  sähe auf jedem System anders aus; eine Font kostete entweder einen Request zu
+  Google oder mehrere Megabyte Auslieferung und zeigte bis dahin den
+  Ligaturnamen im Klartext. Die Pfade stehen trotzdem nicht von Hand da:
+  `frontend/scripts/generate-icons.mjs` holt sie aus `lucide-static` und
+  schreibt `icon-paths.ts` — abgetippte Pfaddaten gehen lange gut und dann
+  still schief, weil Lucide Symbole zwischendurch neu zeichnet. Ein neues
+  Symbol ist eine Zeile in der `ICONS`-Tabelle des Skripts plus
+  `npm run icons:generate`. `lucide-angular` wäre der offensichtliche Weg,
+  hört aber bei Angular 21 auf; als Entwicklungsabhängigkeit stellt sich die
+  Frage nicht, in den Bundle kommt nur die erzeugte Tabelle.
 - **Zwei Platzierungsarten im Kalender.** Blöcke sitzen auf benannten Rasterlinien
   (`grid-column: t0900 / t1300`), die Formularvorschau und die Jetzt-Linie auf
   Prozentwerten. Beide bauen auf `visibleRange()` in

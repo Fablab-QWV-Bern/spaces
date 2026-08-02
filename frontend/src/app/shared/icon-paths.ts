@@ -1,0 +1,61 @@
+// Erzeugt von scripts/generate-icons.mjs — nicht von Hand ändern.
+// Quelle: lucide-static (ISC), Raster 24×24, Strichstärke 2, runde Enden.
+// Neues Symbol: im Skript eintragen, dann `npm run icons:generate`.
+
+export type IconName =
+  | 'login'
+  | 'logout'
+  | 'back'
+  | 'forward'
+  | 'settings'
+  | 'calendar'
+  | 'series'
+  | 'edit'
+  | 'external'
+  | 'remove'
+  | 'photo';
+
+export const ICON_PATHS: Record<IconName, readonly string[]> = {
+  // log-in
+  login: ['m10 17 5-5-5-5', 'M15 12H3', 'M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4'],
+  // log-out
+  logout: ['m16 17 5-5-5-5', 'M21 12H9', 'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4'],
+  // chevron-left
+  back: ['m15 18-6-6 6-6'],
+  // chevron-right
+  forward: ['m9 18 6-6-6-6'],
+  // settings
+  settings: [
+    'M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915',
+    'M9 12a3 3 0 1 0 6 0a3 3 0 1 0 -6 0',
+  ],
+  // calendar
+  calendar: [
+    'M8 2v3',
+    'M16 2v3',
+    'M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2z',
+    'M3 9h18',
+  ],
+  // repeat
+  series: [
+    'm17 2 4 4-4 4',
+    'M3 11v-1a4 4 0 0 1 4-4h14',
+    'm7 22-4-4 4-4',
+    'M21 13v1a4 4 0 0 1-4 4H3',
+  ],
+  // pencil
+  edit: [
+    'M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z',
+    'm15 5 4 4',
+  ],
+  // arrow-up-right
+  external: ['M7 7h10v10', 'M7 17 17 7'],
+  // x
+  remove: ['M18 6 6 18', 'm6 6 12 12'],
+  // image
+  photo: [
+    'M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2z',
+    'M7 9a2 2 0 1 0 4 0a2 2 0 1 0 -4 0',
+    'm21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21',
+  ],
+};

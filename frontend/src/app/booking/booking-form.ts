@@ -41,6 +41,7 @@ import {
   slotsOfDay,
 } from '../calendar/time-axis';
 import { readBooker, writeBooker } from '../shared/booker-cookie';
+import { Icon } from '../shared/icon';
 import { SessionBar } from '../shared/session-bar';
 import { SessionService } from '../shared/session-service';
 
@@ -74,7 +75,7 @@ interface PreviewBlock {
 
 @Component({
   selector: 'app-booking-form',
-  imports: [FormField, RouterLink, SessionBar],
+  imports: [FormField, Icon, RouterLink, SessionBar],
   templateUrl: './booking-form.html',
   styleUrl: './booking-form.scss',
 })

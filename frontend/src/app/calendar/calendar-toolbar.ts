@@ -1,6 +1,7 @@
 import { Component, computed, inject, input, output } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
+import { Icon } from '../shared/icon';
 import { SessionBar } from '../shared/session-bar';
 import { SessionService } from '../shared/session-service';
 
@@ -21,7 +22,7 @@ import { SessionService } from '../shared/session-service';
  */
 @Component({
   selector: 'app-calendar-toolbar',
-  imports: [RouterLink, RouterLinkActive, SessionBar],
+  imports: [Icon, RouterLink, RouterLinkActive, SessionBar],
   template: `
     <h1>{{ heading() }}</h1>
 
@@ -32,9 +33,13 @@ import { SessionService } from '../shared/session-service';
         >
       }
 
-      <button type="button" (click)="shift.emit(-1)" [attr.aria-label]="backLabel()">‹</button>
+      <button type="button" (click)="shift.emit(-1)" [attr.aria-label]="backLabel()">
+        <app-icon name="back" />
+      </button>
       <button type="button" (click)="today.emit()">Heute</button>
-      <button type="button" (click)="shift.emit(1)" [attr.aria-label]="forwardLabel()">›</button>
+      <button type="button" (click)="shift.emit(1)" [attr.aria-label]="forwardLabel()">
+        <app-icon name="forward" />
+      </button>
 
       <!-- Schmal schrumpft das Feld auf sein Symbol: das Datum steht als
            Überschrift schon da, ein zweites Mal ausgeschrieben kostet nur
@@ -42,7 +47,9 @@ import { SessionService } from '../shared/session-service';
            durchsichtig zu — so öffnet der Griff weiterhin den Auswähler des
            Geräts, statt dass wir einen nachbauen. -->
       <label class="date">
-        <span #icon class="icon" aria-hidden="true">📅</span>
+        <span #icon class="icon date-icon" aria-hidden="true">
+          <app-icon name="calendar" />
+        </span>
 
         <input
           #picker
@@ -78,7 +85,10 @@ import { SessionService } from '../shared/session-service';
       <!-- Die anonyme Rolle kann Rechte tragen, ohne dass jemand angemeldet
            wäre; der Zugang zur Verwaltung gehört trotzdem hinter die Anmeldung. -->
       @if (!session.isAnonymous() && session.canManageAnything()) {
-        <a class="admin" routerLink="/verwaltung">Verwaltung</a>
+        <a class="admin" routerLink="/verwaltung" title="Verwaltung" aria-label="Verwaltung">
+          <app-icon class="icon" name="settings" />
+          <span class="text">Verwaltung</span>
+        </a>
       }
 
       <app-session-bar />
@@ -106,7 +116,7 @@ import { SessionService } from '../shared/session-service';
 
       button,
       input,
-      .icon,
+      .date-icon,
       .overview {
         border: 1px solid var(--line-strong);
         background: var(--paper);
@@ -195,6 +205,17 @@ import { SessionService } from '../shared/session-service';
       .controls .icon {
         display: block;
         line-height: 1.2;
+      }
+
+      // Schmal bleibt vom Weg in die Verwaltung nur das Zahnrad — ein
+      // unterstrichenes Symbol sähe nach Fehler aus.
+      .admin {
+        text-decoration: none;
+        font-size: 1rem;
+
+        .text {
+          display: none;
+        }
       }
 
       .date {

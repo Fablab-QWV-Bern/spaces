@@ -41,7 +41,7 @@
                 @if (workplace.photoThumbnailUrl; as url) {
                   <img [src]="url" [alt]="'Foto von ' + workplace.name" loading="lazy" />
                 } @else {
-                  <span class="no-photo" aria-hidden="true">📷</span>
+                  <app-icon class="no-photo" name="photo" />
                 }
               </div>
 

@@ -7,12 +7,13 @@ import { ApiConfiguration } from '../api/api-configuration';
 import { deleteWorkplace, listAreas, listWorkplaces } from '../api/functions';
 // Umbenannt, damit das generierte Modell das globale Error nicht verdeckt.
 import { Area, Error as ApiError, Workplace } from '../api/models';
+import { Icon } from '../shared/icon';
 import { SessionService } from '../shared/session-service';
 import { AdminHeader } from './admin-header';
 
 @Component({
   selector: 'app-workplace-list',
-  imports: [AdminHeader, RouterLink],
+  imports: [AdminHeader, Icon, RouterLink],
   templateUrl: './workplace-list.html',
   styleUrl: './workplace-list.scss',
 })

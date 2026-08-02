@@ -61,7 +61,9 @@
           }
           @if (selected.wikiUrl) {
             <p class="detail">
-              <a [href]="selected.wikiUrl" target="_blank" rel="noopener">Anleitung im Wiki ↗</a>
+              <a [href]="selected.wikiUrl" target="_blank" rel="noopener"
+                >Anleitung im Wiki <app-icon name="external"
+              /></a>
             </p>
           }
           <p class="detail muted">

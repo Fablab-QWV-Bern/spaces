@@ -1,6 +1,7 @@
 import { Component, inject, input, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
+import { Icon } from '../shared/icon';
 import { CardDetails } from './blocks';
 import { CalendarStore } from './calendar-store';
 
@@ -18,6 +19,7 @@ import { CalendarStore } from './calendar-store';
  */
 @Component({
   selector: 'app-booking-card',
+  imports: [Icon],
   templateUrl: './booking-card.html',
   styleUrl: './booking-card.scss',
   host: {

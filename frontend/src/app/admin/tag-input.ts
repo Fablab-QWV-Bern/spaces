@@ -1,5 +1,7 @@
 import { Component, ElementRef, computed, input, model, signal, viewChild } from '@angular/core';
 
+import { Icon } from '../shared/icon';
+
 /**
  * Eingabe einer Tag-Liste: bereits gesetzte Tags als Marken, dahinter ein Feld
  * für den nächsten.
@@ -17,6 +19,7 @@ import { Component, ElementRef, computed, input, model, signal, viewChild } from
  */
 @Component({
   selector: 'app-tag-input',
+  imports: [Icon],
   template: `
     <div #root class="tag-input" (focusin)="open.set(true)" (focusout)="onFocusOut($event)">
       <div class="tags">
@@ -24,7 +27,7 @@ import { Component, ElementRef, computed, input, model, signal, viewChild } from
           <span class="tag">
             {{ tag }}
             <button type="button" [attr.aria-label]="tag + ' entfernen'" (click)="remove(tag)">
-              ×
+              <app-icon name="remove" />
             </button>
           </span>
         }

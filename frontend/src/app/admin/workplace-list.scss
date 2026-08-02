@@ -70,6 +70,9 @@
   }
 
   .no-photo {
+    // Grösser als der Fliesstext ringsum: das Symbol steht allein in einem
+    // 4×3-Kasten und ist kein Zeichen in einer Zeile.
+    font-size: 1.4rem;
     opacity: 0.35;
   }
 }

@@ -1,5 +1,6 @@
 import { Component, input } from '@angular/core';
 
+import { Icon } from '../shared/icon';
 import { Block } from './blocks';
 import { BookingCard } from './booking-card';
 
@@ -23,7 +24,7 @@ let nextId = 0;
  */
 @Component({
   selector: 'app-calendar-block',
-  imports: [BookingCard],
+  imports: [BookingCard, Icon],
   templateUrl: './calendar-block.html',
   styleUrl: './calendar-block.scss',
   host: {

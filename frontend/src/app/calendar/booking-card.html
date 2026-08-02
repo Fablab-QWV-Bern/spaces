@@ -18,10 +18,12 @@
   }
 
   @if (booking.bookingSeriesId) {
-    <p class="card-series">↻ Teil einer Serie</p>
+    <p class="card-series"><app-icon name="series" /> Teil einer Serie</p>
   }
 
   @if (store.canManageBookings()) {
-    <button type="button" class="card-edit" (click)="editBooking()">✎ Bearbeiten</button>
+    <button type="button" class="card-edit" (click)="editBooking()">
+      <app-icon name="edit" /> Bearbeiten
+    </button>
   }
 }
