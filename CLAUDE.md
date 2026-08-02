@@ -214,20 +214,25 @@ baut sie bei jedem Push auf `main` und schreibt `backend/` mitsamt der SPA in
 Document Root zeigt auf dessen `public/`. Der Branch wird angehängt und nie
 umgeschrieben, weil Plesks Klon einen Force-Push nicht verdaut.
 
-`vendor/` reist nicht mit: `composer install` läuft als Bereitstellungsaktion
-auf dem Server. Die Aktionen, in dieser Reihenfolge:
+`vendor/` reist nicht mit: `composer install` läuft auf dem Server. Als
+Bereitstellungsaktion steht in Plesk nur eine Zeile:
 
 ```
-/opt/plesk/php/8.5/bin/php artisan down --render=errors::503
-composer install --no-dev --optimize-autoloader --no-interaction
-/opt/plesk/php/8.5/bin/php artisan migrate --force
-/opt/plesk/php/8.5/bin/php artisan optimize
-/opt/plesk/php/8.5/bin/php artisan storage:link
-/opt/plesk/php/8.5/bin/php artisan up
+bash deploy.sh
 ```
 
-Der volle PHP-Pfad steht da, weil das blosse `php` in Plesks Aktionen das
-System-PHP meint und nicht das der Domain.
+Alles Weitere macht `backend/deploy.sh` — im Repository und nicht im
+Plesk-Formular, weil sich Schritte in einem Textfeld weder vergleichen noch
+zurückrollen lassen. Drei Dinge stecken darin, die man von aussen nicht sieht:
+
+- **`composer install` kommt vor `artisan down`, nicht danach.** Beim ersten
+  Lauf gibt es noch kein `vendor/`, `artisan` wäre also gar nicht startbar. Die
+  Wartungsseite wird deshalb nur gestellt, wenn schon eine Installation da ist.
+- **Der volle PHP-Pfad**, weil das blosse `php` in Plesks Aktionen das
+  System-PHP meint und nicht das der Domain.
+- **Nach einem Fehler bleibt die Wartungsseite stehen.** Ab der Migration ist
+  der Code neu und das Schema womöglich noch alt; eine kaputte Anwendung
+  auszuliefern wäre die schlechtere Auskunft als eine abwesende.
 
 `.env` und der Inhalt von `storage/` liegen nicht im Repository und werden
 einmalig von Hand angelegt; die Bereitstellung fasst sie nicht an. Fotos liegen
