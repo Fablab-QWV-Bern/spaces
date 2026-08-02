@@ -61,7 +61,7 @@
                 @if (workplace.tags.length) {
                   <p class="line tags">
                     @for (tag of workplace.tags; track tag) {
-                      <span class="tag">#{{ tag }}</span>
+                      <span class="tag">{{ tag }}</span>
                     }
                   </p>
                 }
@@ -78,7 +78,7 @@
                       <span
                         >alles mit
                         @for (tag of workplace.blocksWorkplacesWithTag; track tag) {
-                          <span class="tag">#{{ tag }}</span>
+                          <span class="tag">{{ tag }}</span>
                         }
                       </span>
                     }

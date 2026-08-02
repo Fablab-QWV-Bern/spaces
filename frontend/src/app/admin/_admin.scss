@@ -69,11 +69,14 @@
     min-height: 5rem;
     resize: vertical;
   }
+}
 
-  .note {
-    color: var(--text-soft);
-    font-size: 0.75rem;
-  }
+// Erklärender Kleintext. Steht bewusst ausserhalb von `.field`, denn erklärt
+// wird auch neben einem Kreuz oder in einem freien Absatz — dort erbte er sonst
+// die Grundschrift und geriete grösser als das, was er erklärt.
+.note {
+  color: var(--text-soft);
+  font-size: 0.75rem;
 }
 
 .row {

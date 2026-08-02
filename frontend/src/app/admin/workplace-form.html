@@ -182,13 +182,13 @@
 
       <div class="field">
         <span>Tags</span>
-        <app-tag-input [(value)]="tags" [suggestions]="knownTags()" placeholder="laut" />
+        <app-tag-input [(value)]="tags" [suggestions]="knownTags()" />
         <span class="note">Enter oder Komma setzt einen Tag; „#“ braucht es nicht.</span>
       </div>
 
       <div class="field">
         <span>Blockiert alles mit diesen Tags</span>
-        <app-tag-input [(value)]="blocksWithTag" [suggestions]="knownTags()" placeholder="leise" />
+        <app-tag-input [(value)]="blocksWithTag" [suggestions]="knownTags()" />
       </div>
 
       <div class="field">
