@@ -3,6 +3,10 @@
 :host {
   --columns: repeat(7, 1fr);
 
+  // Sieben Tageszellen brauchen mehr Grundbreite als eine; darunter wird
+  // gescrollt statt gequetscht.
+  --grid-min-width: 60rem;
+
   // Balken sind hier wenige Pixel breit — Polsterung und Rundung des
   // Tagesmassstabs würden sie zu Punkten machen.
   --bar-padding: 0.15rem;
@@ -11,12 +15,6 @@
   // Nur noch Stundenlinien: viertelstündlich wäre hier jede zweite Pixelspalte
   // eine Linie, und die Tönung der Wochenenden ginge darin unter.
   --quarter-line: transparent;
-}
-
-.grid {
-  // Sieben Tageszellen brauchen mehr Grundbreite als eine; darunter wird
-  // gescrollt statt gequetscht.
-  min-width: 60rem;
 }
 
 .header .day {

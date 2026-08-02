@@ -18,14 +18,24 @@ import { SessionService } from './session-service';
   selector: 'app-session-bar',
   imports: [FormsModule],
   template: `
+    <!-- Schmal bleibt von der Leiste nur je ein Zeichen übrig: der Satz
+         "Angemeldet als …" erklärt sich auf einem Telefon nicht so viel besser,
+         dass er die halbe Zeile wert wäre. Beschriftet sind die Knöpfe
+         trotzdem — über aria-label und title, nicht über sichtbaren Text. -->
     <div class="bar">
       @if (session.isAnonymous()) {
-        <button type="button" (click)="open()">Anmelden</button>
+        <button type="button" (click)="open()" title="Anmelden" aria-label="Anmelden">
+          <span class="icon" aria-hidden="true">⇥</span>
+          <span class="text">Anmelden</span>
+        </button>
       } @else {
         <span class="role"
-          >Angemeldet als <strong>{{ session.roleName() }}</strong></span
+          ><span class="text">Angemeldet als </span><strong>{{ session.roleName() }}</strong></span
         >
-        <button type="button" (click)="logout()">Abmelden</button>
+        <button type="button" (click)="logout()" title="Abmelden" aria-label="Abmelden">
+          <span class="icon" aria-hidden="true">⇤</span>
+          <span class="text">Abmelden</span>
+        </button>
       }
     </div>
 
@@ -85,6 +95,25 @@ import { SessionService } from './session-service';
       gap: 0.5rem;
       font-size: 0.85rem;
       color: var(--text-muted);
+
+      .icon {
+        display: none;
+      }
+    }
+
+    // Dieselbe Schwelle wie im Kalendergerüst.
+    @media (width < 48rem) {
+      .bar {
+        .icon {
+          display: inline;
+          font-size: 1rem;
+          line-height: 1;
+        }
+
+        .text {
+          display: none;
+        }
+      }
     }
 
     button {

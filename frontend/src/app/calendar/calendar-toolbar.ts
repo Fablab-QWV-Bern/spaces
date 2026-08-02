@@ -36,12 +36,23 @@ import { SessionService } from '../shared/session-service';
       <button type="button" (click)="today.emit()">Heute</button>
       <button type="button" (click)="shift.emit(1)" [attr.aria-label]="forwardLabel()">›</button>
 
-      <input
-        type="date"
-        [value]="date()"
-        (change)="dateSelected.emit($any($event.target).value)"
-        aria-label="Datum wählen"
-      />
+      <!-- Schmal schrumpft das Feld auf sein Symbol: das Datum steht als
+           Überschrift schon da, ein zweites Mal ausgeschrieben kostet nur
+           Breite. Das Feld selbst bleibt liegen und deckt das Symbol
+           durchsichtig zu — so öffnet der Griff weiterhin den Auswähler des
+           Geräts, statt dass wir einen nachbauen. -->
+      <label class="date">
+        <span #icon class="icon" aria-hidden="true">📅</span>
+
+        <input
+          #picker
+          type="date"
+          [value]="date()"
+          (change)="dateSelected.emit($any($event.target).value)"
+          (click)="openPicker(icon, picker)"
+          aria-label="Datum wählen"
+        />
+      </label>
 
       @if (zoomable()) {
         <span class="spans">
@@ -95,6 +106,7 @@ import { SessionService } from '../shared/session-service';
 
       button,
       input,
+      .icon,
       .overview {
         border: 1px solid var(--line-strong);
         background: var(--paper);
@@ -111,6 +123,10 @@ import { SessionService } from '../shared/session-service';
 
       input[type='date'] {
         cursor: text;
+      }
+
+      .icon {
+        display: none;
       }
 
       .overview {
@@ -164,6 +180,39 @@ import { SessionService } from '../shared/session-service';
         }
       }
     }
+
+    // Dieselbe Schwelle wie im Kalendergerüst: unterhalb der Mindestbreite des
+    // Rasters wird gescrollt, und die Leiste gibt her, was sie entbehren kann.
+    @media (width < 48rem) {
+      :host {
+        padding: 0.75rem 0.75rem 0.5rem;
+      }
+
+      h1 {
+        font-size: 1.25rem;
+      }
+
+      .controls .icon {
+        display: block;
+        line-height: 1.2;
+      }
+
+      .date {
+        position: relative;
+        display: grid;
+
+        // Das durchsichtige Feld liegt über dem Symbol und bestimmt damit den
+        // Zeiger. Hier tippt man nicht, hier schlägt man auf.
+        input {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          padding: 0;
+          opacity: 0;
+          cursor: pointer;
+        }
+      }
+    }
   `,
 })
 export class CalendarToolbar {
@@ -198,4 +247,17 @@ export class CalendarToolbar {
         this.unit()
       ],
   );
+
+  /**
+   * Öffnet den Datumsauswähler von Hand — aber nur im schmalen Zustand, wo das
+   * durchsichtige Feld über dem Symbol liegt und ein Klick sonst ins Leere
+   * ginge. Ob dieser Zustand gilt, verrät das Symbol selbst: ausgeblendet hat
+   * es kein `offsetParent`. So steht die Schwelle nur im Stylesheet und nicht
+   * ein zweites Mal hier.
+   */
+  protected openPicker(icon: HTMLElement, picker: HTMLInputElement): void {
+    if (icon.offsetParent) {
+      picker.showPicker?.();
+    }
+  }
 }

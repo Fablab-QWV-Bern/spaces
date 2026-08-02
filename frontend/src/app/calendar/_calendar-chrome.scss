@@ -9,10 +9,18 @@
   --label-width: 10rem;
   --row-height: 2rem;
   --columns: 1fr;
+  // Unter dieser Breite wird gescrollt statt gequetscht. Die Legende braucht
+  // denselben Wert, siehe unten — darum eine Variable und keine zwei Zahlen.
+  --grid-min-width: 48rem;
+  // Der Abstand der Ansicht zum Fensterrand. Die klebende Legende muss ihn
+  // kennen: eine klebende Kante misst vom Rand des Polsterkastens, nicht von
+  // dessen Innenkante — mit `left: 0` rutschte sie erst um die Polsterung
+  // weg, bevor sie fasst.
+  --gutter: 1.5rem;
 
   // Die Ansicht füllt das Fenster und scrollt nicht selbst — gescrollt wird in
-  // `.calendar`. Nur so bleiben Kopfleiste und Legende stehen, und nur so kann
-  // die Kopfzeile des Rasters kleben: `.calendar` trägt `overflow-x` und ist
+  // `.calendar`. Nur so bleibt die Kopfleiste stehen, und nur so kann die
+  // Kopfzeile des Rasters kleben: `.calendar` trägt `overflow-x` und ist
   // damit ohnehin ein Scrollcontainer, an dem sich `position: sticky`
   // ausrichtet. Klebte die Kopfzeile am Fenster, hätte sie keinen Bezug.
   display: flex;
@@ -24,7 +32,7 @@
 
 .hint,
 .error {
-  padding: 1rem 1.5rem;
+  padding: 1rem var(--gutter);
 }
 
 .error {
@@ -36,12 +44,12 @@
   // Ohne das wächst ein Flex-Element auf seinen Inhalt statt zu scrollen.
   min-height: 0;
   overflow: auto;
-  padding: 0 1.5rem 1rem;
+  padding: 0 var(--gutter) 1rem;
 }
 
 .grid {
   position: relative;
-  min-width: 48rem;
+  min-width: var(--grid-min-width);
   border: 1px solid var(--line);
   border-radius: 0.25rem;
   background: var(--paper);
@@ -123,13 +131,34 @@
   background: var(--accent);
 }
 
+// Die Legende steht im Scrollbereich unter dem Raster, nicht als Leiste am
+// Fensterrand: sie erklärt einmal, was die Farben bedeuten, und muss dafür
+// nicht dauerhaft eine Zeile Höhe belegen — auf einem Telefon die knappste
+// Ressource überhaupt. Senkrecht darf sie darum wegrollen, waagrecht nicht:
+// sie erklärt das ganze Raster, nicht dessen linken Rand.
+//
+// Darum die zwei Elemente. Ein klebendes Element bewegt sich nur innerhalb
+// seines Elternblocks; wäre das die Legende selbst, wäre der Eltern das
+// Scrollfenster — genau so breit wie sie, also kein Spielraum. `.legend` ist
+// deshalb so breit wie das Raster, und geklebt wird die Erklärung darin.
 .legend {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0 1.5rem;
+  min-width: var(--grid-min-width);
+  margin: 0.6rem 0 0;
   font-size: 0.8rem;
   color: var(--text-muted);
+
+  .keys {
+    position: sticky;
+    left: var(--gutter);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    // Nur so breit wie nötig — sonst füllte sie den Elternblock und hätte
+    // wieder keinen Spielraum. Im Fenster bleiben muss sie trotzdem.
+    width: max-content;
+    max-width: calc(100vw - 2 * var(--gutter));
+  }
 
   .swatch {
     display: inline-block;
@@ -154,5 +183,28 @@
       background: var(--paper);
       box-shadow: inset 0 0 0 1px var(--line-strong);
     }
+  }
+}
+
+// Unterhalb der Mindestbreite des Rasters wird ohnehin waagrecht gescrollt.
+// Von da an ist jeder Rand links verschenkte Zeit: das Raster läuft bündig
+// bis an beide Kanten, und nur die Umgebung behält eine schmale Rinne. Die
+// Beschriftungsspalte wird knapper — sie klebt links und nimmt der Zeitachse
+// Platz weg, den lange Namen ohnehin per Ellipse aufgeben.
+@media (width < 48rem) {
+  :host {
+    --label-width: 8rem;
+    --gutter: 0.75rem;
+  }
+
+  // Nur das Raster geht bündig bis an die Kanten; der Text ringsum behält
+  // seine Rinne. Die Legende bekommt sie hier, weil sie im Scrollbereich
+  // steht — für ihre klebende Kante bleibt der Versatz derselbe.
+  .calendar {
+    padding-inline: 0;
+  }
+
+  .legend {
+    padding-inline: var(--gutter);
   }
 }
