@@ -70,7 +70,9 @@ fi
 # stehen: eine kaputte Anwendung auszuliefern wäre die schlechtere Auskunft als
 # eine abwesende.
 fehlschlag() {
+    local status=$?
     echo >&2
+    echo "Gescheitert in Zeile ${BASH_LINENO[0]} mit Status ${status}: ${BASH_COMMAND}" >&2
     echo 'Bereitstellung abgebrochen — die Anwendung bleibt in Wartung.' >&2
     echo "Nach dem Beheben: bash deploy.sh (oder $PHP artisan up)" >&2
 }
@@ -103,7 +105,12 @@ fi
 
 "$PHP" artisan migrate --force
 "$PHP" artisan optimize
-"$PHP" artisan storage:link --force
+
+# Nicht tödlich: ohne den Symlink fehlen die Fotos, alles andere läuft. Das
+# Hosting muss dafür symlink() erlauben — ob es das tut, ist ungetestet.
+if ! "$PHP" artisan storage:link --force; then
+    echo 'Warnung: public/storage konnte nicht angelegt werden, Fotos bleiben aus.' >&2
+fi
 
 trap - ERR
 "$PHP" artisan up
