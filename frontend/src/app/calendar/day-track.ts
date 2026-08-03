@@ -39,6 +39,13 @@ export class DayTrack {
    * versprechen, als der Klick tut.
    */
   readonly previewMinutes = input(0);
+  /**
+   * Warum hier nichts anzulegen ist, obwohl der Arbeitsplatz es zuliesse —
+   * etwa weil der Tag jenseits des Vorlaufs liegt. Der Satz erscheint beim
+   * Überfahren an der Stelle, an der sonst die Vorschau läge; über alle Zeilen
+   * hinweg stünde er sonst dutzendfach da.
+   */
+  readonly notice = input<string | null>(null);
 
   /** Der angeklickte Zeitschlitz, in Minuten seit Mitternacht. */
   readonly slotClick = output<number>();

@@ -32,6 +32,25 @@
   cursor: pointer;
 }
 
+// Statt der Vorschau: warum ein Klick hier nichts anlegt. Erst beim Überfahren
+// sichtbar — als stehender Text stünde derselbe Satz in jeder Zeile.
+.notice {
+  grid-row: 1;
+  grid-column: 1 / -1;
+  place-self: center;
+  color: var(--text-soft);
+  font-size: 0.78rem;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 120ms ease-in;
+  margin: 0;
+}
+
+:host(:hover) .notice {
+  opacity: 1;
+}
+
 // Der Balken, den ein Klick anlegen würde. Gestrichelt und durchscheinend, damit
 // er nicht mit einer bestehenden Buchung verwechselt wird — und ohne
 // Zeigerereignisse, sonst verlöre die Zelle den Zeiger an ihn und die Vorschau

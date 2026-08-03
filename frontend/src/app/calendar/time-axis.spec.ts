@@ -119,12 +119,16 @@ describe('instantAt', () => {
 });
 
 describe('allowedDurations', () => {
-  it('schneidet die Staffel beim Maximum ab', () => {
-    expect(allowedDurations(120)).toEqual([15, 30, 45, 60, 90, 120]);
+  it('zaehlt volle Stunden bis zum Maximum', () => {
+    expect(allowedDurations(240)).toEqual([60, 120, 180, 240]);
   });
 
-  it('macht das Maximum immer waehlbar, auch neben der Staffel', () => {
-    expect(allowedDurations(100)).toEqual([15, 30, 45, 60, 90, 100]);
+  it('macht das Maximum immer waehlbar, auch neben der vollen Stunde', () => {
+    expect(allowedDurations(100)).toEqual([60, 100]);
+  });
+
+  it('bietet unter einer Stunde nur das Maximum an', () => {
+    expect(allowedDurations(45)).toEqual([45]);
   });
 
   it('geht ueber 24 Stunden in Tagesschritten weiter', () => {

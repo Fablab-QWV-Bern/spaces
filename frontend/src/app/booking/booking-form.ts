@@ -26,9 +26,9 @@ import {
   Error as ApiError,
   Workplace,
 } from '../api/models';
+import { formatDay, lastBookableDay } from '../calendar/booking-horizon';
 import {
   DEFAULT_DURATION_MINUTES,
-  GRID_MINUTES,
   TimeAxis,
   allowedDurations,
   blockGeometry,
@@ -56,7 +56,7 @@ interface BookingFormValue {
   startMinutes: string;
   durationMinutes: string;
   overnight: boolean;
-  endDate: string;
+  /** Nur bei `overnight` in Gebrauch, und immer am Folgetag gemeint. */
   endMinutes: string;
   name: string;
   contact: string;
@@ -95,8 +95,7 @@ export class BookingForm {
     startMinutes: '480',
     durationMinutes: String(DEFAULT_DURATION_MINUTES),
     overnight: false,
-    endDate: '',
-    endMinutes: '495',
+    endMinutes: '540',
     ...readBooker(),
     rulesAcknowledged: false,
   });
@@ -143,6 +142,24 @@ export class BookingForm {
       }
     });
 
+    // Die Endzeiten hängen am Beginn: verschiebt der sich, passt die
+    // eingestellte nicht mehr auf eine erlaubte Dauer. Die nächstliegende tritt
+    // an ihre Stelle — sie hält die Dauer, wo die kürzeste sie einkürzte.
+    effect(() => {
+      const slots = this.endSlots();
+      const chosen = this.endMinutes();
+
+      if (!this.overnight() || slots.length === 0 || slots.includes(chosen)) {
+        return;
+      }
+
+      const nearest = slots.reduce((best, slot) =>
+        Math.abs(slot - chosen) < Math.abs(best - chosen) ? slot : best,
+      );
+
+      this.model.update((value) => ({ ...value, endMinutes: String(nearest) }));
+    });
+
     // Wechselt der Arbeitsplatz oder der Tag, müssen die Nachbarbuchungen neu her.
     effect(() => {
       const workplaceId = this.workplaceId();
@@ -161,7 +178,6 @@ export class BookingForm {
   protected readonly startMinutes = computed(() => Number(this.model().startMinutes));
   protected readonly durationMinutes = computed(() => Number(this.model().durationMinutes));
   protected readonly overnight = computed(() => this.model().overnight);
-  protected readonly endDate = computed(() => this.model().endDate);
   protected readonly endMinutes = computed(() => Number(this.model().endMinutes));
   protected readonly rulesAcknowledged = computed(() => this.model().rulesAcknowledged);
 
@@ -200,7 +216,9 @@ export class BookingForm {
     return workplace?.maxBookingDurationMinutes ?? area?.maxBookingDurationMinutes ?? 0;
   });
 
-  protected readonly durations = computed(() => allowedDurations(this.maxDurationMinutes()));
+  protected readonly durations = computed(() =>
+    withChosen(allowedDurations(this.maxDurationMinutes()), this.durationMinutes()),
+  );
 
   protected readonly slots = computed(() => {
     const axis = this.axis();
@@ -208,20 +226,42 @@ export class BookingForm {
     return axis ? slotsOfDay(axis) : [];
   });
 
-  /** Die Enden liegen eine Viertelstunde später als die Startzeiten. */
+  /**
+   * Mögliche Endzeiten am Folgetag — zu jeder erlaubten Buchungsdauer die
+   * Uhrzeit, bei der sie herauskommt.
+   *
+   * Angerechnet wird nur, was in den Öffnungszeiten liegt: der Abend bis zur
+   * Schliessung und der Morgen ab der Öffnung. Zu einer Dauer gehört darum
+   * nicht "Beginn plus Dauer", sondern was nach dem Abend noch übrig ist.
+   * Dauern, die über den Abend nicht hinausreichen, führen nicht über Nacht
+   * und stehen hier nicht; ebensowenig solche, die noch am Morgen über die
+   * Schliessung hinauskämen.
+   */
   protected readonly endSlots = computed(() => {
     const axis = this.axis();
 
-    return axis
-      ? slotsOfDay(axis)
-          .map((minutes) => minutes + GRID_MINUTES)
-          .filter((minutes) => minutes <= axis.closesAt)
-      : [];
+    if (!axis) {
+      return [];
+    }
+
+    const evening = axis.closesAt - this.startMinutes();
+
+    return allowedDurations(this.maxDurationMinutes())
+      .map((minutes) => axis.opensAt + minutes - evening)
+      .filter((minutes) => minutes > axis.opensAt && minutes <= axis.closesAt);
   });
 
   protected readonly allowsOvernight = computed(() => this.area()?.allowNightlyActivities ?? false);
 
-  /** Auswählbare Tage, begrenzt durch den Vorlauf des Bereichs. */
+  /**
+   * Auswählbare Tage: von heute bis zum Vorlauf des Bereichs — und darüber
+   * hinaus der gerade gewählte Tag.
+   *
+   * Der kann aus der Adresse kommen oder aus einer bestehenden Buchung und
+   * weiter draussen liegen als der Vorlauf. Fehlte er in der Liste, stünde das
+   * Feld leer, während die Prüfung darunter über ihn urteilt — man läse einen
+   * Fehler zu einem Datum, das nirgends steht.
+   */
   protected readonly dateOptions = computed(() => {
     const config = this.config();
 
@@ -229,28 +269,39 @@ export class BookingForm {
       return [];
     }
 
-    const limit = this.session.session()?.permissions.noTimeRestrictions
-      ? 365
-      : (this.area()?.maxBookingEndOffsetDays ?? config.maxBookingEndOffsetDays);
+    const last = lastBookableDay(config, this.area(), this.session.noTimeRestrictions());
+    const days: string[] = [];
 
-    const options: { value: string; label: string }[] = [];
+    // Ohne Grenze bleibt es bei einem Jahr: weiter reicht keine Auswahlliste.
+    for (let offset = 0; offset <= 365; offset++) {
+      const value = dayFromToday(offset);
 
-    for (let offset = 0; offset <= Math.min(limit, 365); offset++) {
-      const day = new Date();
-      day.setDate(day.getDate() + offset);
+      if (last !== null && value > last) {
+        break;
+      }
 
-      options.push({
-        value: isoDate(day),
-        label:
-          offset === 0
-            ? `Heute, ${formatDate(day)}`
-            : offset === 1
-              ? `Morgen, ${formatDate(day)}`
-              : formatDate(day),
-      });
+      days.push(value);
     }
 
-    return options;
+    const chosen = this.date();
+
+    if (chosen && !days.includes(chosen)) {
+      days.push(chosen);
+      days.sort();
+    }
+
+    const today = dayFromToday(0);
+    const tomorrow = dayFromToday(1);
+
+    return days.map((value) => ({
+      value,
+      label:
+        value === today
+          ? `Heute, ${formatDay(value)}`
+          : value === tomorrow
+            ? `Morgen, ${formatDay(value)}`
+            : formatDay(value),
+    }));
   });
 
   /** Start und Ende als echte Zeitpunkte, oder null solange etwas fehlt. */
@@ -263,10 +314,11 @@ export class BookingForm {
 
     const start = instantAt(date, this.startMinutes());
 
+    // Über Nacht endet am Folgetag, ohne zweite Datumswahl. Stünde sie da,
+    // liesse sich derselbe Tag einstellen — und damit ein Ende vor dem Beginn.
+    // Wer länger als eine Nacht bucht, nimmt die Dauer in Tagesschritten.
     if (this.overnight()) {
-      const endDate = this.endDate();
-
-      return endDate ? { start, end: instantAt(endDate, this.endMinutes()) } : null;
+      return { start, end: instantAt(nextDay(date), this.endMinutes()) };
     }
 
     return { start, end: new Date(start.getTime() + this.durationMinutes() * 60_000) };
@@ -281,7 +333,7 @@ export class BookingForm {
 
     const sameDay = isoDate(range.start) === isoDate(range.end);
 
-    return sameDay ? formatTime(range.end) : `${formatTime(range.end)} am ${formatDate(range.end)}`;
+    return sameDay ? formatTime(range.end) : `${formatTime(range.end)} am ${formatDay(range.end)}`;
   });
 
   /** Die Buchung, wie sie an die API ginge — oder null, solange etwas fehlt. */
@@ -425,7 +477,11 @@ export class BookingForm {
   private prefillFromBooking(booking: Booking): void {
     const start = new Date(booking.startTime);
     const end = new Date(booking.endTime);
-    const overnight = isoDate(start) !== isoDate(end);
+
+    // Nur die eine Nacht ist "über Nacht" — was weiter reicht, wird über die
+    // Dauer beschrieben, sonst zöge das Formular beim Speichern das Ende
+    // stillschweigend auf den Folgetag zurück.
+    const overnight = isoDate(end) === nextDay(isoDate(start));
 
     this.editing.set(booking);
 
@@ -438,7 +494,6 @@ export class BookingForm {
         ? value.durationMinutes
         : String(Math.round((end.getTime() - start.getTime()) / 60_000)),
       overnight,
-      endDate: isoDate(end),
       endMinutes: String(end.getHours() * 60 + end.getMinutes()),
       name: booking.name,
       contact: booking.contact ?? '',
@@ -467,8 +522,8 @@ export class BookingForm {
       durationMinutes: String(
         requestedDuration > 0 ? requestedDuration : Math.min(DEFAULT_DURATION_MINUTES, maxDuration),
       ),
-      endDate: datePart,
-      endMinutes: String((axis?.opensAt ?? 480) + GRID_MINUTES),
+      // Die Endzeit bleibt, wie sie ist: sie zählt erst bei "über Nacht", und
+      // dann rückt der Abgleich oben sie ohnehin auf eine erlaubte Dauer.
     }));
   }
 
@@ -584,6 +639,36 @@ function isoDate(date: Date): string {
   return new Date(date.getTime() - offset).toISOString().slice(0, 10);
 }
 
-function formatDate(date: Date): string {
-  return date.toLocaleDateString('de-CH', { weekday: 'short', day: 'numeric', month: 'long' });
+/**
+ * Der Tag, der so viele Tage nach heute liegt.
+ *
+ * Über Mittag gerechnet: an einem Tag mit Zeitumstellung wäre der Schritt über
+ * Mitternacht 23 oder 25 Stunden lang und träfe den Nachbartag.
+ */
+/** Der Tag nach dem gegebenen. */
+function nextDay(day: string): string {
+  const date = new Date(`${day}T12:00:00`);
+  date.setDate(date.getDate() + 1);
+
+  return isoDate(date);
+}
+
+/**
+ * Der eingestellte Wert gehört in die Auswahlliste, auch wenn er auf keiner
+ * Stufe liegt: er kann aus einer bestehenden Buchung stammen, die vor einer
+ * Änderung der Staffelung oder des Maximums entstanden ist. Fehlte er, stünde
+ * das Feld leer, während gespeichert würde, was darin steht.
+ */
+function withChosen(values: number[], chosen: number): number[] {
+  return chosen > 0 && !values.includes(chosen)
+    ? [...values, chosen].sort((left, right) => left - right)
+    : values;
+}
+
+function dayFromToday(offset: number): string {
+  const day = new Date();
+  day.setHours(12, 0, 0, 0);
+  day.setDate(day.getDate() + offset);
+
+  return isoDate(day);
 }

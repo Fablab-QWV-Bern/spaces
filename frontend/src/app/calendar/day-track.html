@@ -1,3 +1,7 @@
+@if (notice(); as notice) {
+  <p class="notice">{{ notice }}</p>
+}
+
 <!-- Vor den Balken, damit eine bestehende Buchung die Vorschau überdeckt. -->
 @if (preview(); as preview) {
   <div class="preview" [style.grid-column]="preview.gridColumn" aria-hidden="true">

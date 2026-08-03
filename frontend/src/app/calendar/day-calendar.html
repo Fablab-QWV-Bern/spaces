@@ -35,7 +35,8 @@
             <app-day-track
               [axis]="axis"
               [blocks]="blocks(workplace)"
-              [clickable]="isBookable(workplace)"
+              [clickable]="isBookable(workplace, group.area)"
+              [notice]="notice(workplace, group.area)"
               [previewMinutes]="previewMinutes"
               (slotClick)="onSlotClick(workplace, $event)"
             />

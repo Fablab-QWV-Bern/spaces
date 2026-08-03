@@ -35,7 +35,8 @@
           <app-day-track
             [axis]="axis"
             [blocks]="blocks(day.date)"
-            [clickable]="isBookable()"
+            [clickable]="clickable(day.date)"
+            [notice]="notice(day.date)"
             [previewMinutes]="previewMinutes"
             (slotClick)="onSlotClick(day.date, $event)"
           />

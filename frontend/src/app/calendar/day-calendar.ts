@@ -1,8 +1,9 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
-import { Workplace } from '../api/models';
+import { Area, Workplace } from '../api/models';
 import { Block, blocksFor } from './blocks';
+import { leadTimeNotice } from './booking-horizon';
 import { CalendarStore, isoDate } from './calendar-store';
 import { CalendarToolbar } from './calendar-toolbar';
 import { syncDateWithUrl } from './date-in-url';
@@ -99,9 +100,48 @@ export class DayCalendar {
     return this.blocksByWorkplace().get(workplace.id) ?? [];
   }
 
+  /**
+   * Der Hinweis je Bereich, wenn der dargestellte Tag jenseits seines Vorlaufs
+   * liegt — sonst null. Der Text entsteht einmal je Bereich und nicht je
+   * Abgleich, damit die Bindung im Template nicht bei jedem Durchlauf eine
+   * neue Zeichenkette sieht.
+   */
+  private readonly noticeByArea = computed(() => {
+    const config = this.store.config();
+    const date = this.store.date();
+    const unrestricted = this.store.noTimeRestrictions();
+    const map = new Map<string, string | null>();
+
+    for (const group of this.store.rows()) {
+      map.set(
+        group.area.id,
+        config ? leadTimeNotice(config, group.area, unrestricted, date) : null,
+      );
+    }
+
+    return map;
+  });
+
   /** Nur wo tatsächlich gebucht werden kann, ist die Fläche anklickbar. */
-  protected isBookable(workplace: Workplace): boolean {
-    return workplace.status === 'OK' && this.store.canManageBookings();
+  protected isBookable(workplace: Workplace, area: Area): boolean {
+    return (
+      workplace.status === 'OK' &&
+      this.store.canManageBookings() &&
+      !this.noticeByArea().get(area.id)
+    );
+  }
+
+  /**
+   * Der Hinweis, aber nur in Zeilen, die sonst buchbar wären: wo ohnehin nichts
+   * anzulegen ist, wäre die Auskunft über den Vorlauf eine Antwort auf eine
+   * Frage, die niemand gestellt hat.
+   */
+  protected notice(workplace: Workplace, area: Area): string | null {
+    if (workplace.status !== 'OK' || !this.store.canManageBookings()) {
+      return null;
+    }
+
+    return this.noticeByArea().get(area.id) ?? null;
   }
 
   protected onSlotClick(workplace: Workplace, minutes: number): void {

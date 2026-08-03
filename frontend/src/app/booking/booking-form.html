@@ -120,16 +120,7 @@
           </label>
         } @else {
           <label class="field">
-            <span>Ende am</span>
-            <select [formField]="bookingForm.endDate">
-              @for (option of dateOptions(); track option.value) {
-                <option [value]="option.value">{{ option.label }}</option>
-              }
-            </select>
-          </label>
-
-          <label class="field">
-            <span>Ende um</span>
+            <span>Ende am Folgetag</span>
             <select [formField]="bookingForm.endMinutes">
               @for (slot of endSlots(); track slot) {
                 <option [value]="slot">{{ formatMinutes(slot) }}</option>
@@ -142,7 +133,7 @@
       @if (allowsOvernight()) {
         <label class="check">
           <input type="checkbox" [formField]="bookingForm.overnight" />
-          <span>Über Nacht — Ende an einem anderen Tag</span>
+          <span>Über Nacht — Ende am folgenden Tag</span>
         </label>
       }
 

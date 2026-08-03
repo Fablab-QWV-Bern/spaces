@@ -74,7 +74,9 @@ Die Kalenderkomponente wird selbst gebaut, nicht zugekauft.
     - zu erstellende Buchung wird als hervorgehobener Block angezeigt
 - Gewählt werden Start- und Endzeit. Als Abkürzung gibt es ein Dauer-Dropdown mit erlaubten Dauern (basierend auf
   Arbeitsplatz + Bereich, vgl. Zeitregeln), das das Ende auf "Start + Dauer" setzt.
-    - Buchungen über Nacht werden über ein Enddatum + Endzeit erfasst, nicht über das Dauer-Dropdown
+    - Buchungen über Nacht werden über eine Endzeit am Folgetag erfasst, nicht über das Dauer-Dropdown. Ein Enddatum
+      gibt es nicht: mit ihm liesse sich derselbe Tag und damit ein Ende vor dem Beginn einstellen. Wählbar sind die
+      Endzeiten, bei denen die anrechenbare Dauer auf eine der erlaubten Dauern fällt.
     - die anrechenbare Dauer (ohne Nachtstunden) wird daraus abgeleitet und angezeigt; sie ist nur für die Validierung
       gegen die maximale Buchungsdauer relevant
 - Kollisionen werden in Echtzeit geprüft und angezeigt. Die Prüfung im Frontend ist eine Vorschau; verbindlich ist die
@@ -109,6 +111,9 @@ Die Kalenderkomponente wird selbst gebaut, nicht zugekauft.
 - Arbeitsplätze mit Wiki-Link zeigen ein Link-Icon neben dem Namen
 - Leere Zeiten sind als weiße Flächen dargestellt und können angeklickt werden, um eine neue Buchung zu erstellen.
   Vorbelegt werden Arbeitsplatz, Datum und Startzeit der Zelle sowie die kürzeste erlaubte Dauer.
+- Jenseits des Vorlaufs (`maxBookingEndOffsetDays` des Bereichs) ist die Fläche nicht anklickbar und zeigt keine
+  Vorschau; beim Überfahren steht dort, wie viele Tage im Voraus dieser Bereich buchbar ist und ab wann dieser Tag es
+  wird.
 - Eine vertikale Linie zeigt die aktuelle Zeit an (sofern im sichtbaren Bereich)
 - Optional einschränkbar, dass nur ein Bereich angezeigt wird
 - Zeiten ausserhalb der Öffnungszeiten werden nicht dargestellt, sondern übersprungen. Eine Buchung über Nacht liegt
@@ -283,8 +288,8 @@ also nur die Zeit innerhalb der Öffnungszeiten; eine Buchung von Freitag 20:00 
 Weiter gilt:
 
 - Die maximale Buchungsdauer ist die des Arbeitsplatzes, falls gesetzt, sonst die des Bereichs.
-- Erlaubte Dauern im Dropdown (abgeschnitten beim Maximum, das Maximum selbst ist immer wählbar): 15, 30, 45 Minuten, 1,
-  1.5, 2, 3, 4, 6, 8, 12, 24 Stunden, danach in Schritten von 24 Stunden.
+- Erlaubte Dauern im Dropdown (abgeschnitten beim Maximum, das Maximum selbst ist immer wählbar): volle Stunden bis 24
+  Stunden, danach in Schritten von 24 Stunden.
 - Ohne `allowNightlyActivities` müssen Start und Ende am selben Tag liegen.
 - Start und Ende müssen innerhalb der Öffnungszeiten liegen, auch bei Bereichen mit `allowNightlyActivities`.
 - Das Ende darf höchstens `maxBookingEndOffsetDays` Tage in der Zukunft liegen (Bereich, sonst globaler Wert).

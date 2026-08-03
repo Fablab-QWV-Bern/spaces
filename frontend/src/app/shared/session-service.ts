@@ -31,6 +31,9 @@ export class SessionService {
       this.canManageRoles() ||
       this.canManageBookingSeries(),
   );
+  readonly noTimeRestrictions = computed(
+    () => this.session()?.permissions.noTimeRestrictions ?? false,
+  );
   readonly seesDetails = computed(() => this.session()?.permissions.viewBookingsDetails ?? false);
   readonly isAnonymous = computed(() => this.session()?.isAnonymous ?? true);
   readonly roleName = computed(() => this.session()?.roleName ?? '');

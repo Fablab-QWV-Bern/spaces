@@ -3,6 +3,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { Block, blocksFor } from './blocks';
+import { leadTimeNotice } from './booking-horizon';
 import { CalendarStore, IsoDate, isoDate } from './calendar-store';
 import { CalendarToolbar } from './calendar-toolbar';
 import { syncDateWithUrl } from './date-in-url';
@@ -99,8 +100,8 @@ export class WorkplaceCalendar {
   });
 
   /**
-   * Der gewählte Arbeitsplatz samt Farbe seines Bereichs, oder null solange
-   * keiner gewählt ist bzw. die Kennung zu keinem passt.
+   * Der gewählte Arbeitsplatz samt seinem Bereich, oder null solange keiner
+   * gewählt ist bzw. die Kennung zu keinem passt.
    */
   protected readonly selection = computed(() => {
     const workplaceId = this.workplaceId();
@@ -109,7 +110,7 @@ export class WorkplaceCalendar {
       const workplace = group.workplaces.find((candidate) => candidate.id === workplaceId);
 
       if (workplace) {
-        return { workplace, color: group.area.color };
+        return { workplace, area: group.area };
       }
     }
 
@@ -126,7 +127,7 @@ export class WorkplaceCalendar {
       return map;
     }
 
-    const { workplace, color } = selection;
+    const { workplace, area } = selection;
     const nameOf = this.store.nameOf();
     const bookings = this.store.bookingsByWorkplace().get(workplace.id) ?? [];
     const blockages = this.store.blockagesByWorkplace().get(workplace.id) ?? [];
@@ -136,7 +137,7 @@ export class WorkplaceCalendar {
         axis,
         day: new Date(`${date}T12:00:00`),
         workplaceName: workplace.name,
-        color,
+        color: area.color,
         nameOf,
       };
 
@@ -166,6 +167,41 @@ export class WorkplaceCalendar {
 
     return selection?.workplace.status === 'OK' && this.store.canManageBookings();
   });
+
+  /**
+   * Der Hinweis je Tag, der noch jenseits des Vorlaufs liegt — sonst null.
+   *
+   * Anders als in der Tagesansicht steht hier ein Monat untereinander, der
+   * Hinweis nennt also je Zeile ein anderes Datum. Die Sätze entstehen einmal
+   * und nicht bei jedem Abgleich, sonst sähe die Bindung im Template über
+   * einunddreissig Zeilen hinweg immer neue Zeichenketten.
+   */
+  private readonly noticeByDay = computed(() => {
+    const config = this.store.config();
+    const selection = this.selection();
+    const map = new Map<IsoDate, string | null>();
+
+    if (!config || !selection || !this.isBookable()) {
+      return map;
+    }
+
+    const unrestricted = this.store.noTimeRestrictions();
+
+    for (const date of this.store.days()) {
+      map.set(date, leadTimeNotice(config, selection.area, unrestricted, date));
+    }
+
+    return map;
+  });
+
+  /** Jenseits des Vorlaufs wird nicht gebucht — der Hinweis sagt, ab wann. */
+  protected notice(date: IsoDate): string | null {
+    return this.noticeByDay().get(date) ?? null;
+  }
+
+  protected clickable(date: IsoDate): boolean {
+    return this.isBookable() && this.notice(date) === null;
+  }
 
   protected onSlotClick(date: IsoDate, minutes: number): void {
     const selection = this.selection();

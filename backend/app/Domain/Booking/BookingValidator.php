@@ -36,6 +36,7 @@ final class BookingValidator
 
         $area = $workplace->area;
         $violations = [];
+        $latestEnd = null;
 
         // --- Raster und Reihenfolge ---------------------------------------
 
@@ -119,6 +120,7 @@ final class BookingValidator
             $conflicts,
             $chargeable,
             $blocked,
+            $latestEnd,
         );
     }
 

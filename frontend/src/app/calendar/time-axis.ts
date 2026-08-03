@@ -211,9 +211,6 @@ export function toLocalIso(instant: Date): string {
   return new Date(instant.getTime() - offset).toISOString().slice(0, 16);
 }
 
-/** Die Staffelung aus der Spec, in Minuten. */
-const DURATION_LADDER = [15, 30, 45, 60, 90, 120, 180, 240, 360, 480, 720, 1440];
-
 /**
  * Standarddauer einer neuen Buchung, sofern sie am Arbeitsplatz erlaubt ist.
  *
@@ -224,12 +221,16 @@ const DURATION_LADDER = [15, 30, 45, 60, 90, 120, 180, 240, 360, 480, 720, 1440]
 export const DEFAULT_DURATION_MINUTES = 120;
 
 /**
- * Erlaubte Dauern bis zum Maximum. Über 24 Stunden geht es in Tagesschritten
- * weiter, und das Maximum selbst ist immer wählbar — auch wenn es nicht auf der
- * Staffel liegt.
+ * Erlaubte Dauern bis zum Maximum: volle Stunden, über 24 Stunden hinaus in
+ * Tagesschritten. Das Maximum selbst ist immer wählbar — auch wenn es auf keine
+ * volle Stunde fällt.
  */
 export function allowedDurations(maxMinutes: number): number[] {
-  const durations = DURATION_LADDER.filter((minutes) => minutes <= maxMinutes);
+  const durations: number[] = [];
+
+  for (let minutes = 60; minutes <= Math.min(maxMinutes, 1440); minutes += 60) {
+    durations.push(minutes);
+  }
 
   for (let minutes = 2880; minutes <= maxMinutes; minutes += 1440) {
     durations.push(minutes);
