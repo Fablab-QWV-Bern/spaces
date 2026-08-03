@@ -90,6 +90,11 @@ class BookingController extends Controller
 
         $data = $this->validatePayload($request);
 
+        // Das Feld ist im Vertrag optional. Beim Ändern heisst „weggelassen"
+        // aber nicht „widerrufen" — sonst nähme ein Aufruf ohne das Feld die
+        // Bestätigung zurück, ohne dass jemand das wollte.
+        $data['usageRulesAcknowledged'] ??= $booking->usage_rules_acknowledged;
+
         try {
             $updated = $this->writer->update(
                 $booking,
@@ -110,7 +115,7 @@ class BookingController extends Controller
             return $this->pastBooking();
         }
 
-        $booking->delete();
+        $this->writer->delete($booking);
 
         return response()->json(status: 204);
     }

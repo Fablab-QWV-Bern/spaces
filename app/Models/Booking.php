@@ -23,6 +23,7 @@ class Booking extends Model
         'end_time',
         'chargeable_duration_minutes',
         'booking_series_id',
+        'series_detached',
     ];
 
     protected function casts(): array
@@ -32,6 +33,7 @@ class Booking extends Model
             'start_time' => 'immutable_datetime',
             'end_time' => 'immutable_datetime',
             'usage_rules_acknowledged' => 'boolean',
+            'series_detached' => 'boolean',
             'chargeable_duration_minutes' => 'integer',
         ];
     }

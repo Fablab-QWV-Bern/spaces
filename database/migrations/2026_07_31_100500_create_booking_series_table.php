@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('name', 150);
             $table->string('contact', 150);
 
-            $table->enum('interval', ['DAILY', 'WEEKLY', 'MONTHLY']);
+            $table->enum('interval', ['WEEKLY', 'MONTHLY']);
             $table->unsignedSmallInteger('interval_count')->default(1);
 
             // ACHTUNG: lokale Wanduhrzeit, NICHT UTC. Eine wöchentliche Serie um

@@ -36,6 +36,7 @@ class BookingResource extends JsonResource
             'endTime' => $this->end_time->toIso8601ZuluString(),
             'chargeableDurationMinutes' => $this->chargeable_duration_minutes,
             'bookingSeriesId' => $this->booking_series_id,
+            'seriesDetached' => (bool) $this->series_detached,
         ];
     }
 }

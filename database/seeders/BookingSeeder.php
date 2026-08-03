@@ -6,6 +6,7 @@ use App\Domain\Booking\BlockedWorkplaceResolver;
 use App\Domain\Booking\CollisionChecker;
 use App\Domain\Booking\OpeningHours;
 use App\Models\Booking;
+use App\Models\BookingSeries;
 use App\Models\GlobalSetting;
 use App\Models\Role;
 use Carbon\CarbonImmutable;
@@ -95,8 +96,25 @@ class BookingSeeder extends Seeder
                 continue;
             }
 
+            // Die Serie wird angelegt, aber nicht instanziert: der Seeder baut den
+            // heutigen Tag nach, und ein Jahr Instanzen im Voraus kollidierte
+            // reihenweise mit den übrigen Zeilen. `instantiated_until` steht
+            // deshalb auf heute — den Rest holt der Tageslauf nach.
+            $series = $isSeries ? BookingSeries::create([
+                'workplace_id' => $workplaceId,
+                'name' => $name,
+                'contact' => $contact,
+                'interval' => BookingSeries::INTERVAL_WEEKLY,
+                'interval_count' => 1,
+                'first_instance_start' => "{$today} {$from}:00",
+                'first_instance_end' => "{$today} {$to}:00",
+                'end_date' => null,
+                'instantiated_until' => $today,
+            ]) : null;
+
             $booking = Booking::create([
                 'workplace_id' => $workplaceId,
+                // Serieninstanzen haben keinen Ersteller — sie entstehen aus der Serie.
                 'creator_role_id' => $isSeries ? null : $creatorRoleId,
                 'ip_address' => '192.0.2.'.random_int(2, 250),
                 'name' => $name,
@@ -105,6 +123,7 @@ class BookingSeeder extends Seeder
                 'start_time' => $start,
                 'end_time' => $end,
                 'chargeable_duration_minutes' => $hours->chargeableMinutes($start, $end),
+                'booking_series_id' => $series?->id,
             ]);
 
             $booking->setBlockedWorkplaceIds($resolver->resolve($workplaceId));

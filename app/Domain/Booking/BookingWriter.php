@@ -13,7 +13,10 @@ use Illuminate\Support\Facades\DB;
  */
 final class BookingWriter
 {
-    public function __construct(private readonly BookingValidator $validator) {}
+    public function __construct(
+        private readonly BookingValidator $validator,
+        private readonly SeriesExceptions $exceptions,
+    ) {}
 
     /**
      * @param  array{name: string, contact: string}  $booker
@@ -64,7 +67,12 @@ final class BookingWriter
         return DB::transaction(function () use ($booking, $candidate, $role, $booker): Booking {
             $result = $this->check($candidate, $role);
 
-            $booking->update([
+            // Vor dem Füllen festgehalten: danach steht in start_time die neue
+            // Zeit, der Takt-Zeitpunkt wäre dann nicht mehr zu haben.
+            $occurrenceStart = $booking->start_time;
+            $wasDetached = (bool) $booking->series_detached;
+
+            $booking->fill([
                 'workplace_id' => $candidate->workplaceId,
                 'name' => $booker['name'],
                 'contact' => $booker['contact'],
@@ -74,9 +82,36 @@ final class BookingWriter
                 'chargeable_duration_minutes' => $result->chargeableDurationMinutes,
             ]);
 
+            // Wer eine Serieninstanz von Hand ändert, koppelt sie ab: das nächste
+            // Bearbeiten der Serie lässt sie danach stehen. Nur bei einer echten
+            // Änderung — ein Formular, das man öffnet und ungeändert speichert,
+            // soll den Termin nicht für immer festnageln.
+            if ($booking->booking_series_id !== null && $booking->isDirty()) {
+                if (! $wasDetached) {
+                    $this->exceptions->record($booking->booking_series_id, $occurrenceStart);
+                }
+
+                $booking->series_detached = true;
+            }
+
+            $booking->save();
+
             $booking->setBlockedWorkplaceIds($result->blockedWorkplaceIds);
 
             return $booking->refresh();
+        });
+    }
+
+    /**
+     * Löscht eine Buchung. Bei einer Serieninstanz bleibt der gestrichene Termin
+     * gestrichen — sonst käme er beim nächsten Ändern der Serie zurück.
+     */
+    public function delete(Booking $booking): void
+    {
+        DB::transaction(function () use ($booking): void {
+            $this->exceptions->recordFor($booking);
+
+            $booking->delete();
         });
     }
 
