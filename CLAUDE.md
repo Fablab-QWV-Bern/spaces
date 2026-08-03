@@ -34,6 +34,31 @@ Englisch. Kommentare erklären das _Warum_, nicht das _Was_.
   `backend/app/Domain/Booking/`. Das Frontend prüft ausschliesslich Pflichtfelder
   und fragt für alles Weitere `POST /bookings/validate`. Regeln nie im Frontend
   nachbauen.
+- **Der Vorlauf ist die eine Regel, die auch das Frontend kennt** —
+  `frontend/src/app/calendar/booking-horizon.ts`. Das ist kein Nachbau, sondern
+  eine Vorwegnahme: die Datumsliste im Formular muss wissen, wie lang sie wird,
+  und der Kalender, wo er das Klicken einstellt. Beides ist eine Frage *vor* der
+  Prüfung, die `POST /bookings/validate` erst zu einer Buchung beantwortet. Wer
+  den Rand doch erreicht, bekommt trotzdem den Verstoss von dort — die Grenze
+  wird also nirgends zweimal *durchgesetzt*, nur zweimal gerechnet. Was hier
+  entsteht, ist ausserdem eine Auskunft und kein Urteil: nicht „geht nicht",
+  sondern wie viele Tage im Voraus dieser Bereich buchbar ist und ab wann dieser
+  Tag es wird.
+- **Kein Feld darf leer stehen, während sein Wert gespeichert würde.** Ein
+  `<select>`, dessen Wert auf keiner Option liegt, zeigt in Chrome nichts an —
+  und das Buchungsformular bekommt solche Werte regelmässig: ein Datum aus der
+  Adresse jenseits des Vorlaufs, eine Dauer aus einer Buchung von vor der
+  letzten Änderung des Maximums. Darum tragen Datums-, Dauer- und
+  Endzeitenliste immer auch den eingestellten Wert. Man liest sonst einen
+  Fehler zu etwas, das nirgends steht.
+- **Über Nacht ist immer die folgende Nacht.** Ein wählbares Enddatum gab es
+  einmal; mit ihm liess sich derselbe Tag einstellen und damit ein Ende vor dem
+  Beginn. Jetzt steht dort nur eine Uhrzeit, und zwar eine aus der Menge, bei
+  der die anrechenbare Dauer auf eine erlaubte fällt — gerechnet wird sie nicht
+  als „Beginn plus Dauer", sondern als das, was nach dem Abend bis zur
+  Schliessung noch übrig ist. Wer länger als eine Nacht bucht, nimmt die Dauer
+  in Tagesschritten; beim Bearbeiten gilt darum nur als „über Nacht", was
+  tatsächlich am Folgetag endet.
 - **Es gibt keine Benutzer, nur Benutzerrollen.** Authentifiziert wird als Rolle,
   deren Kennwort sich mehrere Personen teilen. `Role` ist das Authenticatable.
 - **Blockierungen sind ein Snapshot.** Beim Anlegen einer Buchung werden
