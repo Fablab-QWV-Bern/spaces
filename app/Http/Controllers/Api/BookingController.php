@@ -135,7 +135,7 @@ class BookingController extends Controller
             'conflictingBookingIds' => $result->conflictingBookingIds,
             'violations' => array_map(fn (ViolationCode $code): array => [
                 'code' => $code->value,
-                'message' => self::MESSAGES[$code->value],
+                'message' => $this->message($code, $result),
             ], $result->violations),
             'chargeableDurationMinutes' => $result->chargeableDurationMinutes,
         ]);
@@ -194,10 +194,30 @@ class BookingController extends Controller
 
         foreach ($result->violations as $code) {
             $field = self::FIELDS[$code->value];
-            $errors[$field][] = self::MESSAGES[$code->value];
+            $errors[$field][] = $this->message($code, $result);
         }
 
         return $errors;
+    }
+
+    /**
+     * Der Text zum Verstoss.
+     *
+     * Der Vorlauf ist die einzige Regel, deren Grenze aus der Konfiguration
+     * kommt und nicht aus der Eingabe — sie steht darum in der Meldung. Ohne
+     * sie bliebe offen, wie weit "so weit im Voraus" reicht, und man müsste
+     * sich an die Datumsliste herantasten.
+     */
+    private function message(ViolationCode $code, ValidationResult $result): string
+    {
+        $text = self::MESSAGES[$code->value];
+
+        if ($code === ViolationCode::ExceedsMaxEndOffset && $result->latestBookableDay !== null) {
+            $text .= ' Buchbar ist bis zum '
+                .$result->latestBookableDay->locale('de')->translatedFormat('j. F Y').'.';
+        }
+
+        return $text;
     }
 
     private function pastBooking(): JsonResponse
