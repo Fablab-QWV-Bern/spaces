@@ -304,7 +304,7 @@ Nur mit `manageBookingSeries`.
 - Serien-ID
 - Referenz auf Arbeitsplatz (`workplaceId`)
 - Name + Kontakt (werden auf jede Instanz kopiert)
-- Interval (DAILY, WEEKLY, MONTHLY)
+- Interval (WEEKLY, MONTHLY)
 - Interval-Anzahl (int, z.B. alle 2 Wochen)
 - Startzeit + Datum der ersten Instanz (Datetime)
 - Endzeit + Datum der ersten Instanz (Datetime)
@@ -326,11 +326,16 @@ Serien-Instanzen unterliegen nicht `maxBookingEndOffsetDays`, sonst liessen sie 
 "Heute + 1 Jahr" liegen. Danach wird "Instanziert bis" aktualisiert auf "Heute + 1 Jahr". Der Lauf ist idempotent und
 gegen Mehrfachausführung gesichert.
 
-Beim Ändern einer Serie werden alle Instanzen mit Startzeit in der Zukunft gelöscht und neu erzeugt; vergangene und
-laufende Instanzen bleiben unverändert. Einzeln geänderte Instanzen gehen dabei verloren.
+Beim Ändern einer Serie werden die künftigen Instanzen abgeglichen statt gelöscht und neu erzeugt: Termine, die es
+weiterhin gibt, werden an Ort und Stelle aktualisiert und behalten ihre ID, weggefallene verschwinden, neue kommen
+dazu. Vergangene und laufende Instanzen bleiben unverändert.
 
-Beim Löschen einer Serie werden alle Instanzen mit Startzeit in der Zukunft gelöscht; vergangene bleiben als
-eigenständige Buchungen bestehen.
+Wer eine einzelne Instanz von Hand ändert, koppelt sie damit von der Serie ab. Abgekoppelte Instanzen bleiben beim
+Ändern der Serie stehen, und der Takt-Zeitpunkt, an dem sie einmal lag, wird nicht neu befüllt. Dasselbe gilt für eine
+einzeln gelöschte Instanz: der gestrichene Termin kehrt nicht zurück.
+
+Beim Löschen einer Serie werden alle Instanzen mit Startzeit in der Zukunft gelöscht, auch abgekoppelte; vergangene
+bleiben als eigenständige Buchungen bestehen.
 
 ### Globale Konfigurationswerte
 

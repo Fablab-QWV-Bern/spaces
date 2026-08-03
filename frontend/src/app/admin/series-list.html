@@ -1,0 +1,59 @@
+<app-admin-header heading="Serien" />
+
+@if (loading()) {
+  <p class="hint">Wird geladen …</p>
+} @else if (!session.canManageBookingSeries()) {
+  <div class="notice">
+    <p>
+      Zum Verwalten der Serien braucht es eine Rolle mit dem Recht dazu. Aktuell bist du
+      @if (session.isAnonymous()) {
+        nicht angemeldet.
+      } @else {
+        als <strong>{{ session.roleName() }}</strong> angemeldet, diese Rolle darf das nicht.
+      }
+    </p>
+  </div>
+} @else {
+  @if (error(); as message) {
+    <p class="error" role="alert">{{ message }}</p>
+  }
+
+  <div class="content">
+    <div class="actions">
+      <a class="button primary" routerLink="/verwaltung/serien/neu">Neue Serie</a>
+    </div>
+
+    @if (empty()) {
+      <p class="hint">
+        Noch keine Serien angelegt. Eine Serie erzeugt gewöhnliche Buchungen — im Kalender steht je
+        Termin eine, erkennbar am Wiederholungs-Zeichen.
+      </p>
+    } @else {
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Arbeitsplatz</th>
+            <th>Rhythmus</th>
+            <th>Zeitraum</th>
+            <th><span class="sr-only">Aktionen</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (entry of series(); track entry.id) {
+            <tr>
+              <td class="name">{{ entry.name }}</td>
+              <td>{{ workplaceName(entry) }}</td>
+              <td>{{ describeRhythm(entry) }}</td>
+              <td>{{ period(entry) }}</td>
+              <td class="row-actions">
+                <a class="button" [routerLink]="['/verwaltung/serien', entry.id]">Bearbeiten</a>
+                <button type="button" class="danger" (click)="remove(entry)">Löschen</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+}

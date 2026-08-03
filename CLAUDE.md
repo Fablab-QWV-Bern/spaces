@@ -117,6 +117,58 @@ Englisch. Kommentare erklären das _Warum_, nicht das _Was_.
 - **Bilder rechnet GD**, nicht eine Bibliothek aus Composer: das Hosting bringt GD
   mit, und `vendor/` reist per FTP mit. Vorschaubild und verkleinertes Original
   entstehen beide aus der Originaldatei — zweimal skalieren kostet Schärfe.
+- **Eine Serie erzeugt Buchungen, sie ist keine.** `booking_series` beschreibt
+  einen Rhythmus; im Kalender steht nichts davon, sondern eine gewöhnliche
+  Buchung je Termin, mit `booking_series_id` als einzigem Hinweis. Daraus folgt
+  alles Weitere: Instanzen tragen keinen Ersteller (der spätere Nachschub kommt
+  aus einem Cron-Lauf ohne Sitzung), sie gelten als bestätigt, was die
+  Nutzungsregeln angeht (`BookingSeriesWrite` hat kein Feld dafür — wer eine
+  Serie anlegen darf, bestätigt sie mit ihr), und sie lassen sich einzeln ändern
+  wie jede andere Buchung.
+- **Wer eine Instanz anfasst, koppelt sie ab.** Zwei Merkmale halten das fest,
+  und sie tun bewusst zweierlei: `bookings.series_detached` sagt „diese Zeile
+  nicht anfassen", `booking_series_exceptions` sagt „zu diesem Takt-Zeitpunkt
+  nichts erzeugen". Beides braucht es — ohne das Flag räumte der Abgleich die
+  verschobene Instanz als verwaisten Termin weg, ohne die Tabelle käme an ihrem
+  alten Zeitpunkt ein Duplikat nach. Die Ausnahme schreibt, wer eine Instanz
+  löscht, und wer sie zum ersten Mal ändert; ihre `start_time` ist zu diesem
+  Zeitpunkt noch der Takt-Zeitpunkt, danach nicht mehr.
+- **Kein Soft-Delete für gestrichene Instanzen.** Eine Zeile, die stehen bliebe,
+  müsste in jeder Abfrage auf `bookings` ausgefiltert werden — auch in
+  `CollisionChecker`, der als einziger am Modell vorbei über den Query Builder
+  läuft, weil erst der die Gap-Locks setzt. Eine dort vergessene Bedingung
+  blockierte fremde Arbeitsplätze mit einer Buchung, die niemand sehen kann. Die
+  Ausnahmetabelle hat stattdessen genau einen Leser.
+- **Dass ein Termin herausgelöst ist, steht im Buchungsformular**, nicht auf der
+  Detailkarte im Kalender. Die Karte sieht jeder, der den Kalender öffnet, und
+  für ihn ist es eine Auskunft über Innereien; wer das Formular offen hat, will
+  gerade etwas ändern und braucht sie. Ungeschützt ist sie dort trotzdem —
+  ausgerechnet der Person zu verschweigen, was ihr Speichern anrichtet, wäre
+  die falsche Sparsamkeit.
+- **Beim Ändern wird abgeglichen, nicht gelöscht und neu angelegt.** Ein Termin,
+  den es weiterhin gibt, behält seine Zeile und damit seine ID — und die ID ist
+  die UID im iCal-Feed. Löschte man, verschwänden in jedem Abo alle künftigen
+  Termine und kämen als neue zurück.
+- **Geprüft wird die Serie einmal, nicht jede Instanz.** Was eine Serie ausmacht
+  — Arbeitsplatz, Wanduhrzeit, Dauer — ist für alle Instanzen dasselbe; geprüft
+  wird es darum an der ersten. Drei Verstösse bleiben dabei aussen vor: eine
+  Kollision lässt die einzelne Instanz ausfallen statt die Serie scheitern (sie
+  wird als `skippedInstances` gemeldet), der maximale Vorlauf gilt für Serien
+  nicht (sonst reichte keine ein Jahr), und ein Beginn in der Vergangenheit ist
+  bei einem Rhythmus normal — erzeugt wird ohnehin erst ab jetzt.
+- **Kein tägliches Intervall.** Täglich ist für den Betrieb keine Serie, sondern
+  eine Dauerbelegung. Zweiwöchentlich ist `WEEKLY` mit `intervalCount: 2` —
+  dafür gibt es das Feld, ein eigener Enum-Wert wäre eine zweite Schreibweise
+  für dieselbe Sache. Im Serienformular taucht das Paar gar nicht erst auf:
+  `series-rhythm.ts` übersetzt zwischen ihm und den drei Sätzen, die zur Wahl
+  stehen. Den Wochentag hat es nicht, er folgt aus dem Datum.
+- **Das Serienformular prüft nicht mit, und zeigt keine Termine.** Beides wäre
+  Regelwissen im Frontend: die Vorabprüfung müsste wissen, dass eine Kollision
+  bei einer Serie kein Fehler ist, und die Terminliste müsste die
+  Überspringen-Regel aus `SeriesSchedule` nachbauen. Geprüft wird beim
+  Speichern; die Vorschau ist die Einzelansicht des Arbeitsplatzes, auf die der
+  Weg danach führt. Weitergeleitet wird dabei nicht — `skippedInstances` steht
+  nur in dieser einen Antwort, gespeichert wird es nirgends.
 - **Der iCal-Feed rendert immer als anonyme Rolle**, auch mit Sitzungscookie. Ein
   Kalenderclient hat keines; würde der Feed die angemeldete Rolle berücksichtigen,
   zeigte die Vorschau im Browser mehr als das Abo danach liefert. So ist er für
@@ -191,7 +243,13 @@ cd backend && php artisan migrate:fresh --seed --force && php artisan db:seed --
 ```
 
 Der `BookingSeeder` prüft seine Zeilen gegen die Kollisionsregeln und überspringt
-widersprüchliche. Eine übersprungene Zeile beim Lauf ist erwartet.
+widersprüchliche. Eine übersprungene Zeile beim Lauf ist erwartet. Die drei
+Zeilen, die er als Serie anlegt, bekommen nur die heutige Instanz — der Rest
+käme aus dem Tageslauf, der lokal von Hand angestossen wird:
+
+```bash
+cd backend && php artisan booking-series:instantiate
+```
 
 Anmeldedaten der Entwicklungsumgebung: `Mitglied` / `mitglied-kennwort`,
 `Admin` / `admin-kennwort`.
@@ -201,6 +259,19 @@ Anmeldedaten der Entwicklungsumgebung: `Mitglied` / `mitglied-kennwort`,
 hosttech "Smart Deal" mit Plesk: PHP 8.5, MariaDB, 180 Sekunden Ausführungszeit
 (bis 600 einstellbar), keine dauerhaft laufenden Prozesse. Alles Periodische
 läuft über Cron, nicht über Queue-Worker.
+
+**Ein einziger Cron-Eintrag genügt**, in Plesk unter „Geplante Aufgaben", jede
+Minute:
+
+```
+/opt/plesk/php/8.5/bin/php /var/www/vhosts/…/artisan schedule:run
+```
+
+Was wann läuft, steht in `backend/routes/console.php` — im Repository und nicht
+im Plesk-Formular, aus demselben Grund wie bei der Bereitstellung. Bisher hängt
+daran nur `booking-series:instantiate`, der die Serien täglich um 03:00 wieder
+ein Jahr im Voraus instanziert. Bleibt der Eintrag aus, laufen die Serien
+irgendwann aus, ohne dass sonst etwas kaputtgeht.
 
 **Kein SSH, aber Shell zum Bereitstellungszeitpunkt.** Plesk zieht per Git von
 GitHub und führt danach hinterlegte Shell-Befehle aus. Das ist der einzige
@@ -269,6 +340,7 @@ ausgeliefert, den `storage:link` bei jeder Bereitstellung erneuert.
   entschieden ist, bleiben sie leer — kein Fehler, aber auch keine Auskunft.
   Die übrige Umbenenn-Tabelle in `spec/karte-kennungen.markdown` ist erledigt.
 - Farbige Markierung der Zustände auf der Karte (frei/belegt/defekt/deaktiviert)
-- Serienbuchungen
+- Cron-Eintrag für `schedule:run` auf dem Hosting (siehe „Hosting") — ohne ihn
+  bleibt der Horizont der Serien stehen, wo die letzte Änderung ihn hinterliess.
 - Abo-Link in der Verwaltung mit Filter (Bereich, Arbeitsplatz) — der Feed kann
   es, die Oberfläche bietet bisher nur den ungefilterten Kalender an

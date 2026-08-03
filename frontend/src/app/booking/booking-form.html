@@ -25,6 +25,19 @@
        Forms nicht mehr braucht — ohne preventDefault würde der Browser das
        Formular selbst abschicken. -->
   <form class="form" (submit)="$event.preventDefault(); submit()">
+    @if (editing()?.bookingSeriesId) {
+      <p class="series-note">
+        <app-icon name="series" />
+        @if (editing()?.seriesDetached) {
+          Dieser Termin ist aus seiner Serie herausgelöst — jemand hat ihn von Hand angepasst. Die
+          Serie lässt ihn seither in Ruhe, auch wenn sie selbst bearbeitet wird.
+        } @else {
+          Dieser Termin gehört zu einer Serie. Wer ihn ändert, löst ihn aus ihr heraus: die Serie
+          lässt ihn danach in Ruhe, auch wenn sie selbst bearbeitet wird.
+        }
+      </p>
+    }
+
     <section class="panel">
       <label class="field">
         <span>Arbeitsplatz</span>

@@ -49,6 +49,7 @@ export class CalendarStore {
 
   /** Eine Quelle für die Rolle: der SessionService, den auch die Anmeldeleiste nutzt. */
   readonly canManageBookings = this.sessionService.canManageBookings;
+  readonly canManageBookingSeries = this.sessionService.canManageBookingSeries;
 
   /** Die Zeitachse aus den konfigurierten Öffnungszeiten. */
   readonly axis = computed<TimeAxis | null>(() => {

@@ -27,12 +27,15 @@ import { SessionService } from '../shared/session-service';
       @if (session.canManageWorkplaces()) {
         <a routerLink="/verwaltung/arbeitsplaetze" routerLinkActive="active">Arbeitsplätze</a>
       }
+      @if (session.canManageBookingSeries()) {
+        <a routerLink="/verwaltung/serien" routerLinkActive="active">Serien</a>
+      }
       @if (session.canManageRoles()) {
         <a routerLink="/verwaltung/rollen" routerLinkActive="active">Rollen</a>
         <a routerLink="/verwaltung/konfiguration" routerLinkActive="active">Konfiguration</a>
       }
       <a class="feed" [href]="feedUrl" [title]="feedHint">iCal-Feed</a>
-      <a routerLink="/tag">Zurück zur Übersicht</a>
+      <a routerLink="/tag">Zurück zum Kalender</a>
     </nav>
   `,
   styles: `

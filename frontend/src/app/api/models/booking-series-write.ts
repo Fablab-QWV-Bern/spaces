@@ -6,7 +6,7 @@ export interface BookingSeriesWrite {
   endDate?: string | null;
   firstInstanceEnd: string;
   firstInstanceStart: string;
-  interval: 'DAILY' | 'WEEKLY' | 'MONTHLY';
+  interval: 'WEEKLY' | 'MONTHLY';
   intervalCount: number;
   name: string;
   workplaceId: string;

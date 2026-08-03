@@ -1,0 +1,225 @@
+<app-admin-header [heading]="heading()" />
+
+@if (loadError(); as message) {
+  <p class="error" role="alert">{{ message }}</p>
+} @else if (loading()) {
+  <p class="hint">Wird geladen …</p>
+} @else if (!session.canManageBookingSeries()) {
+  <div class="notice">
+    <p>
+      Zum Verwalten der Serien braucht es eine Rolle mit dem Recht dazu. Aktuell bist du
+      @if (session.isAnonymous()) {
+        nicht angemeldet.
+      } @else {
+        als <strong>{{ session.roleName() }}</strong> angemeldet, diese Rolle darf das nicht.
+      }
+    </p>
+  </div>
+} @else if (result()) {
+  <!-- Die ausgelassenen Termine stehen nur hier: die API merkt sie sich nicht.
+       Darum wird nach dem Speichern nicht weitergeleitet. -->
+  <div class="done">
+    <section class="panel">
+      <h2>Serie gespeichert</h2>
+      <p class="note">
+        Im Kalender steht jetzt je Termin eine gewöhnliche Buchung, erkennbar am
+        Wiederholungs-Zeichen. Termine bis ein Jahr im Voraus sind angelegt; der Rest kommt täglich
+        nach.
+      </p>
+    </section>
+
+    @if (skipped().length) {
+      <section class="skipped" role="alert">
+        <h2>
+          {{ skipped().length }}
+          {{ skipped().length === 1 ? 'Termin ist ausgefallen' : 'Termine sind ausgefallen' }}
+        </h2>
+        <p class="note">
+          Der Arbeitsplatz war zu diesen Zeiten schon belegt. Die Serie ist trotzdem angelegt — nur
+          diese Termine fehlen. Sie stehen nur hier: wer weiterklickt, sieht sie nicht wieder.
+        </p>
+
+        <ul>
+          @for (instance of skipped(); track instance.startTime) {
+            <li>
+              <a [routerLink]="['/tag']" [queryParams]="{ datum: skippedDay(instance.startTime) }">
+                {{ skippedLabel(instance.startTime) }}
+              </a>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+
+    <div class="actions">
+      <button type="button" class="primary" (click)="toCalendar()">Im Kalender ansehen</button>
+      <button type="button" (click)="toList()">Alle Serien</button>
+    </div>
+  </div>
+} @else {
+  <!-- Natives submit-Ereignis: (ngSubmit) stammt aus FormsModule, das Signal
+       Forms nicht mehr braucht. -->
+  <form class="form" (submit)="$event.preventDefault(); submit()">
+    <section class="panel">
+      <label class="field">
+        <span>Arbeitsplatz</span>
+        <select [formField]="seriesForm.workplaceId">
+          @for (group of grouped(); track group.area.id) {
+            <optgroup [label]="group.area.name">
+              @for (workplace of group.workplaces; track workplace.id) {
+                <option [value]="workplace.id" [disabled]="workplace.status !== 'OK'">
+                  {{ workplace.name }}
+                  @if (workplace.status !== 'OK') {
+                    — nicht buchbar
+                  }
+                </option>
+              }
+            </optgroup>
+          }
+        </select>
+
+        @for (message of errorsFor('workplaceId'); track message) {
+          <span class="field-error">{{ message }}</span>
+        }
+      </label>
+
+      <div class="row">
+        <label class="field">
+          <span>Name</span>
+          <input type="text" [formField]="seriesForm.name" autocomplete="off" />
+
+          @for (error of seriesForm.name().errors(); track error.kind) {
+            <span class="field-error">{{ error.message }}</span>
+          }
+        </label>
+
+        <label class="field">
+          <span>Kontakt</span>
+          <input
+            type="text"
+            [formField]="seriesForm.contact"
+            placeholder="E-Mail oder Telefon"
+            autocomplete="off"
+          />
+
+          @for (error of seriesForm.contact().errors(); track error.kind) {
+            <span class="field-error">{{ error.message }}</span>
+          }
+        </label>
+      </div>
+
+      <span class="note">Name und Kontakt werden auf jeden einzelnen Termin kopiert.</span>
+    </section>
+
+    <section class="panel">
+      <div class="row">
+        <label class="field">
+          <span>Erster Termin am</span>
+          <input type="date" [formField]="seriesForm.date" />
+
+          @for (error of seriesForm.date().errors(); track error.kind) {
+            <span class="field-error">{{ error.message }}</span>
+          }
+        </label>
+
+        <label class="field">
+          <span>Beginn</span>
+          <select [formField]="seriesForm.startMinutes">
+            @for (slot of slots(); track slot) {
+              <option [value]="slot">{{ formatMinutes(slot) }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Dauer</span>
+          <select [formField]="seriesForm.durationMinutes">
+            @for (minutes of durations(); track minutes) {
+              <option [value]="minutes">{{ formatDuration(minutes) }}</option>
+            }
+          </select>
+        </label>
+      </div>
+
+      <p class="ends">
+        Ende des ersten Termins: <strong>{{ endLabel() }}</strong>
+      </p>
+
+      @for (message of errorsFor('firstInstanceStart'); track message) {
+        <span class="field-error">{{ message }}</span>
+      }
+      @for (message of errorsFor('firstInstanceEnd'); track message) {
+        <span class="field-error">{{ message }}</span>
+      }
+
+      <span class="note">
+        Die Uhrzeit gilt als Ortszeit: eine Serie um 09:00 bleibt über die Zeitumstellung hinweg bei
+        09:00.
+      </span>
+    </section>
+
+    <section class="panel">
+      <label class="field">
+        <span>Wiederholung</span>
+        <select [formField]="seriesForm.rhythm">
+          @for (rhythm of rhythms; track rhythm.key) {
+            <option [value]="rhythm.key">{{ rhythm.label }}</option>
+          }
+        </select>
+      </label>
+
+      <p class="rhythm">
+        @switch (seriesForm.rhythm().value()) {
+          @case ('weekly') {
+            Jeden {{ weekday() }}.
+          }
+          @case ('biweekly') {
+            Jeden zweiten {{ weekday() }}.
+          }
+          @case ('monthly') {
+            Am {{ dayOfMonth() }}. jedes Monats.
+          }
+        }
+      </p>
+
+      @if (warnsAboutSkippedMonths()) {
+        <span class="note warn">
+          Monate ohne einen {{ dayOfMonth() }}. fallen aus — sie rutschen nicht auf den letzten Tag
+          des Monats.
+        </span>
+      }
+
+      <label class="field checkbox">
+        <input type="checkbox" [formField]="seriesForm.openEnded" />
+        <span>Läuft weiter, ohne festes Ende</span>
+      </label>
+
+      @if (!seriesForm.openEnded().value()) {
+        <label class="field">
+          <span>Letzter Tag</span>
+          <input type="date" [formField]="seriesForm.endDate" />
+          <span class="note">Nach diesem Tag entstehen keine Termine mehr.</span>
+        </label>
+      }
+    </section>
+
+    @if (editing()) {
+      <p class="note standalone">
+        Beim Speichern werden die künftigen Termine angeglichen. Vergangene und laufende bleiben
+        unberührt, ebenso einzeln angepasste und gestrichene Termine — die Serie fasst sie nicht
+        mehr an.
+      </p>
+    }
+
+    <div class="actions sticky">
+      <button type="submit" class="primary" [disabled]="!canSubmit()">
+        {{ saving() ? 'Wird gespeichert …' : 'Speichern' }}
+      </button>
+      <button type="button" (click)="cancel()">Abbrechen</button>
+
+      @if (saveError(); as message) {
+        <span class="save-error" role="alert">{{ message }}</span>
+      }
+    </div>
+  </form>
+}

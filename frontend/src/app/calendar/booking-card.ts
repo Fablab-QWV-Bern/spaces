@@ -47,4 +47,8 @@ export class BookingCard {
   protected editBooking(): void {
     this.router.navigate(['/buchen'], { queryParams: { booking: this.details().booking.id } });
   }
+
+  protected editSeries(seriesId: string): void {
+    this.router.navigate(['/verwaltung/serien', seriesId]);
+  }
 }

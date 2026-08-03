@@ -1,0 +1,76 @@
+@use './admin';
+
+.form,
+.done {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  // Siehe workplace-form.scss: die klebende Leiste schliesst unten bündig ab.
+  padding: 0 1.5rem;
+  max-width: 40rem;
+}
+
+.done {
+  padding-bottom: 2rem;
+
+  h2 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+}
+
+.field-error {
+  color: var(--danger-text);
+  font-size: 0.78rem;
+}
+
+.ends,
+.rhythm {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.rhythm {
+  color: var(--text-muted);
+}
+
+.note.warn {
+  color: var(--warning-text);
+}
+
+// Was das Speichern anrichtet, steht über der Leiste und nicht in einem Dialog
+// danach: wer es erst nach dem Klick liest, liest es zu spät. Es ist inzwischen
+// eine Auskunft und keine Warnung mehr — darum Kleintext ohne Kasten.
+.note.standalone {
+  display: block;
+  margin: 0;
+}
+
+.skipped {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: var(--warning-wash);
+  border: 1px solid var(--warning-line);
+  border-radius: 0.4rem;
+
+  p {
+    margin: 0;
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 1.1rem;
+    font-size: 0.9rem;
+  }
+
+  li {
+    margin-bottom: 0.2rem;
+  }
+
+  a {
+    color: inherit;
+  }
+}

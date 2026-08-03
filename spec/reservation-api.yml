@@ -517,6 +517,12 @@ components:
         bookingSeriesId:
           type: string
           nullable: true
+        seriesDetached:
+          type: boolean
+          readOnly: true
+          description: |
+            Set once someone edits a series instance by hand. Editing the series then leaves this
+            booking alone instead of regenerating it. Always false when bookingSeriesId is null.
       required:
         - id
         - creatorRoleId
@@ -530,6 +536,7 @@ components:
         - endTime
         - chargeableDurationMinutes
         - bookingSeriesId
+        - seriesDetached
 
     BookingWrite:
       type: object
@@ -615,7 +622,7 @@ components:
           type: string
         interval:
           type: string
-          enum: [DAILY, WEEKLY, MONTHLY]
+          enum: [WEEKLY, MONTHLY]
         intervalCount:
           type: integer
           minimum: 1
@@ -669,7 +676,7 @@ components:
           minLength: 1
         interval:
           type: string
-          enum: [DAILY, WEEKLY, MONTHLY]
+          enum: [WEEKLY, MONTHLY]
         intervalCount:
           type: integer
           minimum: 1
@@ -1484,8 +1491,10 @@ paths:
       operationId: updateBookingSeries
       summary: Update booking series
       description: |
-        Deletes every instance starting in the future and regenerates them. Past and currently
-        running instances stay untouched; individually edited future instances are lost.
+        Brings the future instances in line with the new definition: matching ones are updated in
+        place and keep their id, obsolete ones are removed, missing ones are created. Past and
+        currently running instances stay untouched, and so do instances with seriesDetached — an
+        occurrence someone has edited or cancelled by hand is never regenerated.
       x-permissions: ["manageBookingSeries"]
       requestBody:
         required: true

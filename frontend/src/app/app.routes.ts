@@ -5,6 +5,8 @@ import { AreaList } from './admin/area-list';
 import { ConfigForm } from './admin/config-form';
 import { RoleForm } from './admin/role-form';
 import { RoleList } from './admin/role-list';
+import { SeriesForm } from './admin/series-form';
+import { SeriesList } from './admin/series-list';
 import { WorkplaceForm } from './admin/workplace-form';
 import { WorkplaceList } from './admin/workplace-list';
 import { BookingForm } from './booking/booking-form';
@@ -50,6 +52,9 @@ export const routes: Routes = [
     component: WorkplaceForm,
     title: 'Arbeitsplatz bearbeiten',
   },
+  { path: 'verwaltung/serien', component: SeriesList, title: 'Serien' },
+  { path: 'verwaltung/serien/neu', component: SeriesForm, title: 'Neue Serie' },
+  { path: 'verwaltung/serien/:id', component: SeriesForm, title: 'Serie bearbeiten' },
   { path: 'verwaltung/rollen', component: RoleList, title: 'Rollen' },
   { path: 'verwaltung/rollen/neu', component: RoleForm, title: 'Neue Rolle' },
   { path: 'verwaltung/rollen/:id', component: RoleForm, title: 'Rolle bearbeiten' },

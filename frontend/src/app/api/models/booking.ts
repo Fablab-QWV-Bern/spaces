@@ -40,6 +40,12 @@ export interface Booking {
    * viewBookings.
    */
   name: string;
+
+  /**
+   * Set once someone edits a series instance by hand. Editing the series then leaves this
+   * booking alone instead of regenerating it. Always false when bookingSeriesId is null.
+   */
+  seriesDetached: boolean;
   startTime: string;
   usageRulesAcknowledged: boolean;
   workplaceId: string;

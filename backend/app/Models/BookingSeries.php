@@ -12,8 +12,9 @@ class BookingSeries extends Model
 {
     use HasUlids;
 
-    public const INTERVAL_DAILY = 'DAILY';
-
+    // Täglich gibt es bewusst nicht: für den Betrieb der Werkstatt ist das keine
+    // Serie, sondern eine Dauerbelegung. Zweiwöchentlich ist WEEKLY mit
+    // interval_count = 2.
     public const INTERVAL_WEEKLY = 'WEEKLY';
 
     public const INTERVAL_MONTHLY = 'MONTHLY';

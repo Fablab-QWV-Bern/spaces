@@ -26,4 +26,11 @@
       <app-icon name="edit" /> Bearbeiten
     </button>
   }
+
+  <!-- Ohne diesen Weg müsste man wissen, dass es die Verwaltungsseite gibt. -->
+  @if (booking.bookingSeriesId && store.canManageBookingSeries()) {
+    <button type="button" class="card-edit" (click)="editSeries(booking.bookingSeriesId)">
+      <app-icon name="series" /> Serie bearbeiten
+    </button>
+  }
 }

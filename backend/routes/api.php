@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AreaController;
 use App\Http\Controllers\Api\BookingController;
+use App\Http\Controllers\Api\BookingSeriesController;
 use App\Http\Controllers\Api\CalendarFeedController;
 use App\Http\Controllers\Api\ConfigController;
 use App\Http\Controllers\Api\RoleController;
@@ -61,6 +62,17 @@ Route::middleware('permission:viewBookings')->group(function (): void {
 // Ohne `permission`-Middleware: der Feed prüft `viewBookings` selbst, und zwar
 // an der anonymen Rolle statt an der angemeldeten.
 Route::get('calendar.ics', [CalendarFeedController::class, 'show']);
+
+Route::middleware('permission:viewBookings')->group(function (): void {
+    Route::get('booking-series', [BookingSeriesController::class, 'index']);
+    Route::get('booking-series/{bookingSeries}', [BookingSeriesController::class, 'show']);
+});
+
+Route::middleware('permission:manageBookingSeries')->group(function (): void {
+    Route::post('booking-series', [BookingSeriesController::class, 'store']);
+    Route::put('booking-series/{bookingSeries}', [BookingSeriesController::class, 'update']);
+    Route::delete('booking-series/{bookingSeries}', [BookingSeriesController::class, 'destroy']);
+});
 
 Route::middleware('permission:manageBookings')->group(function (): void {
     Route::post('bookings', [BookingController::class, 'store']);

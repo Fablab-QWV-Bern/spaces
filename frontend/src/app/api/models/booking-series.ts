@@ -26,7 +26,7 @@ export interface BookingSeries {
    * How far instances have been generated. Advanced to today + 1 year by the daily job.
    */
   instantiatedUntil: string;
-  interval: 'DAILY' | 'WEEKLY' | 'MONTHLY';
+  interval: 'WEEKLY' | 'MONTHLY';
 
   /**
    * e.g. 2 with WEEKLY means every second week.
