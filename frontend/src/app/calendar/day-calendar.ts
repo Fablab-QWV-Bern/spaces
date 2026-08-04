@@ -2,6 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { Area, Workplace } from '../api/models';
+import { refinePageTitle } from '../shared/page-title';
 import { Block, blocksFor } from './blocks';
 import { leadTimeNotice } from './booking-horizon';
 import { CalendarStore, isoDate } from './calendar-store';
@@ -32,6 +33,10 @@ export class DayCalendar {
     this.store.span.set('day');
     syncDateWithUrl();
     this.store.load();
+
+    // Im Reiter steht, was in der Überschrift steht — ein Kalender ohne Datum
+    // ist keine Auskunft.
+    refinePageTitle(this.heading);
 
     // Die Jetzt-Linie bewegt sich viertelstündlich weiter; häufiger wäre für ein
     // 15-Minuten-Raster ohne Aussage.

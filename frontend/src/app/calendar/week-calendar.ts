@@ -2,6 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { Workplace } from '../api/models';
+import { refinePageTitle } from '../shared/page-title';
 import { Block, blocksFor } from './blocks';
 import { CalendarStore, IsoDate, isoDate } from './calendar-store';
 import { CalendarToolbar } from './calendar-toolbar';
@@ -48,6 +49,10 @@ export class WeekCalendar {
     this.store.span.set('week');
     syncDateWithUrl();
     this.store.load();
+
+    // "Woche" davor, weil eine Spanne allein im Reiter nicht sagt, welche
+    // Zoomstufe offen ist — auf der Seite tut das die Ansicht selbst.
+    refinePageTitle(() => `Woche ${this.heading()}`);
 
     setInterval(() => this.now.set(new Date()), 60_000);
   }

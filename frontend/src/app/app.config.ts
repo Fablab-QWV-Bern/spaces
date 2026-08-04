@@ -1,14 +1,18 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideHttpClient, withFetch, withXsrfConfiguration } from '@angular/common/http';
-import { provideRouter } from '@angular/router';
+import { TitleStrategy, provideRouter } from '@angular/router';
 
 import { provideApiConfiguration } from './api/api-configuration';
 import { routes } from './app.routes';
+import { AppTitleStrategy } from './shared/page-title';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
+    // Der Titel der Route ist nur die Hälfte: die Ansichten verfeinern ihn um
+    // das, was erst mit den Daten feststeht (siehe `page-title.ts`).
+    { provide: TitleStrategy, useClass: AppTitleStrategy },
     provideHttpClient(
       withFetch(),
       // Laravel erwartet das CSRF-Token als X-XSRF-TOKEN, gelesen aus dem

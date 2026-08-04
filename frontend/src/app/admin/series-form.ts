@@ -35,6 +35,7 @@ import {
   slotsOfDay,
   toLocalIso,
 } from '../calendar/time-axis';
+import { refinePageTitle } from '../shared/page-title';
 import { SessionService } from '../shared/session-service';
 import { AdminHeader } from './admin-header';
 import { RHYTHMS, RhythmKey, rhythmByKey, rhythmOf, skipsMonths } from './series-rhythm';
@@ -127,6 +128,15 @@ export class SeriesForm {
   protected readonly heading = computed(() => (this.editing() ? 'Serie bearbeiten' : 'Neue Serie'));
 
   constructor() {
+    // Der Name zuerst: welcher Serie bearbeitet wird, ist im Reiter die
+    // eigentliche Auskunft. Beim Anlegen gibt es keinen, dann bleibt der
+    // Titel der Route stehen.
+    refinePageTitle(() => {
+      const editing = this.editing();
+
+      return editing ? `Serie ${editing.name} bearbeiten` : null;
+    });
+
     const id = this.route.snapshot.paramMap.get('id');
 
     forkJoin({

@@ -17,6 +17,7 @@ import {
 // Umbenannt, damit das generierte Modell das globale Error nicht verdeckt.
 import { Area, Error as ApiError, Workplace, WorkplaceCreate } from '../api/models';
 import { formatDuration } from '../calendar/time-axis';
+import { refinePageTitle } from '../shared/page-title';
 import { SessionService } from '../shared/session-service';
 import { AdminHeader } from './admin-header';
 import { TagInput } from './tag-input';
@@ -156,6 +157,15 @@ export class WorkplaceForm {
   });
 
   constructor() {
+    // Der Name zuerst: welcher Arbeitsplatz bearbeitet wird, ist im Reiter die
+    // eigentliche Auskunft. Beim Anlegen gibt es keinen, dann bleibt der
+    // Titel der Route stehen.
+    refinePageTitle(() => {
+      const editing = this.editing();
+
+      return editing ? `Arbeitsplatz ${editing.name} bearbeiten` : null;
+    });
+
     const id = this.route.snapshot.paramMap.get('id');
 
     forkJoin({

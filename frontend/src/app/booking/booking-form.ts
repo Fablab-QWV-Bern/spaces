@@ -42,6 +42,7 @@ import {
 } from '../calendar/time-axis';
 import { readBooker, writeBooker } from '../shared/booker-cookie';
 import { Icon } from '../shared/icon';
+import { refinePageTitle } from '../shared/page-title';
 import { SessionBar } from '../shared/session-bar';
 import { SessionService } from '../shared/session-service';
 
@@ -131,6 +132,16 @@ export class BookingForm {
 
   constructor() {
     this.load();
+
+    // Der Arbeitsplatz zuerst: ein Reiter wird abgeschnitten, und "Neue
+    // Buchung" steht auf jedem zweiten. Der Name des Buchenden bleibt draussen
+    // — er landete sonst im Verlauf des Browsers.
+    refinePageTitle(() => {
+      const what = this.editing() ? 'Buchung bearbeiten' : 'Neue Buchung';
+      const workplace = this.workplace();
+
+      return workplace ? `${workplace.name}: ${what}` : what;
+    });
 
     // Bei jeder Änderung am Zeitfenster frisch gegen den Server prüfen — die
     // Regeln liegen dort und werden hier bewusst nicht nachgebaut.

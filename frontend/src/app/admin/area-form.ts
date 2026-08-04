@@ -9,6 +9,7 @@ import { createArea, getArea, updateArea } from '../api/functions';
 // Umbenannt, damit das generierte Modell das globale Error nicht verdeckt.
 import { Area, AreaWrite, Error as ApiError } from '../api/models';
 import { formatDuration } from '../calendar/time-axis';
+import { refinePageTitle } from '../shared/page-title';
 import { SessionService } from '../shared/session-service';
 import { AdminHeader } from './admin-header';
 
@@ -87,6 +88,15 @@ export class AreaForm {
   });
 
   constructor() {
+    // Der Name zuerst: welcher Bereich bearbeitet wird, ist im Reiter die
+    // eigentliche Auskunft. Beim Anlegen gibt es keinen, dann bleibt der
+    // Titel der Route stehen.
+    refinePageTitle(() => {
+      const editing = this.editing();
+
+      return editing ? `Bereich ${editing.name} bearbeiten` : null;
+    });
+
     const id = this.route.snapshot.paramMap.get('id');
 
     forkJoin({

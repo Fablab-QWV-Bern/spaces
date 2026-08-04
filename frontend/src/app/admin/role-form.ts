@@ -8,6 +8,7 @@ import { ApiConfiguration } from '../api/api-configuration';
 import { createRole, listRoles, updateRole } from '../api/functions';
 // Umbenannt, damit das generierte Modell das globale Error nicht verdeckt.
 import { Error as ApiError, Permissions, Role, RoleWrite } from '../api/models';
+import { refinePageTitle } from '../shared/page-title';
 import { SessionService } from '../shared/session-service';
 import { AdminHeader } from './admin-header';
 import { PERMISSION_LABELS, PermissionKey } from './permission-labels';
@@ -105,6 +106,15 @@ export class RoleForm {
   );
 
   constructor() {
+    // Der Name zuerst: welcher Rolle bearbeitet wird, ist im Reiter die
+    // eigentliche Auskunft. Beim Anlegen gibt es keinen, dann bleibt der
+    // Titel der Route stehen.
+    refinePageTitle(() => {
+      const editing = this.editing();
+
+      return editing ? `Rolle ${editing.name} bearbeiten` : null;
+    });
+
     const id = this.route.snapshot.paramMap.get('id');
 
     // Die ganze Liste statt nur der einen Rolle: für die Frage, ob dies die

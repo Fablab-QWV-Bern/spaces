@@ -2,6 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 
+import { refinePageTitle } from '../shared/page-title';
 import { Block, blocksFor } from './blocks';
 import { leadTimeNotice } from './booking-horizon';
 import { CalendarStore, IsoDate, isoDate } from './calendar-store';
@@ -60,6 +61,11 @@ export class WorkplaceCalendar {
     this.store.span.set('month');
     syncDateWithUrl();
     this.store.load();
+
+    // Ohne Arbeitsplatz bliebe vom Titel nur der Monat übrig — der sähe im
+    // Reiter aus wie eine Monatsansicht, die es nicht gibt. Dann lieber der
+    // Titel der Route.
+    refinePageTitle(() => (this.selection() ? this.heading() : null));
 
     setInterval(() => this.now.set(new Date()), 60_000);
   }
