@@ -5,9 +5,9 @@ namespace App\Domain\Booking;
 use Carbon\CarbonImmutable;
 
 /**
- * Ein Termin, der wegen einer bestehenden Buchung ausgelassen wurde. Die Serie
- * entsteht trotzdem — der Aufrufer bekommt die Lücke gemeldet, statt dass die
- * ganze Anlage scheitert.
+ * An occurrence left out because of an existing booking. The series is created
+ * regardless — the caller is told about the gap instead of the whole creation
+ * failing.
  */
 final readonly class SkippedInstance
 {

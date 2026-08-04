@@ -3,13 +3,13 @@
 namespace App\Support\Ical;
 
 /**
- * Ein iCalendar-Dokument nach RFC 5545 — Zeilen sammeln, maskieren, falten.
+ * An iCalendar document per RFC 5545 — collect lines, escape, fold.
  *
- * Hier steckt alles, was am Format nicht auf den ersten Blick sichtbar ist:
- * CRLF als Zeilenende, die Maskierung von `\`, `;`, `,` und Zeilenumbruch in
- * Textwerten, und die Faltung langer Zeilen. Die Kalenderclients sind darin
- * unterschiedlich streng; ein Feed, der es hier ungenau nimmt, funktioniert bei
- * dreien und bricht beim vierten.
+ * Everything about the format that is not obvious at first glance lives here:
+ * CRLF as the line ending, the escaping of `\`, `;`, `,` and line breaks in text
+ * values, and the folding of long lines. Calendar clients differ in how strict
+ * they are about it; a feed that is sloppy here works with three of them and
+ * breaks with the fourth.
  */
 final class IcalDocument
 {
@@ -31,7 +31,7 @@ final class IcalDocument
     }
 
     /**
-     * Eine Eigenschaft mit maskiertem Textwert.
+     * A property with an escaped text value.
      *
      * @param  array<string, string>  $parameters
      */
@@ -41,8 +41,8 @@ final class IcalDocument
     }
 
     /**
-     * Eine Eigenschaft, deren Wert nicht maskiert werden darf — Zeitpunkte,
-     * Bezeichner, Aufzählungswerte.
+     * A property whose value must not be escaped — timestamps, identifiers,
+     * enumerated values.
      *
      * @param  array<string, string>  $parameters
      */
@@ -66,8 +66,8 @@ final class IcalDocument
     }
 
     /**
-     * Die Reihenfolge ist wesentlich: der Backslash muss zuerst verdoppelt
-     * werden, sonst maskiert der zweite Durchgang die eigenen Fluchtzeichen.
+     * The order matters: the backslash has to be doubled first, otherwise the
+     * second pass escapes its own escape characters.
      */
     private static function escape(string $value): string
     {
@@ -79,10 +79,10 @@ final class IcalDocument
     }
 
     /**
-     * Zeilen über 75 Oktett werden umgebrochen, die Fortsetzung beginnt mit
-     * einem Leerzeichen. Gezählt wird in Oktett, geschnitten aber an
-     * Zeichengrenzen — ein mitten durchtrenntes „ä" wäre kein gültiges UTF-8
-     * mehr, und Namen mit Umlauten sind hier die Regel.
+     * Lines over 75 octets are wrapped, the continuation starting with a space.
+     * Counting is in octets, but cutting happens at character boundaries — an "ä"
+     * severed down the middle would no longer be valid UTF-8, and names with
+     * umlauts are the rule here.
      */
     private static function fold(string $line): string
     {
@@ -98,7 +98,7 @@ final class IcalDocument
             if (strlen($current) + strlen($character) > $limit) {
                 $folded .= $current."\r\n ";
                 $current = '';
-                // Das Leerzeichen der Fortsetzungszeile zählt mit.
+                // The continuation line's leading space counts too.
                 $limit = 74;
             }
 

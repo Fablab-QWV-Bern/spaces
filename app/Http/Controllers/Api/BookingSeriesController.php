@@ -24,7 +24,7 @@ class BookingSeriesController extends Controller
 
     public function index(): AnonymousResourceCollection
     {
-        // Ohne Zeitfenster: Serien sind wenige, und die Verwaltung braucht alle.
+        // Without a time window: series are few, and the admin view needs all.
         return BookingSeriesResource::collection(
             BookingSeries::query()->orderBy('first_instance_start')->get(),
         );
@@ -81,11 +81,12 @@ class BookingSeriesController extends Controller
                 BookingSeries::INTERVAL_WEEKLY,
                 BookingSeries::INTERVAL_MONTHLY,
             ])],
-            // Die Obergrenze ist die der Spalte; ohne sie wäre eine absurde Zahl
-            // kein Eingabefehler, sondern ein Datenbankfehler.
+            // The upper bound is the column's; without it an absurd number would
+            // be a database error rather than an input error.
             'intervalCount' => ['required', 'integer', 'min:1', 'max:65535'],
-            // Wanduhrzeit ohne Zeitzone, genau in der Form der Spec. `date` wäre zu
-            // grosszügig: es nähme auch ein "Z" an, das hier nichts zu suchen hat.
+            // Wall-clock time without a timezone, exactly in the shape of the
+            // spec. `date` would be too generous: it would also accept a "Z",
+            // which has no business here.
             'firstInstanceStart' => ['required', 'string', 'regex:/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/'],
             'firstInstanceEnd' => ['required', 'string', 'regex:/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/'],
             'endDate' => ['sometimes', 'nullable', 'date_format:Y-m-d'],
@@ -109,9 +110,9 @@ class BookingSeriesController extends Controller
     }
 
     /**
-     * Anders als bei einer einzelnen Buchung gibt es hier kein 409: eine Kollision
-     * lässt die Instanz ausfallen, nicht die Serie scheitern. Was übrig bleibt,
-     * ist immer ein Fehler in der Eingabe.
+     * Unlike for a single booking there is no 409 here: a collision makes the
+     * instance drop out rather than the series fail. Whatever remains is always an
+     * error in the input.
      */
     private function ruleFailure(BookingRuleException $exception): JsonResponse
     {

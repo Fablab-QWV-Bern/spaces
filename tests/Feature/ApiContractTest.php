@@ -8,17 +8,17 @@ use Database\Seeders\DatabaseSeeder;
 use Spectator\Spectator;
 
 /**
- * Prüft jede Antwort gegen spec/reservation-api.yml. Damit kann die
- * Implementierung nicht unbemerkt von der Spec abweichen — ein umbenanntes oder
- * vergessenes Feld macht die Testsuite rot.
+ * Checks every response against spec/reservation-api.yml. That way the
+ * implementation cannot drift from the spec unnoticed — a renamed or forgotten
+ * field turns the test suite red.
  */
 beforeEach(function () {
     Spectator::using('reservation-api.yml');
 
     $this->seed(DatabaseSeeder::class);
 
-    // Zwei Buchungen mit unterschiedlichem Datenprofil, damit die Prüfung auch
-    // die nullbaren Felder trifft: eine von einer Rolle erstellt, eine ohne.
+    // Two bookings with different data profiles, so that the check also covers
+    // the nullable fields: one created by a role, one without.
     Booking::create([
         'workplace_id' => 'holz-1',
         'creator_role_id' => Role::where('name', 'Mitglied')->value('id'),
@@ -44,19 +44,19 @@ beforeEach(function () {
     $this->booking = $ruhetag;
 });
 
-it('haelt den Vertrag fuer /config', function () {
+it('holds the contract for /config', function () {
     $this->getJson('/api/config')->assertValidRequest()->assertValidResponse(200);
 });
 
-it('haelt den Vertrag fuer /session', function () {
+it('holds the contract for /session', function () {
     $this->getJson('/api/session')->assertValidRequest()->assertValidResponse(200);
 });
 
-it('haelt den Vertrag fuer /session/roles', function () {
+it('holds the contract for /session/roles', function () {
     $this->getJson('/api/session/roles')->assertValidRequest()->assertValidResponse(200);
 });
 
-it('haelt den Vertrag fuer /roles', function () {
+it('holds the contract for /roles', function () {
     $admin = Role::where('name', 'Admin')->firstOrFail();
 
     $this->actingAs($admin)->getJson('/api/roles')->assertValidRequest()->assertValidResponse(200);
@@ -67,37 +67,37 @@ it('haelt den Vertrag fuer /roles', function () {
         ->assertValidResponse(200);
 });
 
-it('haelt den Vertrag fuer /areas', function () {
+it('holds the contract for /areas', function () {
     $this->getJson('/api/areas')->assertValidRequest()->assertValidResponse(200);
 });
 
-it('haelt den Vertrag fuer /areas/{id}', function () {
+it('holds the contract for /areas/{id}', function () {
     $id = $this->getJson('/api/areas')->json('0.id');
 
     $this->getJson("/api/areas/{$id}")->assertValidRequest()->assertValidResponse(200);
 });
 
-it('haelt den Vertrag fuer /workplaces', function () {
+it('holds the contract for /workplaces', function () {
     $this->getJson('/api/workplaces')->assertValidRequest()->assertValidResponse(200);
 });
 
-it('haelt den Vertrag fuer /workplaces/{id}', function () {
+it('holds the contract for /workplaces/{id}', function () {
     $this->getJson('/api/workplaces/holz-1')->assertValidRequest()->assertValidResponse(200);
 });
 
-it('haelt den Vertrag fuer /bookings', function () {
+it('holds the contract for /bookings', function () {
     $this->getJson('/api/bookings?from=2026-08-03T00:00:00Z&to=2026-08-04T00:00:00Z')
         ->assertValidRequest()
         ->assertValidResponse(200);
 });
 
-it('haelt den Vertrag fuer /bookings/{id}', function () {
+it('holds the contract for /bookings/{id}', function () {
     $this->getJson("/api/bookings/{$this->booking->id}")
         ->assertValidRequest()
         ->assertValidResponse(200);
 });
 
-it('haelt den Vertrag fuer /calendar.ics', function () {
+it('holds the contract for /calendar.ics', function () {
     $this->get('/api/calendar.ics')->assertValidRequest()->assertValidResponse(200);
 
     $this->get('/api/calendar.ics?workplaceId=holz-1')->assertValidRequest()->assertValidResponse(200);
@@ -105,15 +105,15 @@ it('haelt den Vertrag fuer /calendar.ics', function () {
     $this->get('/api/calendar.ics?workplaceId=gibtsnicht')->assertValidResponse(404);
 });
 
-it('haelt den Vertrag fuer die Fehlerantworten', function () {
-    // 422 bei fehlendem Zeitfenster.
+it('holds the contract for the error responses', function () {
+    // 422 for a missing time window.
     $this->getJson('/api/bookings')->assertValidResponse(422);
 
-    // 404 bei unbekannter Ressource.
+    // 404 for an unknown resource.
     $this->getJson('/api/workplaces/gibtsnicht')->assertValidResponse(404);
 });
 
-it('haelt den Vertrag fuer die 403-Antwort', function () {
+it('holds the contract for the 403 response', function () {
     Role::where('is_anonymous', true)->update(['view_bookings' => false]);
 
     $this->getJson('/api/bookings?from=2026-08-03T00:00:00Z&to=2026-08-04T00:00:00Z')

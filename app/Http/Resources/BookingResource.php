@@ -10,11 +10,11 @@ use Illuminate\Http\Resources\Json\JsonResource;
 /**
  * @mixin Booking
  *
- * Setzt die Sichtbarkeitsregeln der Spec durch: der Name ist bereits mit
- * `viewBookings` sichtbar (das braucht es sowieso, um diesen Endpunkt zu
- * erreichen), der Kontakt erst mit `viewBookingsDetails`, die IP-Adresse nur
- * mit `manageRoles`. `contact` bleibt im Schema und wird auf null gesetzt,
- * statt zu verschwinden — sonst müsste der Client zwei Formen unterscheiden.
+ * Enforces the visibility rules of the spec: the name is already visible with
+ * `viewBookings` (which is needed to reach this endpoint anyway), the contact only
+ * with `viewBookingsDetails`, the IP address only with `manageRoles`. `contact`
+ * stays in the schema and is set to null rather than disappearing — otherwise the
+ * client would have to distinguish two shapes.
  */
 class BookingResource extends JsonResource
 {

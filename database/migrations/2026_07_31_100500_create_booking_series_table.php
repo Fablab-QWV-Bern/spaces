@@ -14,20 +14,20 @@ return new class extends Migration
             $table->string('workplace_id', 64);
             $table->foreign('workplace_id')->references('id')->on('workplaces')->restrictOnDelete();
 
-            // Werden auf jede Instanz kopiert.
+            // Copied onto every instance.
             $table->string('name', 150);
             $table->string('contact', 150);
 
             $table->enum('interval', ['WEEKLY', 'MONTHLY']);
             $table->unsignedSmallInteger('interval_count')->default(1);
 
-            // ACHTUNG: lokale Wanduhrzeit, NICHT UTC. Eine wöchentliche Serie um
-            // 09:00 bleibt über die Zeitumstellung hinweg bei 09:00 Ortszeit.
-            // Diese beiden Spalten dürfen nirgends als UTC interpretiert werden.
+            // CAREFUL: local wall-clock time, NOT UTC. A weekly series at 09:00
+            // stays at 09:00 local time across a DST change. These two columns
+            // must never be interpreted as UTC anywhere.
             $table->dateTime('first_instance_start');
             $table->dateTime('first_instance_end');
 
-            // Null: die Serie läuft unbegrenzt weiter.
+            // Null: the series runs on indefinitely.
             $table->date('end_date')->nullable();
 
             $table->date('instantiated_until');

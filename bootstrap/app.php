@@ -13,9 +13,9 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
         then: function (): void {
-            // Bewusst die web-Gruppe und nicht die zustandslose api-Gruppe: das
-            // Frontend läuft auf demselben Origin und meldet sich per Session-Cookie
-            // an, mit CSRF-Schutz auf allen schreibenden Aufrufen.
+            // Deliberately the web group and not the stateless api group: the
+            // frontend runs on the same origin and authenticates via a session
+            // cookie, with CSRF protection on all writing calls.
             Route::middleware('web')
                 ->prefix('api')
                 ->group(base_path('routes/api.php'));

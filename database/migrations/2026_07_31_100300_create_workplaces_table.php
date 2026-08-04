@@ -9,8 +9,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('workplaces', function (Blueprint $table) {
-            // Vom Client vergeben, stabil, URL- und SVG-tauglich (z.B. "holz-3").
-            // Die Übersichtskarte gleicht die id-Attribute im SVG hiergegen ab.
+            // Assigned by the client, stable, usable in URLs and SVG (e.g.
+            // "holz-3"). The overview map matches the SVG's id attributes against
+            // this.
             $table->string('id', 64)->primary();
 
             $table->string('name', 150);
@@ -28,7 +29,7 @@ return new class extends Migration
 
             $table->string('wiki_url', 500)->nullable();
 
-            // Null: es gilt der Wert des Bereichs.
+            // Null: the area's value applies.
             $table->unsignedInteger('max_booking_duration_minutes')->nullable();
 
             $table->integer('sort_order')->default(0);

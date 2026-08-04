@@ -12,8 +12,8 @@ class BookingSeries extends Model
 {
     use HasUlids;
 
-    // Täglich gibt es bewusst nicht: für den Betrieb der Werkstatt ist das keine
-    // Serie, sondern eine Dauerbelegung. Zweiwöchentlich ist WEEKLY mit
+    // There is deliberately no daily interval: for the running of the workshop
+    // that is not a series but a permanent occupation. Fortnightly is WEEKLY with
     // interval_count = 2.
     public const INTERVAL_WEEKLY = 'WEEKLY';
 
@@ -36,10 +36,10 @@ class BookingSeries extends Model
     protected function casts(): array
     {
         return [
-            // first_instance_start und first_instance_end bleiben bewusst
-            // ungecastet: sie sind lokale Wanduhrzeit, kein Zeitpunkt. Ein Cast
-            // auf datetime würde ihnen die App-Zeitzone (UTC) anheften und die
-            // Serie über die Zeitumstellung um eine Stunde verschieben.
+            // first_instance_start and first_instance_end deliberately stay
+            // uncast: they are local wall-clock time, not points in time. A cast
+            // to datetime would pin the app timezone (UTC) onto them and shift the
+            // series by an hour across a DST change.
             'interval_count' => 'integer',
             'end_date' => 'immutable_date',
             'instantiated_until' => 'immutable_date',
@@ -56,7 +56,7 @@ class BookingSeries extends Model
         return $this->hasMany(Booking::class, 'booking_series_id');
     }
 
-    /** Der Start der ersten Instanz als echter Zeitpunkt in der Anzeige-Zeitzone. */
+    /** The first instance's start as a real point in time in the display timezone. */
     public function firstInstanceStartIn(string $timezone): CarbonImmutable
     {
         return CarbonImmutable::parse($this->first_instance_start, $timezone);

@@ -2,7 +2,7 @@
     "$schema": "https://getcomposer.org/schema.json",
     "name": "qwv/reservationssystem",
     "type": "project",
-    "description": "Reservationssystem für Arbeitsplätze der Quartierwerkstatt.",
+    "description": "Booking system for the workstations of the Quartierwerkstatt.",
     "keywords": ["laravel", "reservation"],
     "license": "MIT",
     "require": {

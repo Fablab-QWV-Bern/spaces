@@ -42,8 +42,8 @@ class AreaController extends Controller
 
     public function destroy(Area $area): JsonResponse
     {
-        // Die Fremdschlüssel-Beschränkung würde das ohnehin verhindern; hier
-        // scheitert es mit einer Begründung statt mit einem Datenbankfehler.
+        // The foreign key constraint would prevent this anyway; here it fails
+        // with a reason rather than with a database error.
         if ($area->workplaces()->exists()) {
             return response()->json([
                 'message' => 'Dem Bereich sind noch Arbeitsplätze zugeordnet.',
@@ -60,11 +60,11 @@ class AreaController extends Controller
     {
         return $request->validate([
             'name' => ['required', 'string', 'min:1', 'max:100'],
-            // Beliebige CSS-Farbe; die Ansicht setzt sie unverändert als
-            // Hintergrund. Die Länge deckelt die Spalte.
+            // Any CSS colour; the view applies it unchanged as a background. The
+            // length is capped by the column.
             'color' => ['required', 'string', 'max:30'],
             'maxBookingDurationMinutes' => ['required', 'integer', 'min:15', 'multiple_of:15'],
-            // Null bedeutet "es gilt der globale Wert".
+            // Null means "the global value applies".
             'maxBookingEndOffsetDays' => ['sometimes', 'nullable', 'integer', 'min:0'],
             'allowNightlyActivities' => ['required', 'boolean'],
             'sortOrder' => ['sometimes', 'integer'],
@@ -72,8 +72,8 @@ class AreaController extends Controller
     }
 
     /**
-     * PUT ersetzt den ganzen Bereich: was der Aufruf weglässt, fällt auf seinen
-     * Standardwert zurück und behält nicht den bisherigen.
+     * PUT replaces the whole area: whatever the call omits falls back to its
+     * default rather than keeping the previous value.
      *
      * @param  array<string, mixed>  $data
      * @return array<string, mixed>

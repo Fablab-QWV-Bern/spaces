@@ -7,25 +7,25 @@ use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Die Takt-Zeitpunkte, an denen eine Serie nichts mehr erzeugen soll.
+ * The beats at which a series should no longer generate anything.
  *
- * Zwei Handgriffe schreiben hierher, und beide meinen dasselbe: „an dieser
- * Stelle des Rhythmus steht schon eine Entscheidung". Wer eine Instanz löscht,
- * will den Termin weg; wer sie verschiebt, will ihn woanders — in beiden Fällen
- * wäre eine nachgelieferte Instanz am ursprünglichen Zeitpunkt ein Rückschritt.
+ * Two operations write here, and both mean the same thing: "there is already a
+ * decision at this point of the rhythm". Deleting an instance means wanting the
+ * occurrence gone; moving it means wanting it elsewhere — in both cases a
+ * subsequently generated instance at the original time would be a regression.
  *
- * Bewusst eine eigene Tabelle statt eines Soft-Deletes auf `bookings`: ein
- * gestrichener Termin, der als Zeile stehen bliebe, müsste in jeder Abfrage
- * ausgefiltert werden — auch in der Kollisionsprüfung, die als einzige am Modell
- * vorbei über den Query Builder läuft. Eine vergessene Bedingung dort blockierte
- * fremde Arbeitsplätze mit einer Buchung, die niemand sehen kann. So hat die
- * Ausnahme genau einen Leser.
+ * Deliberately a table of its own rather than a soft delete on `bookings`: a
+ * cancelled occurrence left standing as a row would have to be filtered out in
+ * every query — including in the collision check, the only place that bypasses
+ * the model and goes through the query builder. A condition forgotten there would
+ * block other people's workplaces with a booking nobody can see. This way the
+ * exception has exactly one reader.
  */
 final class SeriesExceptions
 {
     /**
-     * Die ausgenommenen Zeitpunkte einer Serie, als "Y-m-d H:i:s" in UTC — in der
-     * Form, in der sich ein Takt-Zeitpunkt direkt vergleichen lässt.
+     * The exempted points in time of a series, as "Y-m-d H:i:s" in UTC — in the
+     * form in which a beat can be compared directly.
      *
      * @return list<string>
      */
@@ -39,10 +39,10 @@ final class SeriesExceptions
     }
 
     /**
-     * Hält fest, dass die Serie am bisherigen Zeitpunkt dieser Instanz nichts
-     * mehr erzeugen soll. Tut nichts, wenn die Buchung zu keiner Serie gehört
-     * oder die Instanz ohnehin schon abgekoppelt ist — dann steht die Ausnahme
-     * seit dem ersten Eingriff.
+     * Records that the series should no longer generate anything at this
+     * instance's previous point in time. Does nothing if the booking belongs to no
+     * series or the instance is already detached — in that case the exception has
+     * been in place since the first intervention.
      */
     public function recordFor(Booking $booking): void
     {

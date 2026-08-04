@@ -13,17 +13,17 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 /**
- * Der Abonnement-Feed für Kalenderclients.
+ * The subscription feed for calendar clients.
  *
- * Gerendert wird immer als anonyme Rolle, auch wenn der Aufruf ein
- * Sitzungscookie mitbringt. Ein Kalenderclient hat keines — was ein angemeldeter
- * Browser hier sähe, wäre sonst nicht das, was das Abo danach liefert. So ist
- * der Feed für alle dasselbe Dokument, und ein weitergegebener Link kann keine
- * Kontaktdaten ausspielen, die die anonyme Rolle nicht ohnehin zeigt.
+ * Always rendered as the anonymous role, even when the call brings a session
+ * cookie. A calendar client has none — what a logged-in browser saw here would
+ * otherwise not be what the subscription delivers afterwards. This way the feed
+ * is the same document for everyone, and a shared link cannot leak contact
+ * details the anonymous role does not show anyway.
  */
 class CalendarFeedController extends Controller
 {
-    /** Dasselbe gleitende Fenster wie im System, das dieses hier ablöst. */
+    /** The same sliding window as in the system this one replaces. */
     private const WINDOW_MONTHS = 3;
 
     public function __construct(private readonly CalendarFeed $feed) {}
@@ -39,8 +39,8 @@ class CalendarFeedController extends Controller
             'workplaceId' => ['sometimes', 'string'],
         ]);
 
-        // Ein Tippfehler im Abo-Link soll auffallen, statt als leerer Kalender
-        // durchzugehen — den würde man erst Wochen später bemerken.
+        // A typo in the subscription link should stand out rather than pass as an
+        // empty calendar — one would only notice that weeks later.
         $area = isset($filters['areaId']) ? Area::findOrFail($filters['areaId']) : null;
         $workplace = isset($filters['workplaceId']) ? Workplace::findOrFail($filters['workplaceId']) : null;
 

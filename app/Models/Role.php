@@ -7,17 +7,17 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 /**
- * Eine Benutzerrolle, die sich mehrere Personen teilen. Es gibt bewusst keine
- * Benutzer: wer gebucht hat, steht als Name + Kontakt auf der Buchung.
+ * A user role shared by several people. There are deliberately no users: who did
+ * the booking is recorded as name + contact on the booking itself.
  *
- * Authentifiziert wird als Rolle, nicht als Person — deshalb ist dieses Modell
- * das Authenticatable des `web`-Guards.
+ * Authentication happens as a role, not as a person — which is why this model is
+ * the Authenticatable of the `web` guard.
  */
 class Role extends Authenticatable
 {
     use HasUlids, Notifiable;
 
-    /** Die Berechtigungen, wie sie in der API als Objekt erscheinen. */
+    /** The permissions as they appear in the API as an object. */
     public const PERMISSIONS = [
         'viewBookings' => 'view_bookings',
         'viewBookingsDetails' => 'view_bookings_details',
@@ -57,7 +57,7 @@ class Role extends Authenticatable
         ];
     }
 
-    /** Die anonyme Rolle, die jeder nicht angemeldete Aufruf erhält. */
+    /** The anonymous role that every unauthenticated call gets. */
     public static function anonymous(): self
     {
         return self::where('is_anonymous', true)->firstOrFail();
@@ -72,7 +72,7 @@ class Role extends Authenticatable
             : parent::can($abilities, $arguments);
     }
 
-    /** Die Berechtigungen in der Form, in der die API sie ausliefert. */
+    /** The permissions in the shape the API delivers them. */
     public function permissionMap(): array
     {
         return array_map(

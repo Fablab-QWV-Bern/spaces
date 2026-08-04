@@ -9,13 +9,13 @@ final readonly class ValidationResult
     /**
      * @param  list<ViolationCode>  $violations
      * @param  list<string>  $conflictingBookingIds
-     * @param  list<string>  $blockedWorkplaceIds  Der Snapshot, der bei einer gültigen
-     *                                             Buchung gespeichert wird.
-     * @param  CarbonImmutable|null  $latestBookableDay  Der letzte Tag, an dem die Buchung
-     *                                                   enden dürfte; null, wo kein Vorlauf
-     *                                                   gilt. Nur die Meldung braucht ihn —
-     *                                                   ohne ihn bliebe offen, wie weit
-     *                                                   "so weit im Voraus" reicht.
+     * @param  list<string>  $blockedWorkplaceIds  The snapshot stored for a valid
+     *                                             booking.
+     * @param  CarbonImmutable|null  $latestBookableDay  The last day on which the booking
+     *                                                   would be allowed to end; null where
+     *                                                   no horizon applies. Only the message
+     *                                                   needs it — without it, how far "this
+     *                                                   far in advance" reaches stays open.
      */
     public function __construct(
         public array $violations,

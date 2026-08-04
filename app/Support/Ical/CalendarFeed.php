@@ -7,26 +7,25 @@ use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 
 /**
- * Buchungen als iCalendar-Dokument, wie es Kalenderclients abonnieren.
+ * Bookings as an iCalendar document, the way calendar clients subscribe to it.
  *
- * Je Buchung ein VEVENT. Serieninstanzen sind eigene Buchungen und damit eigene
- * Ereignisse mit eigener UID — bewusst kein RRULE: eine Instanz ist ein
- * Zeitpunkt in der Datenbank, und eine geänderte Serie wirft ihre künftigen
- * Instanzen ohnehin weg und legt sie neu an. Der Feed muss von Serien nichts
- * wissen.
+ * One VEVENT per booking. Series instances are bookings of their own and
+ * therefore events of their own with their own UID — deliberately no RRULE: an
+ * instance is a point in time in the database, and a changed series reconciles
+ * its future instances anyway. The feed needs to know nothing about series.
  *
- * Die Zeiten stehen in UTC (Form „…Z"). Lokalzeit mit TZID verlangte eine
- * mitgelieferte VTIMEZONE-Komponente mitsamt Umstellungsregeln; die braucht
- * nur, wer RRULE schreibt.
+ * The times are in UTC (the "…Z" form). Local time with TZID would require an
+ * accompanying VTIMEZONE component including the transition rules; only whoever
+ * writes RRULE needs that.
  */
 final class CalendarFeed
 {
     private const FORMAT = 'Ymd\THis\Z';
 
     /**
-     * @param  Collection<int, Booking>  $bookings  mit geladenem workplace.area
-     * @param  string  $host  für die UID — sie muss weltweit eindeutig sein
-     * @param  bool  $withContact  ob die Rolle den Kontakt sehen darf
+     * @param  Collection<int, Booking>  $bookings  with workplace.area eager-loaded
+     * @param  string  $host  for the UID — it has to be globally unique
+     * @param  bool  $withContact  whether the role may see the contact
      */
     public function render(Collection $bookings, string $title, string $host, bool $withContact): string
     {
@@ -37,7 +36,7 @@ final class CalendarFeed
             ->raw('CALSCALE', 'GREGORIAN')
             ->raw('METHOD', 'PUBLISH')
             ->text('X-WR-CALNAME', $title)
-            // Beides sagt dasselbe; die Clients lesen mal das eine, mal das andere.
+            // Both say the same thing; clients read sometimes one, sometimes the other.
             ->raw('REFRESH-INTERVAL', 'PT1H', ['VALUE' => 'DURATION'])
             ->raw('X-PUBLISHED-TTL', 'PT1H');
 

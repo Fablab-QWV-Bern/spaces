@@ -7,24 +7,23 @@ use Carbon\CarbonImmutable;
 use InvalidArgumentException;
 
 /**
- * Rechnet aus, wann eine Serie stattfindet.
+ * Works out when a series takes place.
  *
- * Gerechnet wird durchgehend in lokaler Wanduhrzeit und erst am Schluss nach UTC
- * umgerechnet. Nur so bleibt eine wöchentliche Serie um 09:00 über die
- * Zeitumstellung hinweg um 09:00 — addierte man UTC-Zeitpunkte, verschöbe sie
- * sich zweimal im Jahr um eine Stunde.
+ * Everything is computed in local wall-clock time and only converted to UTC at
+ * the end. That is the only way a weekly series at 09:00 stays at 09:00 across a
+ * DST change — adding to UTC timestamps would shift it by an hour twice a year.
  */
 final readonly class SeriesSchedule
 {
     public function __construct(
-        /** Einer der BookingSeries::INTERVAL_*-Werte. */
+        /** One of the BookingSeries::INTERVAL_* values. */
         private string $interval,
         private int $intervalCount,
-        /** Lokale Wanduhrzeit der ersten Instanz. */
+        /** Local wall-clock time of the first instance. */
         private CarbonImmutable $firstStart,
-        /** Lokale Wanduhrzeit der ersten Instanz; darf am Folgetag liegen. */
+        /** Local wall-clock time of the first instance; may fall on the following day. */
         private CarbonImmutable $firstEnd,
-        /** Letzter Tag, an dem die Serie stattfinden darf; null heisst unbegrenzt. */
+        /** Last day on which the series may take place; null means unbounded. */
         private ?CarbonImmutable $endDate,
         private string $timezone,
     ) {}
@@ -44,12 +43,12 @@ final readonly class SeriesSchedule
     }
 
     /**
-     * Die Termine, deren Datum zwischen `$firstDay` und `$lastDay` liegt (beide
-     * einschliesslich) und die nicht vor `$notBefore` beginnen.
+     * The occurrences whose date lies between `$firstDay` and `$lastDay` (both
+     * inclusive) and that do not start before `$notBefore`.
      *
-     * @param  CarbonImmutable  $firstDay  Lokaler Tag, einschliesslich
-     * @param  CarbonImmutable  $lastDay  Lokaler Tag, einschliesslich
-     * @param  CarbonImmutable  $notBefore  UTC-Zeitpunkt
+     * @param  CarbonImmutable  $firstDay  Local day, inclusive
+     * @param  CarbonImmutable  $lastDay  Local day, inclusive
+     * @param  CarbonImmutable  $notBefore  UTC point in time
      * @return list<SeriesOccurrence>
      */
     public function occurrencesBetween(
@@ -64,23 +63,23 @@ final readonly class SeriesSchedule
             $lastDay = $this->endDate->startOfDay();
         }
 
-        // Wie viele Kalendertage nach dem Beginn die Instanz endet — bei einer
-        // Buchung über Nacht einer, sonst keiner.
+        // How many calendar days after the start the instance ends — one for an
+        // overnight booking, none otherwise.
         $nightsSpanned = (int) $this->firstStart->startOfDay()
             ->diffInDays($this->firstEnd->startOfDay());
 
         $occurrences = [];
 
-        // Gezählt wird ab der ersten Instanz, auch wenn sie lange zurückliegt:
-        // eine seit Jahren laufende Serie kostet ein paar tausend Schleifendurchläufe
-        // ohne eine einzige Abfrage. Das ist billiger als eine zweite Rechnung, die
-        // den Einstiegspunkt herleitet und bei MONTHLY danebenliegen kann.
+        // Counting starts at the first instance, even if it lies far in the past:
+        // a series running for years costs a few thousand loop iterations without a
+        // single query. That is cheaper than a second calculation deriving the
+        // entry point, which can be off by one for MONTHLY.
         for ($n = 0; ; $n++) {
             $date = $this->dateOf($n);
 
             if ($date === null) {
-                // Ein übersprungener Monat (z.B. der 31. im Februar). Ob die Serie
-                // damit zu Ende ist, entscheidet der Monat selbst.
+                // A skipped month (e.g. the 31st in February). Whether the series
+                // ends here is decided by the month itself.
                 if ($this->monthOf($n) > $lastDay) {
                     break;
                 }
@@ -109,25 +108,25 @@ final readonly class SeriesSchedule
         return $occurrences;
     }
 
-    /** Die erste Instanz, ohne Rücksicht auf Fenster und Endtag. */
+    /** The first instance, regardless of window and end date. */
     public function firstOccurrence(): SeriesOccurrence
     {
         return new SeriesOccurrence($this->firstStart->utc(), $this->firstEnd->utc());
     }
 
-    /** Das lokale Datum der n-ten Instanz; null, wenn dieser Termin ausfällt. */
+    /** The local date of the n-th instance; null if that occurrence drops out. */
     private function dateOf(int $n): ?CarbonImmutable
     {
         $step = $n * $this->intervalCount;
 
         return match ($this->interval) {
             BookingSeries::INTERVAL_WEEKLY => $this->firstStart->startOfDay()->addWeeks($step),
-            // MONTHLY meint denselben Tag im Monat. Monate, die diesen Tag nicht
-            // haben, fallen aus — nicht auf den 28. gerutscht, sondern übersprungen.
+            // MONTHLY means the same day of the month. Months without that day
+            // drop out — not slid onto the 28th, but skipped.
             BookingSeries::INTERVAL_MONTHLY => $this->firstStart->day > $this->monthOf($n)->daysInMonth
                 ? null
                 : $this->monthOf($n)->day($this->firstStart->day),
-            default => throw new InvalidArgumentException("Unbekanntes Intervall: {$this->interval}"),
+            default => throw new InvalidArgumentException("Unknown interval: {$this->interval}"),
         };
     }
 
@@ -137,7 +136,7 @@ final readonly class SeriesSchedule
             ->addMonths($n * $this->intervalCount);
     }
 
-    /** Setzt die Wanduhrzeit von `$time` auf den lokalen Tag `$day`. */
+    /** Puts the wall-clock time of `$time` onto the local day `$day`. */
     private function at(CarbonImmutable $day, CarbonImmutable $time): CarbonImmutable
     {
         return $day->setTime($time->hour, $time->minute);

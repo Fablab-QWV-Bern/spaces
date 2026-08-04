@@ -5,7 +5,7 @@ use App\Models\Role;
 use App\Models\Workplace;
 use Database\Seeders\DatabaseSeeder;
 
-it('legt Bereiche, Arbeitsplaetze und Rollen an', function () {
+it('creates areas, workplaces and roles', function () {
     $this->seed(DatabaseSeeder::class);
 
     expect(Area::count())->toBe(6)
@@ -13,7 +13,7 @@ it('legt Bereiche, Arbeitsplaetze und Rollen an', function () {
         ->and(Role::where('is_anonymous', true)->count())->toBe(1);
 });
 
-it('loest Tags und Blockierungen am Arbeitsplatz auf', function () {
+it('resolves tags and blocking on the workplace', function () {
     $this->seed(DatabaseSeeder::class);
 
     $drechselbank = Workplace::findOrFail('drechselbank');
@@ -24,7 +24,7 @@ it('loest Tags und Blockierungen am Arbeitsplatz auf', function () {
     expect(Workplace::findOrFail('ruhetag')->blocksWorkplacesWithTag())->toBe(['werkstatt']);
 });
 
-it('vergleicht Tags ohne Ruecksicht auf Gross- und Kleinschreibung', function () {
+it('compares tags case-insensitively', function () {
     $area = Area::create([
         'name' => 'Test', 'color' => '#000000',
         'max_booking_duration_minutes' => 60, 'sort_order' => 1,
@@ -34,8 +34,8 @@ it('vergleicht Tags ohne Ruecksicht auf Gross- und Kleinschreibung', function ()
         'id' => 'test-1', 'name' => 'Test 1', 'area_id' => $area->id,
     ]);
 
-    // "#Lärmig" und "lärmig" sind derselbe Tag: fuehrendes # faellt weg, der
-    // Vergleich laeuft ueber die Kollation.
+    // "#Lärmig" and "lärmig" are the same tag: the leading # is dropped and the
+    // comparison runs through the collation.
     $workplace->syncTags(['#Lärmig', 'lärmig']);
 
     expect($workplace->tags())->toHaveCount(1);

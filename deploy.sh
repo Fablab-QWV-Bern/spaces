@@ -1,120 +1,119 @@
 #!/usr/bin/env bash
 #
-# Bereitstellungsaktion für Plesk. Dort steht als einziger Befehl:
+# Deployment action for Plesk. The only command configured there is:
 #
 #     bash deploy.sh
 #
-# Plesk hat den Branch `deploy` zu diesem Zeitpunkt bereits ausgecheckt; dieses
-# Skript macht daraus eine lauffähige Anwendung. Es liegt hier statt im
-# Plesk-Textfeld, damit die Schritte im Repository stehen und nicht in einem
-# Formular, das niemand vergleichen kann.
+# By this point Plesk has already checked out the `deploy` branch; this script
+# turns that into a running application. It lives here rather than in the Plesk
+# text field, so that the steps are in the repository and not in a form nobody can
+# diff.
 
 set -euo pipefail
 cd "$(dirname "$0")"
 
-# Ohne SSH ist das Bereitstellungslog der einzige Ort, an dem sich nachsehen
-# lässt, wo und womit gearbeitet wurde.
-echo "Verzeichnis: $PWD"
+# Without SSH the deployment log is the only place to look up where and with what
+# the work was done.
+echo "Directory:   $PWD"
 
-# Plesks Composer-Oberfläche sucht sich ihre Anwendung selbst und greift dabei
-# auch schon mal eine fremde composer.json aus dem Dokumentenstamm. Dieses
-# Skript arbeitet nur dort, wo es selbst liegt — und hält an, wenn das nicht
-# nach dieser Anwendung aussieht.
+# Plesk's Composer UI picks its application itself and sometimes grabs a foreign
+# composer.json from the document root. This script only works where it itself
+# lives — and stops if that does not look like this application.
 if [ ! -f artisan ] || [ ! -f composer.lock ]; then
-    echo 'Hier steht keine Laravel-Anwendung mit composer.lock. Nichts getan.' >&2
+    echo 'No Laravel application with a composer.lock here. Nothing done.' >&2
     exit 1
 fi
 
-# Das blosse `php` ist in Plesks Aktionen das System-PHP, nicht das der Domain.
+# A bare `php` in Plesk's actions means the system PHP, not the domain's.
 PHP="${PHP:-/opt/plesk/php/8.5/bin/php}"
 [ -x "$PHP" ] || PHP="$(command -v php || true)"
 if [ -z "$PHP" ]; then
-    echo 'Kein PHP gefunden. Pfad über PHP=… vorgeben.' >&2
+    echo 'No PHP found. Provide the path via PHP=…' >&2
     exit 1
 fi
 echo "PHP:         $PHP ($("$PHP" -r 'echo PHP_VERSION;'))"
 
-# Der PATH einer Bereitstellungsaktion ist kürzer als der einer Anmeldeschale,
-# darum die üblichen Orte von Hand dazu.
+# A deployment action's PATH is shorter than a login shell's, so the usual places
+# are added by hand.
 PATH="$PATH:/usr/local/bin:/usr/bin:/opt/plesk/composer"
 
-composer_gefunden=0
+composer_found=0
 COMPOSER=()
-for kandidat in \
+for candidate in \
     "${COMPOSER_BIN:-}" \
     "$(command -v composer 2>/dev/null || true)" \
     /usr/local/psa/var/modules/composer/composer.phar \
     /usr/lib/plesk-9.0/composer.phar \
     /opt/plesk/composer/composer.phar \
     ./composer.phar; do
-    [ -n "$kandidat" ] && [ -f "$kandidat" ] || continue
-    case "$kandidat" in
-        *.phar) COMPOSER=("$PHP" "$kandidat") ;;
-        *) COMPOSER=("$kandidat") ;;
+    [ -n "$candidate" ] && [ -f "$candidate" ] || continue
+    case "$candidate" in
+        *.phar) COMPOSER=("$PHP" "$candidate") ;;
+        *) COMPOSER=("$candidate") ;;
     esac
-    composer_gefunden=1
-    echo "Composer:    $kandidat"
+    composer_found=1
+    echo "Composer:    $candidate"
     break
 done
-[ "$composer_gefunden" = 1 ] || echo 'Composer:    nicht gefunden'
+[ "$composer_found" = 1 ] || echo 'Composer:    not found'
 
-# Beim ersten Lauf gibt es noch kein vendor/, artisan wäre also nicht startbar.
-# Danach schon — dann soll die Wartungsseite stehen, bevor die Abhängigkeiten
-# unter der laufenden Anwendung ausgetauscht werden.
+# On the first run there is no vendor/ yet, so artisan would not start. Later
+# there is — and then the maintenance page should be up before the dependencies
+# are swapped out underneath the running application.
 if [ -f vendor/autoload.php ]; then
     "$PHP" artisan down --render=errors::503 --retry=60
 fi
 
-# Ab hier ist die Anwendung womöglich unten und der Code schon neu, das Schema
-# aber noch alt. Wenn etwas schiefgeht, bleibt die Wartungsseite absichtlich
-# stehen: eine kaputte Anwendung auszuliefern wäre die schlechtere Auskunft als
-# eine abwesende.
-fehlschlag() {
+# From here on the application may be down and the code already new while the
+# schema is still old. If something goes wrong, the maintenance page deliberately
+# stays up: serving a broken application would be worse information than an absent
+# one.
+on_failure() {
     local status=$?
     echo >&2
-    echo "Gescheitert in Zeile ${BASH_LINENO[0]} mit Status ${status}: ${BASH_COMMAND}" >&2
-    echo 'Bereitstellung abgebrochen — die Anwendung bleibt in Wartung.' >&2
-    echo "Nach dem Beheben: bash deploy.sh (oder $PHP artisan up)" >&2
+    echo "Failed at line ${BASH_LINENO[0]} with status ${status}: ${BASH_COMMAND}" >&2
+    echo 'Deployment aborted — the application stays in maintenance mode.' >&2
+    echo "After fixing it: bash deploy.sh (or $PHP artisan up)" >&2
 }
-trap fehlschlag ERR
+trap on_failure ERR
 
-# Wenn die Aktion keinen Composer erreicht, ist das kein Grund zum Abbruch —
-# solange das vorhandene vendor/ zu diesem composer.lock gehört. Nur wenn sich
-# die Abhängigkeiten geändert haben, muss jemand den Composer-Knopf in Plesk
-# drücken, sonst liefe die Anwendung gegen die falschen Pakete.
-stempel=storage/framework/composer-lock.sha256
-gefordert="$("$PHP" -r 'echo hash_file("sha256", "composer.lock");')"
+# If the action cannot reach a Composer, that is no reason to abort — as long as
+# the existing vendor/ belongs to this composer.lock. Only when the dependencies
+# have changed does somebody have to press the Composer button in Plesk, otherwise
+# the application would run against the wrong packages.
+stamp=storage/framework/composer-lock.sha256
+required="$("$PHP" -r 'echo hash_file("sha256", "composer.lock");')"
 
-if [ "$composer_gefunden" = 1 ]; then
+if [ "$composer_found" = 1 ]; then
     "${COMPOSER[@]}" install --no-dev --optimize-autoloader --no-interaction --no-progress
-    printf '%s' "$gefordert" >"$stempel"
+    printf '%s' "$required" >"$stamp"
 elif [ ! -f vendor/autoload.php ]; then
-    echo 'Weder Composer noch vendor/. Einmalig über den Composer-Knopf in Plesk installieren.' >&2
+    echo 'Neither Composer nor vendor/. Install once via the Composer button in Plesk.' >&2
     exit 1
-elif [ ! -f "$stempel" ]; then
-    # vendor/ kam von Hand; wir nehmen es als zum aktuellen Stand passend an.
-    printf '%s' "$gefordert" >"$stempel"
-    echo 'Ohne Composer weiter, vorhandenes vendor/ als passend angenommen.'
-elif [ "$(cat "$stempel")" != "$gefordert" ]; then
-    echo 'composer.lock hat sich geändert, aber kein Composer erreichbar.' >&2
-    echo 'Abhängigkeiten über den Composer-Knopf in Plesk nachziehen.' >&2
+elif [ ! -f "$stamp" ]; then
+    # vendor/ was put there by hand; we assume it matches the current state.
+    printf '%s' "$required" >"$stamp"
+    echo 'Continuing without Composer, assuming the existing vendor/ matches.'
+elif [ "$(cat "$stamp")" != "$required" ]; then
+    echo 'composer.lock has changed, but no Composer is reachable.' >&2
+    echo 'Pull the dependencies via the Composer button in Plesk.' >&2
     exit 1
 else
-    echo 'composer.lock unverändert, vendor/ bleibt wie es ist.'
+    echo 'composer.lock unchanged, vendor/ stays as it is.'
 fi
 
-# Vor der Migration die Verbindung zeigen. Ohne Shell ist das Log die einzige
-# Auskunft, und „migrate ist gescheitert" allein hilft niemandem weiter: hier
-# steht, gegen welchen Host, welche Datenbank und welchen Benutzer es ging.
+# Show the connection before migrating. Without a shell the log is the only
+# information available, and "migrate failed" on its own helps nobody: here it
+# says which host, which database and which user it went against.
 "$PHP" artisan db:show
 
 "$PHP" artisan migrate --force
 "$PHP" artisan optimize
 
-# Nicht tödlich: ohne den Symlink fehlen die Fotos, alles andere läuft. Das
-# Hosting muss dafür symlink() erlauben — ob es das tut, ist ungetestet.
+# Not fatal: without the symlink the photos are missing, everything else runs.
+# The hosting has to allow symlink() for this — whether it does is untested.
 if ! "$PHP" artisan storage:link --force; then
-    echo 'Warnung: public/storage konnte nicht angelegt werden, Fotos bleiben aus.' >&2
+    echo 'Warning: public/storage could not be created, photos will be missing.' >&2
 fi
 
 trap - ERR

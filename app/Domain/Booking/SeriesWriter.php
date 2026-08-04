@@ -10,16 +10,16 @@ use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Legt Buchungsserien an, ändert sie und erzeugt ihre Instanzen.
+ * Creates booking series, changes them and generates their instances.
  *
- * Die Regeln werden einmal an der ersten Instanz geprüft, nicht an jeder: was
- * eine Serie ausmacht — Arbeitsplatz, Wanduhrzeit, Dauer — ist für alle Instanzen
- * dasselbe, und was sich unterscheidet (die Belegung) prüft ohnehin jede Instanz
- * für sich. Kollidiert eine, fällt sie aus; die Serie entsteht trotzdem.
+ * The rules are checked once against the first instance, not against every one:
+ * what makes up a series — workplace, wall-clock time, duration — is the same for
+ * all instances, and what differs (the occupancy) is checked by every instance for
+ * itself anyway. If one collides, it drops out; the series is created regardless.
  */
 final class SeriesWriter
 {
-    /** Wie weit im Voraus Instanzen erzeugt werden. */
+    /** How far ahead instances are generated. */
     public const HORIZON_YEARS = 1;
 
     public function __construct(
@@ -30,7 +30,7 @@ final class SeriesWriter
     ) {}
 
     /**
-     * @param  array<string, mixed>  $data  Bereits geprüfte Felder aus BookingSeriesWrite
+     * @param  array<string, mixed>  $data  Already validated fields from BookingSeriesWrite
      * @return array{0: BookingSeries, 1: list<SkippedInstance>}
      *
      * @throws BookingRuleException
@@ -57,9 +57,9 @@ final class SeriesWriter
     }
 
     /**
-     * Ändert die Serie und gleicht ihre künftigen Instanzen ab. Vergangene und
-     * laufende bleiben, wie sie sind — sie haben stattgefunden —, und ebenso die
-     * abgekoppelten, die jemand von Hand angepasst hat.
+     * Changes the series and reconciles its future instances. Past and running
+     * ones stay as they are — they have taken place — and so do the detached ones
+     * that somebody has adjusted by hand.
      *
      * @param  array<string, mixed>  $data
      * @return array{0: BookingSeries, 1: list<SkippedInstance>}
@@ -88,9 +88,9 @@ final class SeriesWriter
     }
 
     /**
-     * Löscht die Serie. Ihre künftigen Instanzen verschwinden mit ihr, die
-     * vergangenen bleiben als eigenständige Buchungen stehen — der Fremdschlüssel
-     * leert dort nur `booking_series_id`.
+     * Deletes the series. Its future instances vanish with it; the past ones
+     * remain as standalone bookings — the foreign key merely clears
+     * `booking_series_id` there.
      */
     public function delete(BookingSeries $series): void
     {
@@ -101,9 +101,9 @@ final class SeriesWriter
     }
 
     /**
-     * Holt nach, was seit dem letzten Lauf dazugekommen ist, und schiebt den
-     * Horizont wieder auf ein Jahr. Erzeugt wird nur, was nach `instantiated_until`
-     * liegt — der Lauf kann deshalb beliebig oft stattfinden.
+     * Catches up on whatever has accrued since the last run and pushes the
+     * horizon back out to a year. Only what lies after `instantiated_until` is
+     * generated — which is why the run may happen any number of times.
      *
      * @return list<SkippedInstance>
      */
@@ -130,18 +130,17 @@ final class SeriesWriter
     }
 
     /**
-     * Bringt die Instanzen zwischen `$firstDay` und dem Horizont mit der Serie in
-     * Übereinstimmung. Läuft innerhalb der Transaktion des Aufrufers, damit die
-     * Sperren der Kollisionsprüfung bis zum Schreiben halten.
+     * Brings the instances between `$firstDay` and the horizon into agreement
+     * with the series. Runs inside the caller's transaction so that the collision
+     * check's locks hold until the write.
      *
-     * Abgeglichen statt gelöscht und neu angelegt: ein Termin, den es weiterhin
-     * gibt, behält seine Zeile und damit seine ID. Das ist nicht bloss sparsamer
-     * — die ID ist die UID im iCal-Feed, und ein Löschen liesse in jedem Abo
-     * sämtliche künftigen Termine verschwinden und als neue wiederauftauchen.
+     * Reconciled rather than deleted and recreated: an occurrence that still
+     * exists keeps its row and therefore its ID. That is not merely thriftier —
+     * the ID is the UID in the iCal feed, and a delete would make all future
+     * occurrences vanish from every subscription and reappear as new ones.
      *
-     * Zwei Dinge bleiben dabei aussen vor: abgekoppelte Instanzen (jemand hat sie
-     * von Hand angepasst) und Zeitpunkte mit einer Ausnahme (jemand hat den
-     * Termin gestrichen oder verschoben).
+     * Two things are exempt: detached instances (somebody adjusted them by hand)
+     * and beats with an exception (somebody cancelled or moved the occurrence).
      *
      * @return list<SkippedInstance>
      */
@@ -163,13 +162,14 @@ final class SeriesWriter
             ),
         ));
 
-        // Die noch nicht begonnenen Instanzen im abgeglichenen Fenster, greifbar
-        // über ihren Zeitpunkt. Die Fenstergrenzen sind nicht Zierde: der
-        // Tageslauf gleicht nur das neue Jahresende ab und dürfte nicht abräumen,
-        // was davor längst richtig steht.
+        // The not-yet-started instances inside the reconciled window, reachable
+        // by their point in time. The window bounds are not decoration: the daily
+        // run only reconciles the new far end of the year and must not clear away
+        // what has long been correct before it.
         //
-        // Abgekoppelte fehlen hier bewusst: sie werden weder angepasst noch
-        // aufgeräumt, und als Belegung stehen sie ohnehin in der Kollisionsprüfung.
+        // Detached ones are deliberately absent here: they are neither adjusted
+        // nor cleaned up, and as occupancy they show up in the collision check
+        // anyway.
         $existing = $series->bookings()
             ->where('start_time', '>', $now)
             ->where('start_time', '>=', $firstDay->utc())
@@ -183,8 +183,8 @@ final class SeriesWriter
             $occurrences,
         );
 
-        // Erst wegräumen, dann schreiben: eine Instanz, die es nicht mehr gibt,
-        // könnte sonst mit dem Termin kollidieren, der an ihre Stelle tritt.
+        // Clear away first, then write: an instance that no longer exists could
+        // otherwise collide with the occurrence taking its place.
         foreach ($existing->keys()->diff($wanted) as $key) {
             $existing->pull($key)->delete();
         }
@@ -203,8 +203,8 @@ final class SeriesWriter
             );
 
             if ($conflicts !== []) {
-                // Auch eine bestehende Instanz kann im Weg stehen — etwa wenn die
-                // Serie auf einen belegten Arbeitsplatz umzieht.
+                // An existing instance can be in the way too — for example when
+                // the series moves to an occupied workplace.
                 $booking?->delete();
 
                 $skipped[] = new SkippedInstance(
@@ -220,8 +220,8 @@ final class SeriesWriter
                 'workplace_id' => $series->workplace_id,
                 'name' => $series->name,
                 'contact' => $series->contact,
-                // Wer eine Serie anlegen darf, bestätigt die Nutzungsregeln mit ihr;
-                // BookingSeriesWrite hat kein eigenes Feld dafür.
+                // Whoever may create a series confirms the usage rules with it;
+                // BookingSeriesWrite has no field of its own for that.
                 'usage_rules_acknowledged' => true,
                 'start_time' => $occurrence->startTime,
                 'end_time' => $occurrence->endTime,
@@ -235,8 +235,8 @@ final class SeriesWriter
                 $booking->update($attributes);
             } else {
                 $booking = Booking::create([
-                    // Instanzen haben keinen Ersteller: sie entstehen aus der Serie,
-                    // und der spätere Nachschub aus einem Cron-Lauf ohne Sitzung.
+                    // Instances have no creator: they arise from the series, and
+                    // later top-ups from a cron run without a session.
                     'creator_role_id' => null,
                     'booking_series_id' => $series->id,
                     ...$attributes,
@@ -250,13 +250,13 @@ final class SeriesWriter
     }
 
     /**
-     * Prüft die Form der Serie an ihrer ersten Instanz.
+     * Checks the shape of the series against its first instance.
      *
-     * Drei Verstösse bleiben dabei aussen vor: eine Kollision lässt die einzelne
-     * Instanz ausfallen statt die Serie scheitern, der Vorlauf gilt für Serien
-     * nicht (sonst liesse sich kein Jahr im Voraus erzeugen), und ein Beginn in
-     * der Vergangenheit ist bei einer Serie normal — sie beschreibt einen
-     * Rhythmus, nicht einen Termin.
+     * Three violations are exempt: a collision makes the individual instance drop
+     * out rather than the series fail, the booking horizon does not apply to
+     * series (otherwise nothing could be generated a year ahead), and a start in
+     * the past is normal for a series — it describes a rhythm, not an
+     * appointment.
      *
      * @param  array<string, mixed>  $data
      *
@@ -313,7 +313,7 @@ final class SeriesWriter
             ->delete();
     }
 
-    /** "2026-08-03T09:00" wird zu "2026-08-03 09:00:00" — ohne Zeitzone, wie die Spalte. */
+    /** "2026-08-03T09:00" becomes "2026-08-03 09:00:00" — without timezone, like the column. */
     private function wallClock(string $value): string
     {
         return str_replace('T', ' ', $value).':00';
@@ -329,7 +329,7 @@ final class SeriesWriter
         return CarbonImmutable::now($this->timezone())->startOfDay();
     }
 
-    /** Der letzte Tag, bis zu dem Instanzen erzeugt werden — lokal, nicht UTC. */
+    /** The last day up to which instances are generated — local, not UTC. */
     private function horizon(): CarbonImmutable
     {
         return $this->today()->addYears(self::HORIZON_YEARS);

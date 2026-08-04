@@ -17,7 +17,7 @@ class Workplace extends Model
 
     public const STATUS_DISABLED = 'DISABLED';
 
-    /** Die ID wird beim Anlegen vergeben ("holz-3"), nicht generiert. */
+    /** The ID is assigned on creation ("holz-3"), not generated. */
     public $incrementing = false;
 
     protected $keyType = 'string';
@@ -55,7 +55,7 @@ class Workplace extends Model
         return $this->hasMany(Booking::class);
     }
 
-    /** Arbeitsplätze, die dieser hier per expliziter ID blockiert. */
+    /** Workplaces that this one blocks by explicit ID. */
     public function blocksWorkplaces(): BelongsToMany
     {
         return $this->belongsToMany(
@@ -71,15 +71,15 @@ class Workplace extends Model
         return $this->status === self::STATUS_OK;
     }
 
-    /** Die maximale Buchungsdauer dieses Arbeitsplatzes, sonst die des Bereichs. */
+    /** This workplace's maximum booking duration, otherwise the area's. */
     public function effectiveMaxBookingDurationMinutes(Area $area): int
     {
         return $this->max_booking_duration_minutes ?? $area->max_booking_duration_minutes;
     }
 
-    // Die beiden Tag-Listen sind reine Wertelisten. Eloquent hat dafür kein
-    // passendes Beziehungs-Konstrukt, das ohne eigenes Modell auskommt — deshalb
-    // hier direkt über den Query Builder, mit Memoisierung gegen N+1.
+    // The two tag lists are pure value lists. Eloquent has no fitting
+    // relationship construct for that which manages without a model of its own —
+    // hence the query builder directly here, with memoisation against N+1.
 
     /** @var list<string>|null */
     private ?array $tagList = null;
@@ -100,9 +100,9 @@ class Workplace extends Model
     }
 
     /**
-     * Lädt beide Tag-Listen für eine ganze Sammlung in zwei Abfragen statt in
-     * zwei pro Arbeitsplatz. Die Kalenderansicht holt alle Arbeitsplätze auf
-     * einmal — ohne das wären es schnell fünfzig Abfragen.
+     * Loads both tag lists for a whole collection in two queries rather than two
+     * per workplace. The calendar view fetches all workplaces at once — without
+     * this it would quickly be fifty queries.
      *
      * @param  Collection<int, self>  $workplaces
      */
@@ -156,14 +156,14 @@ class Workplace extends Model
     /** @param  list<string>  $tags */
     private function syncValueList(string $table, array $tags): void
     {
-        // Die Memoisierung ist nach dem Schreiben ungültig.
+        // The memoisation is invalid after the write.
         $this->tagList = null;
         $this->blocksTagList = null;
 
-        // Ohne führendes "#", ohne Leerstrings, ohne Duplikate. Die Deduplizierung
-        // muss case-insensitiv sein wie die Kollation der Tabelle — sonst kämen
-        // "Lärmig" und "lärmig" beide durch und liefen in den Primärschlüssel.
-        // Die zuerst genannte Schreibweise gewinnt.
+        // Without a leading "#", without empty strings, without duplicates. The
+        // deduplication has to be case-insensitive like the table's collation —
+        // otherwise "Lärmig" and "lärmig" would both get through and run into the
+        // primary key. The spelling mentioned first wins.
         $normalized = [];
 
         foreach ($tags as $tag) {
