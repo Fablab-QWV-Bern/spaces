@@ -8,7 +8,7 @@ import { leadTimeNotice } from './booking-horizon';
 import { CalendarStore, isoDate } from './calendar-store';
 import { CalendarToolbar } from './calendar-toolbar';
 import { syncDateWithUrl } from './date-in-url';
-import { DayTrack } from './day-track';
+import { DayTrack, SIGN_IN_NOTICE } from './day-track';
 import { HourHeader } from './hour-header';
 import { DEFAULT_DURATION_MINUTES, instantAt, percentOfAxis, toLocalIso } from './time-axis';
 import { WorkplaceLabel } from './workplace-label';
@@ -156,7 +156,7 @@ export class DayCalendar {
     }
 
     if (this.store.isAnonymous()) {
-      return 'Melde dich an, um eine Buchung zu erstellen';
+      return SIGN_IN_NOTICE;
     }
 
     if (!this.store.canManageBookings()) {

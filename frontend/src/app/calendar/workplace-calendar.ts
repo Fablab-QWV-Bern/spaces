@@ -8,7 +8,7 @@ import { leadTimeNotice } from './booking-horizon';
 import { CalendarStore, IsoDate, isoDate } from './calendar-store';
 import { CalendarToolbar } from './calendar-toolbar';
 import { syncDateWithUrl } from './date-in-url';
-import { DayTrack } from './day-track';
+import { DayTrack, SIGN_IN_NOTICE } from './day-track';
 import { HourHeader } from './hour-header';
 import { DEFAULT_DURATION_MINUTES, instantAt, percentOfAxis, toLocalIso } from './time-axis';
 
@@ -200,8 +200,23 @@ export class WorkplaceCalendar {
     return map;
   });
 
-  /** Jenseits des Vorlaufs wird nicht gebucht — der Hinweis sagt, ab wann. */
+  /**
+   * Warum ein Klick in dieser Zeile nichts anlegt — wie in der Tagesansicht.
+   *
+   * Die anonyme Rolle sieht statt des Vorlaufs die Anmeldung: ab wann dieser
+   * Tag freigäbe, hilft niemandem, der zuerst ein Kennwort braucht. Genannt
+   * wird sie nur an einem Arbeitsplatz mit Status OK — sonst wäre sie ein
+   * Versprechen, das die Anmeldung nicht einlöst.
+   */
   protected notice(date: IsoDate): string | null {
+    if (this.selection()?.workplace.status !== 'OK') {
+      return null;
+    }
+
+    if (this.store.isAnonymous()) {
+      return SIGN_IN_NOTICE;
+    }
+
     return this.noticeByDay().get(date) ?? null;
   }
 

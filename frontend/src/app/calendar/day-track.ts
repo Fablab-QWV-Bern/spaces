@@ -5,6 +5,14 @@ import { CalendarBlock } from './calendar-block';
 import { GRID_MINUTES, TimeAxis, gridTemplateColumns, lineName, slotAtOffset } from './time-axis';
 
 /**
+ * Der Hinweis für die anonyme Rolle, der an der Stelle der Vorschau erscheint.
+ * Er steht hier bei der Zelle, weil ihn jede Ansicht zeigt, in der gebucht
+ * wird — als zweites Exemplar ginge er beim Umformulieren in einer davon
+ * verloren.
+ */
+export const SIGN_IN_NOTICE = 'Melde dich an, um eine Buchung zu erstellen';
+
+/**
  * Ein Zeitstrahl über die Öffnungszeiten eines Tages, mit den Balken darauf.
  *
  * Das ist die Zelle, aus der alle Zoomstufen bestehen: die Tagesansicht hat
