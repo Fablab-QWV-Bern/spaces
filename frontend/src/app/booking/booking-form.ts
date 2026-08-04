@@ -391,6 +391,8 @@ export class BookingForm {
     const day = new Date(`${date}T12:00:00`);
     const editingId = this.editing()?.id;
     const workplaceId = this.workplaceId();
+    const nameOf = (id: string) =>
+      this.workplaces().find((workplace) => workplace.id === id)?.name ?? id;
 
     const existing = this.dayBookings()
       .filter((booking) => booking.id !== editingId)
@@ -415,7 +417,11 @@ export class BookingForm {
 
         return [
           {
-            label: onThisWorkplace ? booking.name : `blockiert durch ${booking.name}`,
+            // Wie auf der Detailkarte im Kalender: eine Blockierung nennt den
+            // Arbeitsplatz, von dem sie ausgeht, nicht wer dort bucht.
+            label: onThisWorkplace
+              ? booking.name
+              : `blockiert durch ${nameOf(booking.workplaceId)}`,
             own: false,
             blockage: !onThisWorkplace,
             ...geometry,
