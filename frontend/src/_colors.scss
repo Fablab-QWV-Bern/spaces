@@ -1,22 +1,21 @@
-// Die Farben der Oberfläche, an einem Ort und voneinander abgeleitet.
+// The colours of the interface, in one place and derived from one another.
 //
-// Es gibt sieben Ausgangsfarben; alles andere entsteht durch Mischen. Wer den
-// Farbeindruck der Anwendung ändern will, ändert eine Ausgangsfarbe, nicht
-// dreissig Hex-Werte in zwanzig Dateien.
+// There are seven source colours; everything else arises by mixing. Anyone
+// wanting to change the colour impression of the application changes a source
+// colour, not thirty hex values in twenty files.
 //
-// Gemischt wird in `oklab`: dort liegen gleiche Prozentschritte auch gleich
-// weit auseinander, wie das Auge sie sieht. In `srgb` würde derselbe Schritt
-// im Hellen kaum und im Dunklen zu stark wirken. Ausgenommen sind die
-// Mischungen nach `transparent` — die sind reine Deckkraft, dafür ist der
-// Farbraum gleichgültig.
+// Mixing happens in `oklab`: there equal percentage steps also lie equally far
+// apart as the eye sees them. In `srgb` the same step would barely register in
+// the light and be too strong in the dark. The mixes towards `transparent` are
+// exempt — those are pure opacity, for which the colour space is irrelevant.
 //
-// Die Werte stehen als CSS-Variablen auf `:root` und nicht als SCSS-Variablen,
-// damit jede Komponente sie ohne Import benutzen kann. Der Nebeneffekt: der
-// Browser rechnet die Mischungen aus, nicht der Compiler — eine Ausgangsfarbe
-// liesse sich damit auch zur Laufzeit tauschen.
+// The values live as CSS variables on `:root` rather than as SCSS variables, so
+// that every component can use them without an import. The side effect: the
+// browser computes the mixes, not the compiler — which means a source colour
+// could even be swapped at runtime.
 
 :root {
-  // ---- Ausgangsfarben ----
+  // ---- Source colours ----
 
   --paper: #fff;
   --ink: #0f172a;
@@ -25,17 +24,16 @@
   --warning: #f59e0b;
   --success: #15803d;
 
-  // Die Grundfarbe eines Buchungsbalkens, wenn der Bereich keine eigene
-  // mitbringt. Bereichsfarben kommen aus der Datenbank und stehen darum nicht
-  // hier — nur die Legende braucht einen festen Ton.
+  // The base colour of a booking bar when the area brings none of its own. Area
+  // colours come from the database and therefore do not appear here — only the
+  // legend needs a fixed shade.
   --booking: #84cc16;
 
-  // ---- Grautöne ----
+  // ---- Greys ----
 
-  // Alle Grautöne sind Mischungen dieser einen Farbe mit Papier. Sie ist nicht
-  // `--ink` selbst, sondern eine Spur zum Akzent hin verschoben: ein reiner
-  // Verlauf von `--ink` nach Weiss verliert in der Mitte seinen blauen Stich
-  // und wirkt dort schmutzig.
+  // All greys are mixes of this one colour with paper. It is not `--ink` itself
+  // but shifted a trace towards the accent: a pure gradient from `--ink` to white
+  // loses its blue cast in the middle and looks muddy there.
   --shade: color-mix(in oklab, var(--accent) 12%, var(--ink));
 
   --surface-sunken: color-mix(in oklab, var(--shade) 2%, var(--paper));
@@ -47,20 +45,20 @@
   --text-muted: color-mix(in oklab, var(--shade) 74%, var(--paper));
   --text-strong: color-mix(in oklab, var(--shade) 84%, var(--paper));
 
-  // ---- Akzent ----
+  // ---- Accent ----
 
-  // Dunkler wird über Schwarz gemischt und nicht über `--ink`: das Blau von
-  // `--ink` zöge jede warme Farbe ins Graue. Für den Akzent selbst wäre es
-  // egal, für Gefahr und Warnung nicht — und eine Regel, die überall gleich
-  // gilt, ist eine weniger zu erklären.
+  // Darker is mixed via black rather than via `--ink`: the blue of `--ink` would
+  // pull every warm colour towards grey. For the accent itself it would not
+  // matter, for danger and warning it would — and a rule that holds everywhere is
+  // one fewer to explain.
   --accent-deep: color-mix(in oklab, var(--accent) 92%, #000);
   --accent-tint: color-mix(in oklab, var(--accent) 16%, var(--paper));
   --accent-wash: color-mix(in oklab, var(--accent) 6%, var(--paper));
-  // Eine Stufe kräftiger als `--accent-wash`, damit das Überfahren auch dort
-  // noch sichtbar ist, wo bereits der gewählte Tag getönt liegt.
+  // One step stronger than `--accent-wash`, so that hovering stays visible even
+  // where the selected day is already tinted.
   --accent-wash-strong: color-mix(in oklab, var(--accent) 10%, var(--paper));
 
-  // ---- Gefahr und Warnung ----
+  // ---- Danger and warning ----
 
   --danger-text: color-mix(in oklab, var(--danger) 88%, #000);
   --danger-line: color-mix(in oklab, var(--danger) 44%, var(--paper));
@@ -70,21 +68,21 @@
   --warning-line: color-mix(in oklab, var(--warning) 53%, var(--paper));
   --warning-wash: color-mix(in oklab, var(--warning) 9%, var(--paper));
 
-  // ---- Durchscheinendes ----
+  // ---- Translucent ----
 
-  // Diese vier decken nicht, sie liegen über dem, was darunter steht — darum
-  // Mischungen nach `transparent` statt nach Papier.
+  // These four do not cover; they lie over whatever is beneath — hence mixes
+  // towards `transparent` rather than towards paper.
   --hairline: color-mix(in srgb, var(--ink) 10%, transparent);
   --shadow: color-mix(in srgb, var(--ink) 15%, transparent);
   --scrim: color-mix(in srgb, var(--ink) 35%, transparent);
   --accent-veil: color-mix(in srgb, var(--accent) 8%, transparent);
 
-  // ---- Muster ----
+  // ---- Patterns ----
 
-  // Eine Blockierung darf nicht allein an der Farbe erkennbar sein, darum die
-  // Schraffur. Sie steht hier und nicht dreimal im Code: Kalenderbalken,
-  // Legende und Formularvorschau meinen dieselbe Sache und müssen gleich
-  // aussehen, sonst liest man zwei Muster als zwei Bedeutungen.
+  // A blockage must not be recognisable by colour alone, hence the hatching. It
+  // lives here rather than three times in the code: calendar bars, legend and form
+  // preview mean the same thing and have to look the same, otherwise two patterns
+  // read as two meanings.
   --blockage-hatch: repeating-linear-gradient(
     45deg,
     var(--line-strong),

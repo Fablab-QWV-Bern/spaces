@@ -10,9 +10,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
- * Das Foto hat einen eigenen Endpunkt, weil es als multipart/form-data kommt
- * und der Rest des Arbeitsplatzes als JSON. So bleibt PUT /workplaces/{id} ein
- * gewöhnlicher Formularabsender, der ohne Datei auskommt.
+ * The photo has an endpoint of its own because it arrives as multipart/form-data
+ * while the rest of the workplace is JSON. That way PUT /workplaces/{id} stays an
+ * ordinary form submission that manages without a file.
  */
 class WorkplacePhotoController extends Controller
 {
@@ -21,8 +21,8 @@ class WorkplacePhotoController extends Controller
     public function store(Request $request, Workplace $workplace): WorkplaceResource
     {
         $request->validate([
-            // Die Grenze steht auch in der Spec. `mimetypes` prüft den
-            // tatsächlichen Inhalt, nicht die Endung im Dateinamen.
+            // The limit is in the spec too. `mimetypes` checks the actual
+            // content, not the extension in the file name.
             'file' => [
                 'required',
                 'file',

@@ -9,10 +9,10 @@ import { BookingSeriesWrite } from '../api/models';
 import { SeriesForm } from './series-form';
 
 /**
- * Der Weg vom Formular zur Anfrage — die einzige Stelle, an der das Frontend
- * etwas über Serien rechnet. Vor allem: die Wanduhrzeit geht ohne Zonenangabe
- * hinaus. Ein `toISOString()` verschöbe sie um den Zonenversatz, und die Serie
- * fände fortan zur falschen Stunde statt.
+ * The path from form to request — the only place where the frontend computes
+ * anything about series. Above all: the wall-clock time goes out without a zone.
+ * A `toISOString()` would shift it by the zone offset, and the series would take
+ * place at the wrong hour from then on.
  */
 describe('SeriesForm', () => {
   let fixture: ComponentFixture<SeriesForm>;
@@ -113,7 +113,7 @@ describe('SeriesForm', () => {
     fixture.detectChanges();
   });
 
-  it('schickt die Wanduhrzeit ohne Zonenangabe', () => {
+  it('sends the wall-clock time without a zone', () => {
     set('Erster Termin am', '2026-08-03');
     set('Beginn', '540');
     set('Dauer', '120');
@@ -130,7 +130,7 @@ describe('SeriesForm', () => {
     expect(body.endDate).toBeNull();
   });
 
-  it('macht aus „alle zwei Wochen" WEEKLY mit intervalCount 2', () => {
+  it('turns "alle zwei Wochen" into WEEKLY with intervalCount 2', () => {
     set('Erster Termin am', '2026-08-03');
     set('Name', 'Kurs');
     set('Kontakt', 'kurs@example.org');
@@ -144,10 +144,10 @@ describe('SeriesForm', () => {
     expect(body.intervalCount).toBe(2);
   });
 
-  // Eine Dauer über die Schliesszeit hinaus lässt das Ende auf den Folgetag
-  // rutschen — ohne eigenes Kreuz für "über Nacht". Ob der Bereich das darf,
-  // entscheidet das Backend.
-  it('lässt das Ende auf den Folgetag rutschen', () => {
+  // A duration reaching past closing time lets the end slide onto the following
+  // day — without a checkbox of its own for "overnight". Whether the area is
+  // allowed that is decided by the backend.
+  it('lets the end slide onto the following day', () => {
     set('Erster Termin am', '2026-08-03');
     set('Beginn', '1200');
     set('Dauer', '240');
@@ -162,7 +162,7 @@ describe('SeriesForm', () => {
     expect(body.firstInstanceEnd).toBe('2026-08-04T00:00');
   });
 
-  it('zeigt die ausgelassenen Termine, statt weiterzuleiten', () => {
+  it('shows the skipped occurrences instead of redirecting', () => {
     set('Erster Termin am', '2026-08-03');
     set('Name', 'Reparaturcafé');
     set('Kontakt', 'reparatur@example.org');

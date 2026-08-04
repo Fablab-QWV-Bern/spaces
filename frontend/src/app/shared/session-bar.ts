@@ -2,30 +2,30 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-// Umbenannt, damit das generierte Modell das globale Error nicht verdeckt.
+// Renamed so that the generated model does not shadow the global Error.
 import { Error as ApiError } from '../api/models';
 import { Icon } from './icon';
 import { SessionService } from './session-service';
 
 /**
- * Anmeldung als Rolle. Es gibt keine Benutzer — man wählt die Rolle, unter der
- * man handelt, und teilt sich deren Kennwort mit allen anderen.
+ * Logging in as a role. There are no users — one picks the role one acts under
+ * and shares its password with everyone else.
  *
- * Die Rolle steht als Umschalter neben dem Kennwortfeld und nicht als eigener
- * Schritt davor: die Liste ist kurz und bekannt, und fast jede Anmeldung meint
- * ohnehin die erste. Voreingestellt ist darum die erste — `GET /session/roles`
- * gibt sie in der Reihenfolge ihrer Entstehung zurück, und angelegt wird die
- * alltägliche Rolle vor den verwaltenden. Wer sie meint, tippt nur noch das
- * Kennwort.
+ * The role stands as a switch next to the password field rather than as a
+ * separate step before it: the list is short and familiar, and almost every login
+ * means the first one anyway. The first is therefore preselected —
+ * `GET /session/roles` returns them in order of creation, and the everyday role is
+ * created before the managing ones. Whoever means it only has to type the
+ * password.
  */
 @Component({
   selector: 'app-session-bar',
   imports: [FormsModule, Icon],
   template: `
-    <!-- Der Rollenname steht für sich: neben einem Abmelden-Knopf sagt "Angemeldet
-         als" nichts, was nicht schon dasteht. Schmal bleibt von den Knöpfen nur je
-         ein Zeichen übrig; beschriftet sind sie trotzdem — über aria-label und
-         title, nicht über sichtbaren Text. -->
+    <!-- The role name stands on its own: next to a logout button, "Angemeldet
+         als" says nothing that is not already there. When narrow, only one glyph
+         each remains of the buttons; they are labelled nonetheless — via
+         aria-label and title, not via visible text. -->
     <div class="bar">
       @if (session.isAnonymous()) {
         <button type="button" (click)="open()" title="Anmelden" aria-label="Anmelden">
@@ -63,12 +63,12 @@ import { SessionService } from './session-service';
           </div>
         }
 
-        <!-- Der Kennwortverwalter des Browsers braucht neben dem Kennwort einen
-             Benutzernamen, sonst weiss er nicht, wozu er das Gemerkte ablegen
-             und wann er es anbieten soll. Sichtbar ist er hier nicht — die
-             Rolle steht schon als Umschalter darüber. Aus dem Layout genommen
-             wird er per Zuschnitt und nicht über hidden oder display: none —
-             was der Browser gar nicht darstellt, zählt er auch nicht als Feld. -->
+        <!-- The browser's password manager needs a username alongside the
+             password, otherwise it does not know what to file the saved entry
+             under and when to offer it. It is not visible here — the role is
+             already above as a switch. It is taken out of the layout by clipping
+             rather than via hidden or display: none — what the browser does not
+             render at all, it does not count as a field either. -->
         <input
           class="username"
           type="text"
@@ -119,7 +119,7 @@ import { SessionService } from './session-service';
       }
     }
 
-    // Dieselbe Schwelle wie im Kalendergerüst.
+    // The same threshold as in the calendar chrome.
     @media (width < 48rem) {
       .bar {
         .icon {
@@ -180,11 +180,11 @@ import { SessionService } from './session-service';
         font-family: system-ui, sans-serif;
       }
 
-      // Ein zusammenhängender Umschalter und keine Reihe einzelner Knöpfe: es
-      // ist eine Wahl und nicht mehrere Angebote. Gebaut wie der Zoomumschalter
-      // in der Kopfleiste — geteilte Kante, Rundung nur aussen, ausgezeichnet
-      // in --text-muted. Der Akzent bleibt dem Anmelden-Knopf: was gewählt
-      // ist, ist etwas anderes als was der Klick tut.
+      // One connected switch rather than a row of separate buttons: it is one
+      // choice and not several offers. Built like the zoom switch in the header —
+      // shared edge, rounding only on the outside, marked in --text-muted. The
+      // accent stays with the login button: what is selected is something other
+      // than what the click does.
       .roles {
         display: flex;
       }
@@ -195,8 +195,8 @@ import { SessionService } from './session-service';
         font-size: 0.95rem;
         border-radius: 0;
 
-        // Die Innenkanten liegen aufeinander; sonst stünde dort ein doppelter
-        // Strich.
+        // The inner edges lie on top of each other; otherwise there would be a
+        // double line.
         &:not(:first-child) {
           margin-left: -1px;
         }
@@ -209,8 +209,8 @@ import { SessionService } from './session-service';
           border-radius: 0 0.25rem 0.25rem 0;
         }
 
-        // Nach vorn geholt, damit die dunkle Kante der gewählten Rolle nicht
-        // unter der ihres Nachbarn verschwindet.
+        // Brought forward so that the selected role's dark edge does not
+        // disappear beneath its neighbour's.
         &.selected {
           position: relative;
           background: var(--text-muted);
@@ -219,7 +219,7 @@ import { SessionService } from './session-service';
         }
       }
 
-      // Zugeschnitten statt versteckt — warum, steht an der Stelle selbst.
+      // Clipped rather than hidden — why is explained at the spot itself.
       .username {
         position: absolute;
         width: 1px;
@@ -281,9 +281,9 @@ export class SessionBar {
     this.password.set('');
     this.error.set(null);
     this.dialogRef()?.nativeElement.showModal();
-    // Der Fokus gehört ins Kennwortfeld und nicht auf den ersten Rollenknopf:
-    // die Rolle ist schon gewählt, das Kennwort ist die offene Frage. Einen
-    // Tick später, weil `showModal()` selbst noch fokussiert.
+    // The focus belongs in the password field and not on the first role button:
+    // the role is already selected, the password is the open question. A tick
+    // later, because `showModal()` itself still moves focus.
     setTimeout(() => this.passwordFieldRef()?.nativeElement.focus());
 
     this.loadingRoles.set(true);
@@ -298,9 +298,9 @@ export class SessionBar {
   }
 
   /**
-   * Das Kennwort bleibt beim Umschalten stehen. Wer es getippt hat und erst
-   * dann merkt, dass die andere Rolle gemeint war, soll es nicht zweimal
-   * tippen; der Fehler von vorhin gilt der alten Rolle und verschwindet.
+   * The password survives switching. Someone who has typed it and only then
+   * realises the other role was meant should not have to type it twice; the
+   * earlier error applies to the old role and disappears.
    */
   protected selectRole(role: string): void {
     this.selectedRole.set(role);
@@ -327,7 +327,7 @@ export class SessionBar {
         this.busy.set(false);
         this.password.set('');
         this.close();
-        // Die Ansicht hängt an den Berechtigungen — nach dem Wechsel neu laden.
+        // The view hangs off the permissions — reload after the switch.
         window.location.reload();
       },
       error: (response: HttpErrorResponse) => {

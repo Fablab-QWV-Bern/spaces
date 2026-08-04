@@ -26,7 +26,7 @@ function workplace(string $id, ?Area $area = null): Workplace
     ]);
 }
 
-/** Legt eine Buchung samt aufgeloestem Snapshot an, so wie es der Service tut. */
+/** Creates a booking with a resolved snapshot, the way the service does. */
 function booking(string $workplaceId, string $start, string $end): Booking
 {
     $booking = Booking::create([
@@ -53,7 +53,7 @@ function conflictsFor(string $workplaceId, string $start, string $end, ?string $
     );
 }
 
-it('erkennt eine Ueberschneidung auf demselben Arbeitsplatz', function () {
+it('detects an overlap on the same workplace', function () {
     workplace('holz-1');
     $existing = booking('holz-1', '2026-08-03 09:00', '2026-08-03 11:00');
 
@@ -61,17 +61,17 @@ it('erkennt eine Ueberschneidung auf demselben Arbeitsplatz', function () {
         ->toBe([$existing->id]);
 });
 
-it('behandelt Zeitraeume halboffen', function () {
+it('treats time ranges as half-open', function () {
     workplace('holz-1');
     booking('holz-1', '2026-08-03 10:00', '2026-08-03 11:00');
 
-    // Direkt anschliessend ist keine Kollision.
+    // Directly adjoining is not a collision.
     expect(conflictsFor('holz-1', '2026-08-03 11:00', '2026-08-03 12:00'))->toBe([]);
-    // Direkt davor auch nicht.
+    // Nor is directly before.
     expect(conflictsFor('holz-1', '2026-08-03 09:00', '2026-08-03 10:00'))->toBe([]);
 });
 
-it('laesst verschiedene Arbeitsplaetze in Ruhe', function () {
+it('leaves different workplaces alone', function () {
     workplace('holz-1');
     workplace('holz-2');
     booking('holz-1', '2026-08-03 09:00', '2026-08-03 11:00');
@@ -79,10 +79,10 @@ it('laesst verschiedene Arbeitsplaetze in Ruhe', function () {
     expect(conflictsFor('holz-2', '2026-08-03 09:00', '2026-08-03 11:00'))->toBe([]);
 });
 
-it('kollidiert, wenn der neue Arbeitsplatz im Snapshot der bestehenden steht', function () {
+it('collides when the new workplace is in the existing booking snapshot', function () {
     workplace('kurs');
     workplace('holz-1');
-    // Der Kurs blockiert Holz 1.
+    // The course blocks Holz 1.
     Workplace::findOrFail('kurs')->blocksWorkplaces()->sync(['holz-1']);
 
     $kursBuchung = booking('kurs', '2026-08-03 09:00', '2026-08-03 12:00');
@@ -91,20 +91,20 @@ it('kollidiert, wenn der neue Arbeitsplatz im Snapshot der bestehenden steht', f
         ->toBe([$kursBuchung->id]);
 });
 
-it('kollidiert, wenn der bestehende Arbeitsplatz im Snapshot des neuen steht', function () {
+it('collides when the existing workplace is in the new booking snapshot', function () {
     workplace('kurs');
     workplace('holz-1');
     Workplace::findOrFail('kurs')->blocksWorkplaces()->sync(['holz-1']);
 
     $holzBuchung = booking('holz-1', '2026-08-03 10:00', '2026-08-03 11:00');
 
-    // Jetzt umgekehrt: der Kurs will gebucht werden, Holz 1 ist belegt.
+    // Now the other way round: the course wants to be booked, Holz 1 is taken.
     expect(conflictsFor('kurs', '2026-08-03 09:00', '2026-08-03 12:00'))
         ->toBe([$holzBuchung->id]);
 });
 
-it('laesst zwei Buchungen in Ruhe, die denselben dritten Platz blockieren', function () {
-    // Der Fall, den eine naive Mengenschnitt-Implementierung falsch machen wuerde.
+it('leaves two bookings alone that block the same third workplace', function () {
+    // The case a naive set-intersection implementation would get wrong.
     workplace('a');
     workplace('b');
     workplace('c');
@@ -114,11 +114,11 @@ it('laesst zwei Buchungen in Ruhe, die denselben dritten Platz blockieren', func
 
     booking('a', '2026-08-03 09:00', '2026-08-03 12:00');
 
-    // A und B blockieren beide C, aber nicht einander.
+    // A and B both block C, but not each other.
     expect(conflictsFor('b', '2026-08-03 09:00', '2026-08-03 12:00'))->toBe([]);
 });
 
-it('blockiert nicht transitiv', function () {
+it('does not block transitively', function () {
     workplace('a');
     workplace('b');
     workplace('c');
@@ -128,11 +128,11 @@ it('blockiert nicht transitiv', function () {
 
     booking('a', '2026-08-03 09:00', '2026-08-03 12:00');
 
-    // A blockiert B, B blockiert C — A blockiert C aber nicht.
+    // A blocks B, B blocks C — but A does not block C.
     expect(conflictsFor('c', '2026-08-03 09:00', '2026-08-03 12:00'))->toBe([]);
 });
 
-it('loest Tag-Blockierungen beim Buchen auf', function () {
+it('resolves tag-based blocking at booking time', function () {
     workplace('ruhetag');
     workplace('holz-1');
 
@@ -146,7 +146,7 @@ it('loest Tag-Blockierungen beim Buchen auf', function () {
         ->toBe([$ruhetag->id]);
 });
 
-it('vergleicht Tags ohne Ruecksicht auf Gross- und Kleinschreibung', function () {
+it('compares tags case-insensitively', function () {
     workplace('ruhetag');
     workplace('holz-1');
 
@@ -156,7 +156,7 @@ it('vergleicht Tags ohne Ruecksicht auf Gross- und Kleinschreibung', function ()
     expect(app(BlockedWorkplaceResolver::class)->resolve('ruhetag'))->toBe(['holz-1']);
 });
 
-it('haelt bestehende Buchungen aus spaeteren Tag-Aenderungen heraus', function () {
+it('keeps existing bookings out of later tag changes', function () {
     workplace('ruhetag');
     workplace('holz-1');
     workplace('holz-2');
@@ -166,15 +166,15 @@ it('haelt bestehende Buchungen aus spaeteren Tag-Aenderungen heraus', function (
 
     $ruhetag = booking('ruhetag', '2026-08-03 08:00', '2026-08-03 21:00');
 
-    // Holz 2 bekommt den Tag erst nachtraeglich.
+    // Holz 2 only gets the tag afterwards.
     Workplace::findOrFail('holz-2')->syncTags(['werkstatt']);
 
-    // Der Snapshot der bestehenden Buchung bleibt, wie er war.
+    // The existing booking's snapshot stays as it was.
     expect($ruhetag->blockedWorkplaceIds())->toBe(['holz-1'])
         ->and(conflictsFor('holz-2', '2026-08-03 10:00', '2026-08-03 11:00'))->toBe([]);
 });
 
-it('nimmt die geaenderte Buchung von der Pruefung aus', function () {
+it('excludes the booking being changed from the check', function () {
     workplace('holz-1');
     $existing = booking('holz-1', '2026-08-03 09:00', '2026-08-03 11:00');
 
@@ -182,7 +182,7 @@ it('nimmt die geaenderte Buchung von der Pruefung aus', function () {
         ->toBe([]);
 });
 
-it('nimmt den eigenen Arbeitsplatz nicht in den Snapshot auf', function () {
+it('does not include the workplace itself in the snapshot', function () {
     workplace('holz-1');
     Workplace::findOrFail('holz-1')->syncTags(['werkstatt']);
     Workplace::findOrFail('holz-1')->syncBlocksWorkplacesWithTag(['werkstatt']);
@@ -190,11 +190,11 @@ it('nimmt den eigenen Arbeitsplatz nicht in den Snapshot auf', function () {
     expect(app(BlockedWorkplaceResolver::class)->resolve('holz-1'))->toBe([]);
 });
 
-// Die Wächter-Bedingung in conflictingBookingIdsForUpdate ("muss in einer
-// Transaktion laufen") lässt sich hier nicht prüfen: RefreshDatabase umschliesst
-// jeden Test selbst mit einer Transaktion, die Bedingung ist also immer erfüllt.
+// The guard condition in conflictingBookingIdsForUpdate ("must run inside a
+// transaction") cannot be tested here: RefreshDatabase wraps every test in a
+// transaction itself, so the condition is always satisfied.
 
-it('sperrt die geprueften Zeilen innerhalb einer Transaktion', function () {
+it('locks the examined rows inside a transaction', function () {
     workplace('holz-1');
     $existing = booking('holz-1', '2026-08-03 09:00', '2026-08-03 11:00');
 

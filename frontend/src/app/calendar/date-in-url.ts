@@ -4,15 +4,15 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { CalendarStore, IsoDate } from './calendar-store';
 
 /**
- * Verbindet das Datum des Kalenders mit der Adresszeile: beim Betreten wird
- * `?datum=` übernommen, danach schreibt jede Änderung es zurück.
+ * Ties the calendar's date to the address bar: `?datum=` is picked up on entry,
+ * and afterwards every change writes it back.
  *
- * Damit ist eine Ansicht verlinkbar, und der Umschalter zwischen den Zoomstufen
- * nimmt den dargestellten Zeitraum mit, obwohl er auf eine andere Route führt.
- * Geschrieben wird mit `replaceUrl`, sonst füllte jeder Blätterschritt den
- * Verlauf und der Zurück-Knopf käme nie zur vorigen Zoomstufe.
+ * That makes a view linkable, and the switch between zoom levels carries the
+ * displayed period along even though it leads to a different route. Writing uses
+ * `replaceUrl`, otherwise every paging step would fill the history and the back
+ * button would never reach the previous zoom level.
  *
- * Aufzurufen im Konstruktor einer Kalenderansicht.
+ * To be called in the constructor of a calendar view.
  */
 export function syncDateWithUrl(): void {
   const store = inject(CalendarStore);
@@ -29,8 +29,8 @@ export function syncDateWithUrl(): void {
     void router.navigate([], {
       relativeTo: route,
       queryParams: { datum: store.date() },
-      // Ohne `merge` ersetzt jede Datumsänderung die ganze Abfrage — die
-      // Einzelansicht verlöre bei jedem Blätterschritt ihren Arbeitsplatz.
+      // Without `merge`, every date change replaces the whole query — the
+      // single-workplace view would lose its workplace on every paging step.
       queryParamsHandling: 'merge',
       replaceUrl: true,
     });

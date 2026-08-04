@@ -6,7 +6,7 @@ import { forkJoin, map, of } from 'rxjs';
 
 import { ApiConfiguration } from '../api/api-configuration';
 import { createArea, getArea, updateArea } from '../api/functions';
-// Umbenannt, damit das generierte Modell das globale Error nicht verdeckt.
+// Renamed so that the generated model does not shadow the global Error.
 import { Area, AreaWrite, Error as ApiError } from '../api/models';
 import { formatDuration } from '../calendar/time-axis';
 import { refinePageTitle } from '../shared/page-title';
@@ -14,14 +14,14 @@ import { SessionService } from '../shared/session-service';
 import { AdminHeader } from './admin-header';
 
 /**
- * Der Formularzustand. Zahlen liegen als Strings vor — das ist es, was ein
- * `<input>` liefert; umgerechnet wird erst beim Speichern.
+ * The form state. Numbers are held as strings — that is what an `<input>`
+ * delivers; conversion happens only on save.
  */
 interface AreaFormValue {
   name: string;
   color: string;
   maxBookingDurationMinutes: string;
-  /** Getrennt vom Wert, damit "es gilt der globale Vorlauf" ankreuzbar ist. */
+  /** Separate from the value so that "the global horizon applies" is checkable. */
   useGlobalOffset: boolean;
   maxBookingEndOffsetDays: string;
   allowNightlyActivities: boolean;
@@ -29,9 +29,9 @@ interface AreaFormValue {
 }
 
 /**
- * Die Farben der Bereiche unterscheiden sich nur im Farbton, nicht in Helligkeit
- * und Sättigung — deshalb eine Reihe fertiger Farbtöne statt eines freien
- * Farbwählers. So bleiben die Balken im Kalender untereinander lesbar.
+ * The area colours differ only in hue, not in lightness and saturation — hence a
+ * row of ready-made hues rather than a free colour picker. That keeps the bars in
+ * the calendar legible against one another.
  */
 const HUES = [20, 70, 130, 170, 230, 280, 320, 350];
 
@@ -52,7 +52,7 @@ export class AreaForm {
 
   protected readonly swatches = SWATCHES;
 
-  /** Gesetzt, wenn ein bestehender Bereich bearbeitet wird. */
+  /** Set when an existing area is being edited. */
   protected readonly editing = signal<Area | null>(null);
 
   protected readonly loading = signal(true);
@@ -70,7 +70,7 @@ export class AreaForm {
     sortOrder: '0',
   });
 
-  /** Wie im Buchungsformular: nur Pflichtfelder hier, alles Weitere im Backend. */
+  /** As in the booking form: only required fields here, everything else in the backend. */
   protected readonly areaForm = form(this.model, (path) => {
     required(path.name, { message: 'Bitte einen Namen angeben.' });
     required(path.color, { message: 'Bitte eine Farbe wählen.' });
@@ -80,7 +80,7 @@ export class AreaForm {
     this.editing() ? 'Bereich bearbeiten' : 'Neuer Bereich',
   );
 
-  /** Die eingegebene Dauer in Klartext — 240 sagt weniger als "4 Stunden". */
+  /** The entered duration in plain words — 240 says less than "4 Stunden". */
   protected readonly durationLabel = computed(() => {
     const minutes = Number(this.model().maxBookingDurationMinutes);
 
@@ -88,9 +88,8 @@ export class AreaForm {
   });
 
   constructor() {
-    // Der Name zuerst: welcher Bereich bearbeitet wird, ist im Reiter die
-    // eigentliche Auskunft. Beim Anlegen gibt es keinen, dann bleibt der
-    // Titel der Route stehen.
+    // The name first: which area is being edited is the real information in the
+    // tab. When creating there is none, and then the route's title stays.
     refinePageTitle(() => {
       const editing = this.editing();
 

@@ -5,7 +5,7 @@ import { forkJoin, map } from 'rxjs';
 
 import { ApiConfiguration } from '../api/api-configuration';
 import { deleteArea, listAreas, listWorkplaces } from '../api/functions';
-// Umbenannt, damit das generierte Modell das globale Error nicht verdeckt.
+// Renamed so that the generated model does not shadow the global Error.
 import { Area, Error as ApiError } from '../api/models';
 import { formatDuration } from '../calendar/time-axis';
 import { SessionService } from '../shared/session-service';
@@ -26,7 +26,7 @@ export class AreaList {
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
 
-  /** Wie viele Arbeitsplätze im Bereich hängen — ein voller lässt sich nicht löschen. */
+  /** How many workplaces hang off the area — a full one cannot be deleted. */
   private readonly countByArea = signal(new Map<string, number>());
 
   protected readonly formatDuration = formatDuration;
@@ -48,8 +48,8 @@ export class AreaList {
     forkJoin({
       session: this.session.load(),
       areas: listAreas(this.http, this.rootUrl).pipe(map((r) => r.body)),
-      // Auch die ausgeblendeten, sonst sähe ein Bereich leer aus, obwohl das
-      // Löschen daran scheitert.
+      // Including the hidden ones, otherwise an area would look empty even
+      // though deletion fails because of them.
       workplaces: listWorkplaces(this.http, this.rootUrl, { includeDisabled: true }).pipe(
         map((r) => r.body),
       ),

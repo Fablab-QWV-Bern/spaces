@@ -45,8 +45,8 @@ describe('BookingCard', () => {
   });
 
   const open = () => {
-    // Die Karte hält ihren Inhalt zurück, bis das Popover aufgeht — sonst
-    // stünden hunderte Karten im Baum, die niemand ansieht.
+    // The card withholds its content until the popover opens — otherwise
+    // hundreds of cards nobody looks at would sit in the tree.
     const event = Object.assign(new Event('beforetoggle'), { newState: 'open' });
     fixture.nativeElement.dispatchEvent(event);
     fixture.detectChanges();
@@ -88,22 +88,22 @@ describe('BookingCard', () => {
     }).compileComponents();
   });
 
-  it('führt zur Serie, wenn die Rolle sie verwalten darf', () => {
+  it('leads to the series when the role may manage it', () => {
     const text = render(booking(), { manageBookingSeries: true });
 
     expect(text).toContain('Teil einer Serie');
     expect(text).toContain('Serie bearbeiten');
   });
 
-  // Ein Link, der zuverlässig auf einen Hinweis führt, ist kein Link.
-  it('bietet den Weg zur Serie ohne das Recht nicht an', () => {
+  // A link that reliably leads to a notice is not a link.
+  it('does not offer the route to the series without the permission', () => {
     const text = render(booking(), { manageBookings: true });
 
     expect(text).toContain('Teil einer Serie');
     expect(text).not.toContain('Serie bearbeiten');
   });
 
-  it('sagt bei einer Buchung ohne Serie nichts davon', () => {
+  it('says nothing about a series for a booking without one', () => {
     const text = render(booking({ bookingSeriesId: null }), { manageBookingSeries: true });
 
     expect(text).not.toContain('Teil einer Serie');

@@ -24,7 +24,7 @@ function areaPayload(array $overrides = []): array
     ], $overrides);
 }
 
-it('legt einen Bereich an', function () {
+it('creates an area', function () {
     $this->actingAs($this->admin)
         ->postJson('/api/areas', areaPayload())
         ->assertValidRequest()
@@ -36,7 +36,7 @@ it('legt einen Bereich an', function () {
     expect(Area::where('name', 'Textil')->exists())->toBeTrue();
 });
 
-it('aendert einen Bereich', function () {
+it('changes an area', function () {
     $area = Area::where('name', 'Holz')->firstOrFail();
 
     $this->actingAs($this->admin)
@@ -52,9 +52,9 @@ it('aendert einen Bereich', function () {
         ->assertJsonPath('sortOrder', 35);
 });
 
-// PUT ersetzt den ganzen Bereich — ein weggelassenes Feld behält nicht seinen
-// bisherigen Wert, sonst liesse sich der Vorlauf nie wieder auf "global" stellen.
-it('setzt weggelassene Felder zurueck', function () {
+// PUT replaces the whole area — an omitted field does not keep its previous
+// value, otherwise the horizon could never be set back to "global".
+it('resets omitted fields', function () {
     $area = Area::where('name', 'Kurse')->firstOrFail();
     expect($area->max_booking_end_offset_days)->not->toBeNull();
 
@@ -64,7 +64,7 @@ it('setzt weggelassene Felder zurueck', function () {
         ->assertJsonPath('maxBookingEndOffsetDays', null);
 });
 
-it('loescht einen leeren Bereich', function () {
+it('deletes an empty area', function () {
     $area = Area::create([
         'name' => 'Leer',
         'color' => 'oklch(0.8 0.1 20)',
@@ -79,7 +79,7 @@ it('loescht einen leeren Bereich', function () {
     expect(Area::find($area->id))->toBeNull();
 });
 
-it('verweigert das Loeschen, solange Arbeitsplaetze zugeordnet sind', function () {
+it('refuses deletion while workplaces are assigned', function () {
     $area = Workplace::findOrFail('holz-1')->area;
 
     $this->actingAs($this->admin)
@@ -89,7 +89,7 @@ it('verweigert das Loeschen, solange Arbeitsplaetze zugeordnet sind', function (
     expect(Area::find($area->id))->not->toBeNull();
 });
 
-it('weist ungueltige Angaben ab', function () {
+it('rejects invalid input', function () {
     $this->actingAs($this->admin)
         ->postJson('/api/areas', areaPayload(['maxBookingDurationMinutes' => 20]))
         ->assertValidResponse(422);
@@ -99,7 +99,7 @@ it('weist ungueltige Angaben ab', function () {
         ->assertValidResponse(422);
 });
 
-it('laesst nur manageAreas schreiben', function () {
+it('lets only manageAreas write', function () {
     $this->actingAs($this->member)
         ->postJson('/api/areas', areaPayload())
         ->assertValidResponse(403);

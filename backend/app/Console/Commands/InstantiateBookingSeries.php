@@ -7,18 +7,17 @@ use App\Models\BookingSeries;
 use Illuminate\Console\Command;
 
 /**
- * Schiebt den Horizont aller Serien täglich wieder auf ein Jahr vor.
+ * Pushes the horizon of all series back out to a year, daily.
  *
- * Jede Serie läuft in ihrer eigenen Transaktion: eine, deren Instanzen alle
- * kollidieren, soll die übrigen nicht aufhalten, und ein Abbruch mittendrin
- * lässt keine halb erzeugte Serie zurück — `instantiated_until` wandert erst
- * mit dem Commit.
+ * Every series runs in its own transaction: one whose instances all collide
+ * should not hold up the rest, and an abort halfway through leaves no
+ * half-generated series behind — `instantiated_until` only moves with the commit.
  */
 class InstantiateBookingSeries extends Command
 {
     protected $signature = 'booking-series:instantiate';
 
-    protected $description = 'Erzeugt die Instanzen aller Buchungsserien bis ein Jahr im Voraus';
+    protected $description = 'Generates the instances of all booking series up to a year ahead';
 
     public function handle(SeriesWriter $writer): int
     {
@@ -33,7 +32,7 @@ class InstantiateBookingSeries extends Command
             $skipped += count($gaps);
         });
 
-        $this->info("Serien instanziert: {$created} Buchungen erzeugt, {$skipped} wegen Belegung ausgelassen.");
+        $this->info("Series instantiated: {$created} bookings created, {$skipped} left out due to occupancy.");
 
         return self::SUCCESS;
     }

@@ -13,7 +13,7 @@ import {
   listWorkplaces,
   updateBookingSeries,
 } from '../api/functions';
-// Umbenannt, damit das generierte Modell das globale Error nicht verdeckt.
+// Renamed so that the generated model does not shadow the global Error.
 import {
   Area,
   BookingSeries,
@@ -41,36 +41,36 @@ import { AdminHeader } from './admin-header';
 import { RHYTHMS, RhythmKey, rhythmByKey, rhythmOf, skipsMonths } from './series-rhythm';
 
 /**
- * Der Formularzustand. Wie im Buchungsformular liegen Zahlen als Strings vor —
- * das ist es, was ein `<select>` liefert.
+ * The form state. As in the booking form, numbers are held as strings — that is
+ * what a `<select>` delivers.
  */
 interface SeriesFormValue {
   workplaceId: string;
   name: string;
   contact: string;
-  /** Tag der ersten Instanz, "YYYY-MM-DD". */
+  /** Day of the first instance, "YYYY-MM-DD". */
   date: string;
   startMinutes: string;
   durationMinutes: string;
   rhythm: RhythmKey;
-  /** Getrennt vom Datum, damit „läuft weiter" ankreuzbar ist. */
+  /** Separate from the date so that "runs on" is checkable. */
   openEnded: boolean;
   endDate: string;
 }
 
 /**
- * Serie anlegen und ändern.
+ * Creating and changing a series.
  *
- * Bewusst ohne Vorabprüfung während der Eingabe: der häufigste Fehlerfall einer
- * Buchung ist die Kollision, und die ist bei einer Serie kein Fehler — der
- * einzelne Termin fällt aus, die Serie entsteht. Eine Live-Prüfung müsste das
- * wissen und damit Regelwissen im Frontend halten. Geprüft wird beim Speichern,
- * und geantwortet wird vom Server.
+ * Deliberately without a pre-flight check while typing: the most common failure
+ * for a booking is the collision, and for a series that is not a failure — the
+ * individual occurrence drops out, the series is created. A live check would have
+ * to know that and would thereby hold rule knowledge in the frontend. Validation
+ * happens on save, and the answer comes from the server.
  *
- * Aus demselben Grund gibt es keine Terminvorschau: welche Termine entstehen,
- * rechnet `SeriesSchedule` im Backend aus, samt der Regel über übersprungene
- * Monate. Die Vorschau ist stattdessen die Einzelansicht des Arbeitsplatzes,
- * auf die der Weg nach dem Speichern führt.
+ * For the same reason there is no occurrence preview: which occurrences arise is
+ * computed by `SeriesSchedule` in the backend, including the rule about skipped
+ * months. The preview is instead the single-workplace view the path leads to
+ * after saving.
  */
 @Component({
   selector: 'app-series-form',
@@ -91,7 +91,7 @@ export class SeriesForm {
   private readonly areas = signal<Area[]>([]);
   private readonly workplaces = signal<Workplace[]>([]);
 
-  /** Gesetzt, wenn eine bestehende Serie bearbeitet wird. */
+  /** Set when an existing series is being edited. */
   protected readonly editing = signal<BookingSeries | null>(null);
 
   protected readonly loading = signal(true);
@@ -99,10 +99,10 @@ export class SeriesForm {
   protected readonly loadError = signal<string | null>(null);
   protected readonly saveError = signal<string | null>(null);
 
-  /** Feldfehler aus einer 422-Antwort, nach Feldnamen der Spec. */
+  /** Field errors from a 422 response, keyed by the spec's field names. */
   protected readonly fieldErrors = signal<Record<string, string[]>>({});
 
-  /** Was das Speichern ergeben hat — solange gesetzt, steht die Abschlussansicht. */
+  /** What the save produced — while set, the completion view is shown. */
   protected readonly result = signal<BookingSeriesResult | null>(null);
 
   protected readonly model = signal<SeriesFormValue>({
@@ -117,7 +117,7 @@ export class SeriesForm {
     endDate: '',
   });
 
-  /** Nur Pflichtfelder — alles Weitere prüft das Backend. */
+  /** Required fields only — everything else is checked by the backend. */
   protected readonly seriesForm = form(this.model, (path) => {
     required(path.workplaceId, { message: 'Bitte einen Arbeitsplatz wählen.' });
     required(path.name, { message: 'Bitte einen Namen angeben.' });
@@ -128,9 +128,8 @@ export class SeriesForm {
   protected readonly heading = computed(() => (this.editing() ? 'Serie bearbeiten' : 'Neue Serie'));
 
   constructor() {
-    // Der Name zuerst: welcher Serie bearbeitet wird, ist im Reiter die
-    // eigentliche Auskunft. Beim Anlegen gibt es keinen, dann bleibt der
-    // Titel der Route stehen.
+    // The name first: which series is being edited is the real information in the
+    // tab. When creating there is none, and then the route's title stays.
     refinePageTitle(() => {
       const editing = this.editing();
 
@@ -173,7 +172,7 @@ export class SeriesForm {
     });
   }
 
-  // --- Abgeleitetes ---------------------------------------------------------
+  // --- Derived state --------------------------------------------------------
 
   protected readonly axis = computed<TimeAxis | null>(() => {
     const config = this.config();
@@ -211,7 +210,7 @@ export class SeriesForm {
     return axis ? slotsOfDay(axis) : [];
   });
 
-  /** Beginn und Ende als lokale Wanduhrzeit, in der Form der Spec. */
+  /** Start and end as local wall-clock time, in the shape of the spec. */
   private readonly firstInstance = computed(() => {
     const value = this.model();
     const start = instantAt(value.date, Number(value.startMinutes));
@@ -221,9 +220,9 @@ export class SeriesForm {
   });
 
   /**
-   * „Montag, 3.8.2026, 11:00" — das Ende des ersten Termins. Rutscht es auf den
-   * Folgetag, sagt es das von selbst, denn es steht das ganze Datum da; ein
-   * eigenes Kreuz für „über Nacht" braucht es deshalb nicht.
+   * "Montag, 3.8.2026, 11:00" — the end of the first occurrence. If it slides onto
+   * the following day it says so by itself, because the full date is there; a
+   * checkbox of its own for "overnight" is therefore unnecessary.
    */
   protected readonly endLabel = computed(() =>
     this.firstInstance().end.toLocaleString('de-CH', {
@@ -236,14 +235,14 @@ export class SeriesForm {
     }),
   );
 
-  /** Der Wochentag, der aus dem gewählten Datum folgt. */
+  /** The weekday that follows from the selected date. */
   protected readonly weekday = computed(() =>
     this.firstInstance().start.toLocaleDateString('de-CH', { weekday: 'long' }),
   );
 
   protected readonly dayOfMonth = computed(() => this.firstInstance().start.getDate());
 
-  /** Bei MONTHLY über dem 28.: Monate ohne diesen Tag fallen aus. */
+  /** For MONTHLY beyond the 28th: months without that day drop out. */
   protected readonly warnsAboutSkippedMonths = computed(
     () => this.model().rhythm === 'monthly' && skipsMonths(this.dayOfMonth()),
   );
@@ -254,11 +253,11 @@ export class SeriesForm {
     return this.fieldErrors()[field] ?? [];
   }
 
-  // --- Abschlussansicht -----------------------------------------------------
+  // --- Completion view ------------------------------------------------------
 
   protected readonly skipped = computed(() => this.result()?.skippedInstances ?? []);
 
-  /** Datum eines ausgefallenen Termins, für Anzeige und Link auf den Tag. */
+  /** The date of a dropped occurrence, for display and for the link to the day. */
   protected skippedDay(startTime: string): string {
     return isoDate(new Date(startTime));
   }
@@ -275,8 +274,8 @@ export class SeriesForm {
   }
 
   /**
-   * Der Monat, in dem die Serie zu sehen ist: der erste Termin, oder heute, wenn
-   * er längst vorbei ist — erzeugt wird ohnehin erst ab jetzt.
+   * The month in which the series can be seen: the first occurrence, or today if
+   * that is long past — generation begins from now anyway.
    */
   protected readonly calendarLink = computed(() => {
     const series = this.result()?.series;
@@ -306,7 +305,7 @@ export class SeriesForm {
     this.router.navigate(['/verwaltung/serien']);
   }
 
-  // --- Speichern ------------------------------------------------------------
+  // --- Saving ---------------------------------------------------------------
 
   protected submit(): void {
     if (!this.canSubmit()) {
@@ -355,16 +354,16 @@ export class SeriesForm {
       contact: value.contact.trim(),
       interval: rhythm.interval,
       intervalCount: rhythm.intervalCount,
-      // Ohne Zonenangabe, und das ist keine Nachlässigkeit: die Serie hält
-      // Wanduhrzeit fest, damit sie über die Zeitumstellung hinweg zur selben
-      // Uhrzeit stattfindet. Ein `toISOString()` an dieser Stelle wäre der Fehler.
+      // Without a zone, and that is not sloppiness: the series records wall-clock
+      // time so that it takes place at the same time of day across a DST change. A
+      // `toISOString()` at this point would be the bug.
       firstInstanceStart: toLocalIso(start),
       firstInstanceEnd: toLocalIso(end),
       endDate: value.openEnded ? null : value.endDate,
     };
   }
 
-  // --- Hilfsmittel fürs Template --------------------------------------------
+  // --- Helpers for the template ---------------------------------------------
 
   protected readonly formatDuration = formatDuration;
   protected readonly formatMinutes = formatMinutes;

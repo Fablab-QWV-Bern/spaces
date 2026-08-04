@@ -19,14 +19,14 @@ class WorkplaceController extends Controller
     public function index(Request $request): AnonymousResourceCollection
     {
         $filters = $request->validate([
-            // Nicht `boolean`: das lässt "true" und "false" nicht durch, und genau
-            // so schreibt OpenAPI einen Wahrheitswert in eine Abfragezeichenfolge.
+            // Not `boolean`: that does not let "true" and "false" through, and
+            // that is exactly how OpenAPI writes a boolean into a query string.
             'includeDisabled' => ['sometimes', 'in:true,false,1,0'],
             'areaId' => ['sometimes', 'string'],
         ]);
 
-        // Deaktivierte Arbeitsplätze sieht nur, wer sie verwalten darf. Für alle
-        // anderen wird der Parameter ignoriert statt abgewiesen.
+        // Disabled workplaces are only visible to whoever may manage them. For
+        // everyone else the parameter is ignored rather than rejected.
         $includeDisabled = $request->boolean('includeDisabled')
             && $this->currentRole->can('manageWorkplaces');
 
@@ -35,8 +35,8 @@ class WorkplaceController extends Controller
             ->when(! $includeDisabled, fn ($query) => $query->where('status', '!=', Workplace::STATUS_DISABLED))
             ->when($filters['areaId'] ?? null, fn ($query, $areaId) => $query->where('area_id', $areaId));
 
-        // Sortierung folgt der Gruppierung der Kalenderansicht: erst der Bereich,
-        // dann der Arbeitsplatz.
+        // The ordering follows the calendar view's grouping: area first, then
+        // workplace.
         $workplaces = $query
             ->join('areas', 'areas.id', '=', 'workplaces.area_id')
             ->orderBy('areas.sort_order')
@@ -65,8 +65,8 @@ class WorkplaceController extends Controller
     {
         $data = $this->validatePayload($request, creating: true);
 
-        // Die ID kommt vom Aufrufer und ist damit ein Konflikt mit fremdem
-        // Zustand, kein Fehler in der Eingabe selbst — 409 statt 422.
+        // The ID comes from the caller and is therefore a conflict with someone
+        // else's state, not an error in the input itself — 409 rather than 422.
         if (Workplace::whereKey($data['id'])->exists()) {
             return response()->json([
                 'message' => 'Ein Arbeitsplatz mit dieser Kennung besteht bereits.',
@@ -100,16 +100,16 @@ class WorkplaceController extends Controller
 
     public function destroy(Workplace $workplace): JsonResponse
     {
-        // Vergangene Buchungen dürfen bleiben und ihren Arbeitsplatz verlieren;
-        // eine künftige wäre dagegen ein Versprechen, das niemand mehr einlöst.
+        // Past bookings may stay and lose their workplace; a future one, by
+        // contrast, would be a promise nobody is going to keep.
         if ($workplace->bookings()->where('end_time', '>', now())->exists()) {
             return response()->json([
                 'message' => 'Auf diesem Arbeitsplatz liegen noch künftige Buchungen.',
             ], 422);
         }
 
-        // Aus den Blockierlisten der anderen verschwindet er über die
-        // Fremdschlüssel der Tabelle workplace_blocks_workplaces.
+        // It disappears from the others' blocking lists through the foreign keys
+        // of the workplace_blocks_workplaces table.
         $workplace->delete();
 
         return response()->json(status: 204);
@@ -119,8 +119,8 @@ class WorkplaceController extends Controller
     private function validatePayload(Request $request, bool $creating): array
     {
         return $request->validate([
-            // Vom Aufrufer vergeben, URL- und SVG-tauglich. Beim Ändern steht sie
-            // im Pfad und wird ignoriert.
+            // Assigned by the caller, usable in URLs and SVG. When changing, it
+            // is in the path and gets ignored.
             'id' => $creating
                 ? ['required', 'string', 'max:64', 'regex:/^[a-z0-9][a-z0-9-]*$/']
                 : ['sometimes'],
@@ -147,18 +147,17 @@ class WorkplaceController extends Controller
     }
 
     /**
-     * PUT ersetzt den ganzen Arbeitsplatz: was der Aufruf weglässt, fällt auf
-     * seinen Standardwert zurück und behält nicht den bisherigen. Das Foto ist
-     * davon ausgenommen — es hat einen eigenen Endpunkt.
+     * PUT replaces the whole workplace: whatever the call omits falls back to its
+     * default rather than keeping the previous value. The photo is exempt from
+     * this — it has an endpoint of its own.
      *
      * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     private function attributes(array $data): array
     {
-        // Ein leeres Textfeld im Formular meint "nicht gesetzt" — sonst stünde
-        // in der Spalte ein Leerstring, den keine Ansicht von "gesetzt"
-        // unterscheiden kann.
+        // An empty text field in the form means "not set" — otherwise the column
+        // would hold an empty string that no view can tell apart from "set".
         $text = fn (?string $value): ?string => ($value === null || trim($value) === '')
             ? null
             : $value;
@@ -179,8 +178,8 @@ class WorkplaceController extends Controller
     /** @param  array<string, mixed>  $data */
     private function syncLists(Workplace $workplace, array $data): void
     {
-        // Ein Arbeitsplatz blockiert sich nicht selbst — das wäre still
-        // wirkungslos und stiftet in der Verwaltungsansicht nur Verwirrung.
+        // A workplace does not block itself — that would be silently ineffective
+        // and only causes confusion in the admin view.
         $blocked = array_values(array_diff(
             $data['blocksWorkplaceIds'] ?? [],
             [$workplace->getKey()],

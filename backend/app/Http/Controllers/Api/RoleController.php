@@ -14,8 +14,8 @@ class RoleController extends Controller
 {
     public function index(): AnonymousResourceCollection
     {
-        // Wie in der Anmeldeliste: nach Alter, damit die Reihenfolge stabil
-        // bleibt, wenn eine Rolle umbenannt wird.
+        // As in the login list: by age, so that the ordering stays stable when a
+        // role is renamed.
         return RoleResource::collection(Role::orderBy('created_at')->get());
     }
 
@@ -31,8 +31,8 @@ class RoleController extends Controller
         $role = Role::create([
             'name' => $data['name'],
             'password' => $data['password'],
-            // `isAnonymous` ist über die API nicht setzbar: die anonyme Rolle
-            // gibt es genau einmal, und sie ist ausgesät, nicht angelegt.
+            // `isAnonymous` cannot be set through the API: the anonymous role
+            // exists exactly once, and it is seeded, not created.
             'is_anonymous' => false,
             ...$this->permissionColumns($data['permissions']),
         ]);
@@ -52,9 +52,9 @@ class RoleController extends Controller
             return $this->refuse('Die anonyme Rolle hat kein Kennwort.');
         }
 
-        // Sonst könnte sich jeder Aufruf ohne Anmeldung selbst zum Verwalter
-        // machen. Die Spec verlangt das nicht ausdrücklich, aber eine anonyme
-        // Rolle mit diesem Recht ist kein sinnvoller Zustand.
+        // Otherwise any call without a login could make itself an administrator.
+        // The spec does not explicitly require this, but an anonymous role with
+        // that permission is not a sensible state.
         if ($role->is_anonymous && $permissions['manageRoles']) {
             return $this->refuse('Die anonyme Rolle darf Rollen und Konfiguration nicht verwalten.');
         }
@@ -70,8 +70,8 @@ class RoleController extends Controller
             ...$this->permissionColumns($permissions),
         ];
 
-        // Ein weggelassenes Kennwort lässt das bisherige stehen — sonst müsste
-        // man es bei jeder Umbenennung neu setzen.
+        // An omitted password leaves the existing one in place — otherwise it
+        // would have to be set again on every rename.
         if (($data['password'] ?? null) !== null) {
             $attributes['password'] = $data['password'];
         }
@@ -93,15 +93,15 @@ class RoleController extends Controller
             );
         }
 
-        // Buchungen dieser Rolle behalten ihre `creator_role_id` als
-        // Karteileiche: sie sind ein historischer Beleg, kein Verweis, den man
-        // noch verfolgen müsste.
+        // Bookings made by this role keep their `creator_role_id` as a dangling
+        // record: they are a historical trace, not a reference anyone still needs
+        // to follow.
         $role->delete();
 
         return response()->json(status: 204);
     }
 
-    /** Ob diese Rolle die einzige ist, die `manageRoles` trägt. */
+    /** Whether this role is the only one carrying `manageRoles`. */
     private function isLastAdmin(Role $role): bool
     {
         return $role->manage_roles
@@ -123,8 +123,8 @@ class RoleController extends Controller
                 'required', 'string', 'min:1', 'max:100',
                 Rule::unique('roles', 'name')->ignore($role?->getKey()),
             ],
-            // Beim Anlegen Pflicht: eine Rolle ohne Kennwort stünde in der
-            // Anmeldeliste, ohne dass man sich mit ihr anmelden könnte.
+            // Required when creating: a role without a password would appear in
+            // the login list without being usable to log in.
             'password' => [$role === null ? 'required' : 'sometimes', 'nullable', 'string', 'min:8'],
             'permissions' => ['required', 'array'],
         ];
@@ -137,7 +137,7 @@ class RoleController extends Controller
     }
 
     /**
-     * Die Berechtigungen aus der API-Form in die Spaltennamen übersetzt.
+     * Translates the permissions from the API shape into the column names.
      *
      * @param  array<string, bool>  $permissions
      * @return array<string, bool>

@@ -8,14 +8,14 @@ import { Area, Booking, Config, Workplace } from '../api/models';
 import { SessionService } from '../shared/session-service';
 import { TimeAxis, buildTimeAxis } from './time-axis';
 
-/** Ein Tag, wie ihn der Kalender braucht: lokales Datum ohne Zeitanteil. */
+/** A day as the calendar needs it: a local date with no time component. */
 export type IsoDate = string;
 
 /**
- * Die Zoomstufe des Kalenders. Sie bestimmt, welche Tage geladen werden.
+ * The calendar's zoom level. It determines which days get loaded.
  *
- * `month` gehört der Einzelansicht: dort steht ein Arbeitsplatz je Ansicht und
- * ein Tag je Zeile, deshalb hat ein ganzer Monat Platz.
+ * `month` belongs to the single-workplace view: there one workplace fills the
+ * view and one day fills each row, so a whole month fits.
  */
 export type Span = 'day' | 'week' | 'month';
 
@@ -30,7 +30,7 @@ export class CalendarStore {
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
 
-  /** Die dargestellten Tage — einer im Tag, sieben in der Woche, alle im Monat. */
+  /** The days being shown — one in the day view, seven in the week, all in the month. */
   readonly days = computed<IsoDate[]>(() => {
     switch (this.span()) {
       case 'week':
@@ -47,13 +47,13 @@ export class CalendarStore {
   readonly workplaces = signal<Workplace[]>([]);
   readonly bookings = signal<Booking[]>([]);
 
-  /** Eine Quelle für die Rolle: der SessionService, den auch die Anmeldeleiste nutzt. */
+  /** One source for the role: the SessionService the login bar uses too. */
   readonly canManageBookings = this.sessionService.canManageBookings;
   readonly canManageBookingSeries = this.sessionService.canManageBookingSeries;
   readonly noTimeRestrictions = this.sessionService.noTimeRestrictions;
   readonly isAnonymous = this.sessionService.isAnonymous;
 
-  /** Die Zeitachse aus den konfigurierten Öffnungszeiten. */
+  /** The time axis derived from the configured opening hours. */
   readonly axis = computed<TimeAxis | null>(() => {
     const config = this.config();
 
@@ -64,14 +64,14 @@ export class CalendarStore {
     () => new Map(this.workplaces().map((workplace) => [workplace.id, workplace])),
   );
 
-  /** Name eines Arbeitsplatzes, mit der Kennung als Rückfallebene. */
+  /** A workplace's name, falling back to its identifier. */
   readonly nameOf = computed(() => {
     const byId = this.workplaceById();
 
     return (workplaceId: string) => byId.get(workplaceId)?.name ?? workplaceId;
   });
 
-  /** Arbeitsplätze in der Reihenfolge der Bereiche, mit Gruppenkopf. */
+  /** Workplaces in the order of their areas, with a group heading. */
   readonly rows = computed(() => {
     const byArea = new Map<string, Workplace[]>();
 
@@ -86,7 +86,7 @@ export class CalendarStore {
       .filter((group) => group.workplaces.length > 0);
   });
 
-  /** Buchungen je Arbeitsplatz — die eigenen. */
+  /** Bookings per workplace — the workplace's own. */
   readonly bookingsByWorkplace = computed(() => {
     const map = new Map<string, Booking[]>();
 
@@ -100,8 +100,8 @@ export class CalendarStore {
   });
 
   /**
-   * Blockierungen je Arbeitsplatz: Buchungen auf *anderen* Plätzen, die diesen
-   * hier mitbelegen. Sie erscheinen als graue Blöcke.
+   * Blockages per workplace: bookings on *other* workplaces that also occupy this
+   * one. They appear as grey blocks.
    */
   readonly blockagesByWorkplace = computed(() => {
     const map = new Map<string, Booking[]>();
@@ -117,15 +117,15 @@ export class CalendarStore {
     return map;
   });
 
-  /** Lädt Stammdaten und Buchungen für den dargestellten Zeitraum. */
+  /** Loads master data and bookings for the period being shown. */
   load(): void {
     this.loading.set(true);
     this.error.set(null);
 
     const days = this.days();
-    // Die API liefert jede Buchung, die das Fenster *überlappt*. Eine über Nacht
-    // laufende Buchung des Vortags kommt darum mit, ohne dass der Rand hier
-    // vorsorglich vergrössert werden müsste.
+    // The API returns every booking that *overlaps* the window. An overnight
+    // booking from the previous day therefore comes along without the range
+    // having to be widened here as a precaution.
     const from = new Date(`${days[0]}T00:00:00`);
     const to = new Date(`${days.at(-1)}T00:00:00`);
     to.setDate(to.getDate() + 1);
@@ -159,7 +159,7 @@ export class CalendarStore {
     this.load();
   }
 
-  /** Ein Blätterschritt in der Einheit der Zoomstufe: Tag, Woche oder Monat. */
+  /** One paging step in the zoom level's unit: day, week or month. */
   shift(steps: number): void {
     if (this.span() === 'month') {
       this.shiftMonths(steps);
@@ -178,10 +178,10 @@ export class CalendarStore {
   }
 
   /**
-   * Ein Monat weiter, unter Beibehaltung des Tages im Monat.
+   * One month on, keeping the day of the month.
    *
-   * Gerechnet wird über den Ersten des Zielmonats: `setMonth` allein schöbe den
-   * 31. Januar auf den 3. März, und die Ansicht spränge einen Monat zu weit.
+   * Computed via the first of the target month: `setMonth` alone would push 31
+   * January to 3 March, and the view would jump a month too far.
    */
   private shiftMonths(steps: number): void {
     const current = new Date(`${this.date()}T12:00:00`);
@@ -195,10 +195,10 @@ export class CalendarStore {
 }
 
 /**
- * Die sieben Tage der Woche, in der das Datum liegt — Montag zuerst.
+ * The seven days of the week the date falls in — Monday first.
  *
- * `getDay()` zählt ab Sonntag; die Verschiebung um sechs rückt den Sonntag ans
- * Ende seiner Woche statt an den Anfang der nächsten.
+ * `getDay()` counts from Sunday; shifting by six moves Sunday to the end of its
+ * week rather than to the start of the next one.
  */
 export function weekOf(date: IsoDate): IsoDate[] {
   const monday = new Date(`${date}T12:00:00`);
@@ -213,10 +213,10 @@ export function weekOf(date: IsoDate): IsoDate[] {
 }
 
 /**
- * Alle Tage des Monats, in dem das Datum liegt.
+ * All days of the month the date falls in.
  *
- * Wie `weekOf` über Mittag gerechnet: an einem Tag mit Zeitumstellung wäre der
- * Schritt über Mitternacht 23 oder 25 Stunden lang und träfe den Vortag.
+ * Computed via midday like `weekOf`: on a day with a DST change the step across
+ * midnight would be 23 or 25 hours long and would land on the previous day.
  */
 export function monthOf(date: IsoDate): IsoDate[] {
   const day = new Date(`${date}T12:00:00`);
@@ -237,7 +237,7 @@ export function todayIso(): IsoDate {
   return isoDate(new Date());
 }
 
-/** Lokales Datum als ISO-Tag — toISOString() allein würde in UTC umrechnen. */
+/** The local date as an ISO day — toISOString() alone would convert to UTC. */
 export function isoDate(date: Date): IsoDate {
   const offset = date.getTimezoneOffset() * 60_000;
 

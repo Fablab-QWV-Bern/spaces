@@ -1,16 +1,16 @@
 :host {
-  // Ein Raster mit einer Spalte je Viertelstunde. Die Blöcke werden über
-  // benannte Linien platziert (grid-column: t0900 / t1300) — das Einrasten auf
-  // die Viertelstunde ist damit strukturell und nicht gerechnet.
+  // A grid with one column per quarter hour. The blocks are placed via named
+  // lines (grid-column: t0900 / t1300) — snapping to the quarter hour is
+  // therefore structural rather than computed.
   display: grid;
   grid-auto-rows: 1fr;
   position: relative;
   height: var(--row-height);
 
-  // Viertelstunden-Raster als Hintergrund, Stunden kräftiger. Die dichten
-  // Zoomstufen schalten die Viertelstundenlinien über `--quarter-line` ab —
-  // dort lägen sie zwei Pixel auseinander und verschluckten jede Tönung der
-  // Zelle, statt etwas zu zeigen.
+  // Quarter-hour grid as the background, hours stronger. The dense zoom levels
+  // switch the quarter-hour lines off via `--quarter-line` — there they would sit
+  // two pixels apart and swallow every tint of the cell rather than showing
+  // anything.
   background-image:
     repeating-linear-gradient(
       to right,
@@ -32,8 +32,8 @@
   cursor: pointer;
 }
 
-// Statt der Vorschau: warum ein Klick hier nichts anlegt. Erst beim Überfahren
-// sichtbar — als stehender Text stünde derselbe Satz in jeder Zeile.
+// In place of the preview: why a click here creates nothing. Only visible on
+// hover — as standing text the same sentence would appear in every row.
 .notice {
   grid-row: 1;
   grid-column: 1 / -1;
@@ -51,10 +51,9 @@
   opacity: 1;
 }
 
-// Der Balken, den ein Klick anlegen würde. Gestrichelt und durchscheinend, damit
-// er nicht mit einer bestehenden Buchung verwechselt wird — und ohne
-// Zeigerereignisse, sonst verlöre die Zelle den Zeiger an ihn und die Vorschau
-// flackerte.
+// The bar a click would create. Dashed and translucent so that it is not
+// mistaken for an existing booking — and without pointer events, otherwise the
+// cell would lose the pointer to it and the preview would flicker.
 .preview {
   grid-row: 1;
   margin: 3px 0 3px 1px;

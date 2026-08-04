@@ -3,35 +3,35 @@
 use App\Http\Controllers\SpaController;
 use Illuminate\Http\Request;
 
-// Der Auffangpfad in routes/web.php wird vor den API-Routen registriert. Ohne
-// die Ausnahme im `where` beantwortete er sie mit der Oberfläche, und zwar
-// stillschweigend: der Aufruf käme mit 200 und HTML zurück.
+// The catch-all in routes/web.php is registered before the API routes. Without
+// the exception in `where` it would answer them with the interface, and do so
+// silently: the call would come back with 200 and HTML.
 
-function zustaendigFuer(string $pfad): string
+function handlerFor(string $path): string
 {
     return app('router')->getRoutes()
-        ->match(Request::create($pfad))
+        ->match(Request::create($path))
         ->getActionName();
 }
 
-it('lässt die API in Ruhe', function (): void {
+it('leaves the API alone', function (): void {
     $this->getJson('/api/gibtesnicht')
         ->assertNotFound()
         ->assertHeader('content-type', 'application/json');
 });
 
-it('lässt /storage in Ruhe', function (): void {
-    // Dort liegt in der Entwicklung die Route der `local`-Platte und in der
-    // Produktion der Symlink auf `storage/app/public`. Beide sind besser als
-    // eine HTML-Seite anstelle eines fehlenden Fotos.
-    expect(zustaendigFuer('/storage/kein-foto.jpg'))->not->toBe(SpaController::class);
+it('leaves /storage alone', function (): void {
+    // In development that is where the `local` disk's route lives, and in
+    // production the symlink to `storage/app/public`. Both are better than an
+    // HTML page in place of a missing photo.
+    expect(handlerFor('/storage/kein-foto.jpg'))->not->toBe(SpaController::class);
 });
 
-it('greift für Pfade des Angular-Routers', function (): void {
-    expect(zustaendigFuer('/'))->toBe(SpaController::class)
-        ->and(zustaendigFuer('/woche'))->toBe(SpaController::class)
-        ->and(zustaendigFuer('/arbeitsplatz'))->toBe(SpaController::class);
+it('takes effect for Angular router paths', function (): void {
+    expect(handlerFor('/'))->toBe(SpaController::class)
+        ->and(handlerFor('/woche'))->toBe(SpaController::class)
+        ->and(handlerFor('/arbeitsplatz'))->toBe(SpaController::class);
 
-    // Ohne gebaute Oberfläche bleibt es beim 404.
+    // Without a built interface it stays at 404.
     $this->get('/woche')->assertNotFound();
 });

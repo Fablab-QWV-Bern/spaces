@@ -22,7 +22,7 @@ import {
   BookingValidation,
   BookingWrite,
   Config,
-  // Umbenannt, damit das generierte Modell das globale Error nicht verdeckt.
+  // Renamed so that the generated model does not shadow the global Error.
   Error as ApiError,
   Workplace,
 } from '../api/models';
@@ -47,9 +47,9 @@ import { SessionBar } from '../shared/session-bar';
 import { SessionService } from '../shared/session-service';
 
 /**
- * Der Formularzustand als ein Wert. Die Felder, die an einem `<select>` hängen,
- * sind bewusst Strings — das ist es, was ein Select liefert; die Umrechnung in
- * Minuten passiert in den abgeleiteten Signalen.
+ * The form state as a single value. The fields bound to a `<select>` are
+ * deliberately strings — that is what a select delivers; the conversion to
+ * minutes happens in the derived signals.
  */
 interface BookingFormValue {
   workplaceId: string;
@@ -57,7 +57,7 @@ interface BookingFormValue {
   startMinutes: string;
   durationMinutes: string;
   overnight: boolean;
-  /** Nur bei `overnight` in Gebrauch, und immer am Folgetag gemeint. */
+  /** Only in use with `overnight`, and always meant on the following day. */
   endMinutes: string;
   name: string;
   contact: string;
@@ -70,7 +70,7 @@ interface PreviewBlock {
   widthPercent: number;
   own: boolean;
   blockage: boolean;
-  /** Nur für die eigene Box gesetzt: färbt sie rot. */
+  /** Set only for one's own box: colours it red. */
   collision?: boolean;
 }
 
@@ -88,7 +88,7 @@ export class BookingForm {
 
   protected readonly session = inject(SessionService);
 
-  // --- Formular -------------------------------------------------------------
+  // --- Form -----------------------------------------------------------------
 
   private readonly model = signal<BookingFormValue>({
     workplaceId: '',
@@ -102,9 +102,9 @@ export class BookingForm {
   });
 
   /**
-   * Signal Forms übernimmt nur, was der Client selbst beurteilen kann:
-   * Pflichtfelder. Alle Buchungsregeln bleiben im Backend und kommen über
-   * `POST /bookings/validate` zurück — so gibt es sie nur einmal.
+   * Signal Forms only takes on what the client can judge for itself: required
+   * fields. All booking rules stay in the backend and come back via
+   * `POST /bookings/validate` — that way they exist only once.
    */
   protected readonly bookingForm = form(this.model, (path) => {
     required(path.name, { message: 'Bitte einen Namen angeben.' });
@@ -113,7 +113,7 @@ export class BookingForm {
     });
   });
 
-  // --- Stammdaten -----------------------------------------------------------
+  // --- Master data ----------------------------------------------------------
 
   protected readonly config = signal<Config | null>(null);
   protected readonly areas = signal<Area[]>([]);
@@ -125,7 +125,7 @@ export class BookingForm {
   protected readonly loadError = signal<string | null>(null);
   protected readonly saveError = signal<string | null>(null);
 
-  /** Gesetzt, wenn eine bestehende Buchung bearbeitet wird. */
+  /** Set when an existing booking is being edited. */
   protected readonly editing = signal<Booking | null>(null);
 
   protected readonly validation = signal<BookingValidation | null>(null);
@@ -133,9 +133,9 @@ export class BookingForm {
   constructor() {
     this.load();
 
-    // Der Arbeitsplatz zuerst: ein Reiter wird abgeschnitten, und "Neue
-    // Buchung" steht auf jedem zweiten. Der Name des Buchenden bleibt draussen
-    // — er landete sonst im Verlauf des Browsers.
+    // The workplace first: a tab gets truncated, and "Neue Buchung" would be on
+    // every second one. The booker's name stays out — it would otherwise end up
+    // in the browser history.
     refinePageTitle(() => {
       const what = this.editing() ? 'Buchung bearbeiten' : 'Neue Buchung';
       const workplace = this.workplace();
@@ -143,8 +143,8 @@ export class BookingForm {
       return workplace ? `${workplace.name}: ${what}` : what;
     });
 
-    // Bei jeder Änderung am Zeitfenster frisch gegen den Server prüfen — die
-    // Regeln liegen dort und werden hier bewusst nicht nachgebaut.
+    // Re-check against the server on every change to the time window — the rules
+    // live there and are deliberately not reimplemented here.
     effect(() => {
       const candidate = this.candidate();
 
@@ -153,9 +153,9 @@ export class BookingForm {
       }
     });
 
-    // Die Endzeiten hängen am Beginn: verschiebt der sich, passt die
-    // eingestellte nicht mehr auf eine erlaubte Dauer. Die nächstliegende tritt
-    // an ihre Stelle — sie hält die Dauer, wo die kürzeste sie einkürzte.
+    // The end times hang off the start: if that moves, the one currently set no
+    // longer lands on a permitted duration. The nearest one takes its place — it
+    // holds the duration where the shortest would have cut it back.
     effect(() => {
       const slots = this.endSlots();
       const chosen = this.endMinutes();
@@ -171,7 +171,8 @@ export class BookingForm {
       this.model.update((value) => ({ ...value, endMinutes: String(nearest) }));
     });
 
-    // Wechselt der Arbeitsplatz oder der Tag, müssen die Nachbarbuchungen neu her.
+    // When the workplace or the day changes, the neighbouring bookings have to be
+    // fetched afresh.
     effect(() => {
       const workplaceId = this.workplaceId();
       const date = this.date();
@@ -182,7 +183,7 @@ export class BookingForm {
     });
   }
 
-  // --- Abgeleitete Formularwerte -------------------------------------------
+  // --- Derived form values --------------------------------------------------
 
   protected readonly workplaceId = computed(() => this.model().workplaceId);
   protected readonly date = computed(() => this.model().date);
@@ -192,7 +193,7 @@ export class BookingForm {
   protected readonly endMinutes = computed(() => Number(this.model().endMinutes));
   protected readonly rulesAcknowledged = computed(() => this.model().rulesAcknowledged);
 
-  // --- Abgeleitetes ---------------------------------------------------------
+  // --- Derived state --------------------------------------------------------
 
   protected readonly axis = computed<TimeAxis | null>(() => {
     const config = this.config();
@@ -210,7 +211,7 @@ export class BookingForm {
     return workplace ? (this.areas().find((entry) => entry.id === workplace.areaId) ?? null) : null;
   });
 
-  /** Arbeitsplätze nach Bereich gruppiert, für das Auswahlfeld. */
+  /** Workplaces grouped by area, for the select field. */
   protected readonly grouped = computed(() =>
     this.areas()
       .map((area) => ({
@@ -238,15 +239,14 @@ export class BookingForm {
   });
 
   /**
-   * Mögliche Endzeiten am Folgetag — zu jeder erlaubten Buchungsdauer die
-   * Uhrzeit, bei der sie herauskommt.
+   * Possible end times on the following day — for every permitted booking
+   * duration, the time it works out to.
    *
-   * Angerechnet wird nur, was in den Öffnungszeiten liegt: der Abend bis zur
-   * Schliessung und der Morgen ab der Öffnung. Zu einer Dauer gehört darum
-   * nicht "Beginn plus Dauer", sondern was nach dem Abend noch übrig ist.
-   * Dauern, die über den Abend nicht hinausreichen, führen nicht über Nacht
-   * und stehen hier nicht; ebensowenig solche, die noch am Morgen über die
-   * Schliessung hinauskämen.
+   * Only what falls within the opening hours is charged: the evening up to
+   * closing and the morning from opening. A duration therefore corresponds not to
+   * "start plus duration" but to what is left over after the evening. Durations
+   * that do not reach beyond the evening do not lead overnight and do not appear
+   * here; nor do those that would still run past closing in the morning.
    */
   protected readonly endSlots = computed(() => {
     const axis = this.axis();
@@ -265,13 +265,13 @@ export class BookingForm {
   protected readonly allowsOvernight = computed(() => this.area()?.allowNightlyActivities ?? false);
 
   /**
-   * Auswählbare Tage: von heute bis zum Vorlauf des Bereichs — und darüber
-   * hinaus der gerade gewählte Tag.
+   * Selectable days: from today up to the area's booking horizon — and beyond it,
+   * the day currently selected.
    *
-   * Der kann aus der Adresse kommen oder aus einer bestehenden Buchung und
-   * weiter draussen liegen als der Vorlauf. Fehlte er in der Liste, stünde das
-   * Feld leer, während die Prüfung darunter über ihn urteilt — man läse einen
-   * Fehler zu einem Datum, das nirgends steht.
+   * That one may come from the URL or from an existing booking and lie further
+   * out than the horizon. If it were missing from the list, the field would stand
+   * empty while the check beneath it passed judgement on it — one would read an
+   * error about a date that is nowhere on screen.
    */
   protected readonly dateOptions = computed(() => {
     const config = this.config();
@@ -283,7 +283,7 @@ export class BookingForm {
     const last = lastBookableDay(config, this.area(), this.session.noTimeRestrictions());
     const days: string[] = [];
 
-    // Ohne Grenze bleibt es bei einem Jahr: weiter reicht keine Auswahlliste.
+    // Without a limit it stops at a year: no select list reaches further.
     for (let offset = 0; offset <= 365; offset++) {
       const value = dayFromToday(offset);
 
@@ -315,7 +315,7 @@ export class BookingForm {
     }));
   });
 
-  /** Start und Ende als echte Zeitpunkte, oder null solange etwas fehlt. */
+  /** Start and end as real instants, or null while something is missing. */
   private readonly range = computed<{ start: Date; end: Date } | null>(() => {
     const date = this.date();
 
@@ -325,9 +325,9 @@ export class BookingForm {
 
     const start = instantAt(date, this.startMinutes());
 
-    // Über Nacht endet am Folgetag, ohne zweite Datumswahl. Stünde sie da,
-    // liesse sich derselbe Tag einstellen — und damit ein Ende vor dem Beginn.
-    // Wer länger als eine Nacht bucht, nimmt die Dauer in Tagesschritten.
+    // Overnight ends on the following day, without a second date picker. If
+    // there were one, the same day could be set — and thus an end before the
+    // start. Booking longer than one night takes the duration in whole-day steps.
     if (this.overnight()) {
       return { start, end: instantAt(nextDay(date), this.endMinutes()) };
     }
@@ -347,7 +347,7 @@ export class BookingForm {
     return sameDay ? formatTime(range.end) : `${formatTime(range.end)} am ${formatDay(range.end)}`;
   });
 
-  /** Die Buchung, wie sie an die API ginge — oder null, solange etwas fehlt. */
+  /** The booking as it would go to the API — or null while something is missing. */
   private readonly candidate = computed<BookingWrite | null>(() => {
     const range = this.range();
     const value = this.model();
@@ -360,8 +360,8 @@ export class BookingForm {
       workplaceId: value.workplaceId,
       startTime: range.start.toISOString(),
       endTime: range.end.toISOString(),
-      // Für die Vorabprüfung reicht ein Platzhalter — geprüft wird der Zeitraum,
-      // nicht wer bucht. Beim Speichern gehen die echten Werte mit.
+      // A placeholder is enough for the pre-check — what gets checked is the time
+      // range, not who is booking. The real values go along on save.
       name: value.name || 'Vorschau',
       contact: value.contact || 'vorschau@example.org',
       usageRulesAcknowledged: value.rulesAcknowledged,
@@ -372,13 +372,13 @@ export class BookingForm {
     () => !this.saving() && this.validation()?.valid === true && this.bookingForm().valid(),
   );
 
-  /** Speziell die Kollision, nicht jeder Regelverstoss — die färbt die Box rot. */
+  /** Specifically the collision, not every rule violation — it colours the box red. */
   protected readonly hasCollision = computed(
     () =>
       this.validation()?.violations.some((violation) => violation.code === 'COLLISION') ?? false,
   );
 
-  // --- Vorschau auf der Zeitleiste -----------------------------------------
+  // --- Preview on the timeline ----------------------------------------------
 
   protected readonly previewBlocks = computed<PreviewBlock[]>(() => {
     const axis = this.axis();
@@ -417,8 +417,8 @@ export class BookingForm {
 
         return [
           {
-            // Wie auf der Detailkarte im Kalender: eine Blockierung nennt den
-            // Arbeitsplatz, von dem sie ausgeht, nicht wer dort bucht.
+            // As on the detail card in the calendar: a blockage names the
+            // workplace it originates from, not who is booking there.
             label: onThisWorkplace
               ? booking.name
               : `blockiert durch ${nameOf(booking.workplaceId)}`,
@@ -456,7 +456,7 @@ export class BookingForm {
     return axis ? ((hour * 60 - axis.opensAt) / (axis.closesAt - axis.opensAt)) * 100 : 0;
   }
 
-  // --- Laden ---------------------------------------------------------------
+  // --- Loading --------------------------------------------------------------
 
   private load(): void {
     const query = this.route.snapshot.queryParamMap;
@@ -495,9 +495,9 @@ export class BookingForm {
     const start = new Date(booking.startTime);
     const end = new Date(booking.endTime);
 
-    // Nur die eine Nacht ist "über Nacht" — was weiter reicht, wird über die
-    // Dauer beschrieben, sonst zöge das Formular beim Speichern das Ende
-    // stillschweigend auf den Folgetag zurück.
+    // Only the one night counts as "overnight" — anything reaching further is
+    // described through the duration, otherwise on save the form would silently
+    // pull the end back to the following day.
     const overnight = isoDate(end) === nextDay(isoDate(start));
 
     this.editing.set(booking);
@@ -526,8 +526,8 @@ export class BookingForm {
     const [datePart, timePart] = start ? start.split('T') : [isoDate(new Date()), null];
     const startMinutes = timePart ? minutesOfDay(timePart) : (axis?.opensAt ?? 480);
 
-    // Erst den Arbeitsplatz setzen, damit die Standarddauer gegen dessen
-    // Maximum geklemmt werden kann.
+    // Set the workplace first, so that the default duration can be clamped
+    // against its maximum.
     this.model.update((value) => ({ ...value, workplaceId, date: datePart }));
 
     const requestedDuration = Number(query.get('durationMinutes'));
@@ -539,19 +539,19 @@ export class BookingForm {
       durationMinutes: String(
         requestedDuration > 0 ? requestedDuration : Math.min(DEFAULT_DURATION_MINUTES, maxDuration),
       ),
-      // Die Endzeit bleibt, wie sie ist: sie zählt erst bei "über Nacht", und
-      // dann rückt der Abgleich oben sie ohnehin auf eine erlaubte Dauer.
+      // The end time stays as it is: it only counts for "overnight", and then the
+      // reconciliation above moves it onto a permitted duration anyway.
     }));
   }
 
   private loadDayBookings(workplaceId: string, date: string): void {
     const from = new Date(`${date}T00:00:00`);
-    // Zwei Tage, damit eine Buchung über Nacht vollständig sichtbar bleibt.
+    // Two days, so that an overnight booking stays fully visible.
     const to = new Date(from.getTime() + 2 * 24 * 60 * 60 * 1000);
 
-    // Bewusst ohne Filter auf den Arbeitsplatz: eine Buchung auf einem anderen
-    // Platz kann diesen hier mitblockieren, und genau das muss die Vorschau
-    // zeigen — sonst steht dort "belegt" ohne sichtbaren Grund.
+    // Deliberately without a filter on the workplace: a booking on another
+    // workplace can also block this one, and that is exactly what the preview has
+    // to show — otherwise it reads "occupied" with no visible reason.
     listBookings(this.http, this.rootUrl, {
       from: from.toISOString(),
       to: to.toISOString(),
@@ -577,7 +577,7 @@ export class BookingForm {
       });
   }
 
-  // --- Speichern -----------------------------------------------------------
+  // --- Saving ---------------------------------------------------------------
 
   protected submit(): void {
     const candidate = this.candidate();
@@ -587,8 +587,8 @@ export class BookingForm {
       return;
     }
 
-    // Der Kandidat trägt für die Vorabprüfung Platzhalter — beim Speichern
-    // gehen die tatsächlich eingegebenen Werte mit.
+    // The candidate carries placeholders for the pre-check — the values actually
+    // entered go along on save.
     const body: BookingWrite = { ...candidate, name: value.name, contact: value.contact };
     const booking = this.editing();
 
@@ -601,8 +601,8 @@ export class BookingForm {
 
     request.subscribe({
       next: () => {
-        // Nur beim Anlegen merken: beim Bearbeiten steht dort der Name einer
-        // fremden Person, den man nicht als eigenen übernehmen will.
+        // Remember only when creating: when editing, that is somebody else's name
+        // and one does not want to adopt it as one's own.
         if (!booking) {
           writeBooker({ name: value.name, contact: value.contact });
         }
@@ -644,7 +644,7 @@ export class BookingForm {
     return (error.error as ApiError | null)?.message ?? 'Die Buchung liess sich nicht speichern.';
   }
 
-  // --- Hilfsmittel fürs Template --------------------------------------------
+  // --- Helpers for the template ---------------------------------------------
 
   protected readonly formatDuration = formatDuration;
   protected readonly formatMinutes = formatMinutes;
@@ -657,12 +657,12 @@ function isoDate(date: Date): string {
 }
 
 /**
- * Der Tag, der so viele Tage nach heute liegt.
+ * The day that lies the given number of days after today.
  *
- * Über Mittag gerechnet: an einem Tag mit Zeitumstellung wäre der Schritt über
- * Mitternacht 23 oder 25 Stunden lang und träfe den Nachbartag.
+ * Computed via midday: on a day with a DST change the step across midnight would
+ * be 23 or 25 hours long and would land on the neighbouring day.
  */
-/** Der Tag nach dem gegebenen. */
+/** The day after the given one. */
 function nextDay(day: string): string {
   const date = new Date(`${day}T12:00:00`);
   date.setDate(date.getDate() + 1);
@@ -671,10 +671,10 @@ function nextDay(day: string): string {
 }
 
 /**
- * Der eingestellte Wert gehört in die Auswahlliste, auch wenn er auf keiner
- * Stufe liegt: er kann aus einer bestehenden Buchung stammen, die vor einer
- * Änderung der Staffelung oder des Maximums entstanden ist. Fehlte er, stünde
- * das Feld leer, während gespeichert würde, was darin steht.
+ * The value currently set belongs in the select list even when it lands on no
+ * step: it may come from an existing booking made before a change to the
+ * gradation or the maximum. If it were missing, the field would stand empty while
+ * what it holds would be saved.
  */
 function withChosen(values: number[], chosen: number): number[] {
   return chosen > 0 && !values.includes(chosen)

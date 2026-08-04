@@ -7,9 +7,9 @@ use App\Models\Role;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Legt Buchungen an und ändert sie. Prüfung und Schreiben laufen in einer
- * Transaktion mit Sperre auf den betroffenen Zeilen — nur so können zwei
- * gleichzeitige Anfragen nicht beide durchkommen.
+ * Creates and changes bookings. Check and write run in one transaction with a
+ * lock on the affected rows — that is the only way two simultaneous requests
+ * cannot both get through.
  */
 final class BookingWriter
 {
@@ -44,9 +44,9 @@ final class BookingWriter
                 'chargeable_duration_minutes' => $result->chargeableDurationMinutes,
             ]);
 
-            // Der Snapshot wird aus dem Prüfergebnis übernommen, nicht neu
-            // aufgelöst — sonst könnte sich zwischen Prüfung und Schreiben etwas
-            // ändern.
+            // The snapshot is taken from the validation result rather than
+            // resolved afresh — otherwise something could change between check
+            // and write.
             $booking->setBlockedWorkplaceIds($result->blockedWorkplaceIds);
 
             return $booking;
@@ -67,8 +67,8 @@ final class BookingWriter
         return DB::transaction(function () use ($booking, $candidate, $role, $booker): Booking {
             $result = $this->check($candidate, $role);
 
-            // Vor dem Füllen festgehalten: danach steht in start_time die neue
-            // Zeit, der Takt-Zeitpunkt wäre dann nicht mehr zu haben.
+            // Recorded before filling: afterwards start_time holds the new time
+            // and the beat would no longer be available.
             $occurrenceStart = $booking->start_time;
             $wasDetached = (bool) $booking->series_detached;
 
@@ -82,10 +82,10 @@ final class BookingWriter
                 'chargeable_duration_minutes' => $result->chargeableDurationMinutes,
             ]);
 
-            // Wer eine Serieninstanz von Hand ändert, koppelt sie ab: das nächste
-            // Bearbeiten der Serie lässt sie danach stehen. Nur bei einer echten
-            // Änderung — ein Formular, das man öffnet und ungeändert speichert,
-            // soll den Termin nicht für immer festnageln.
+            // Changing a series instance by hand detaches it: the next edit of
+            // the series will leave it alone afterwards. Only on an actual change
+            // — a form that is opened and saved unchanged should not pin the
+            // occurrence down forever.
             if ($booking->booking_series_id !== null && $booking->isDirty()) {
                 if (! $wasDetached) {
                     $this->exceptions->record($booking->booking_series_id, $occurrenceStart);
@@ -103,8 +103,8 @@ final class BookingWriter
     }
 
     /**
-     * Löscht eine Buchung. Bei einer Serieninstanz bleibt der gestrichene Termin
-     * gestrichen — sonst käme er beim nächsten Ändern der Serie zurück.
+     * Deletes a booking. For a series instance the cancelled occurrence stays
+     * cancelled — otherwise it would come back on the next change to the series.
      */
     public function delete(Booking $booking): void
     {

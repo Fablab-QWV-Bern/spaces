@@ -31,7 +31,7 @@ function context(partial: Partial<OccupancyContext>): OccupancyContext {
 const at = (time: string) => new Date(`2026-08-03T${time}:00.000Z`);
 
 describe('occupancyAt', () => {
-  it('nennt den belegten Arbeitsplatz mit den Angaben der Buchung', () => {
+  it('names the occupied workplace with the booking details', () => {
     const occupancy = occupancyAt(
       context({ bookings: new Map([['holz-1', [booking({})]]]) }),
       at('08:00'),
@@ -42,7 +42,7 @@ describe('occupancyAt', () => {
     expect(occupancy.get('holz-1')!.isBlockage).toBe(false);
   });
 
-  it('lässt einen freien Arbeitsplatz weg', () => {
+  it('leaves out a free workplace', () => {
     const occupancy = occupancyAt(
       context({ bookings: new Map([['holz-1', [booking({})]]]) }),
       at('10:00'),
@@ -51,14 +51,14 @@ describe('occupancyAt', () => {
     expect(occupancy.size).toBe(0);
   });
 
-  it('zählt den Beginn dazu und das Ende nicht mehr', () => {
+  it('counts the start as included and the end as excluded', () => {
     const bookings = new Map([['holz-1', [booking({})]]]);
 
     expect(occupancyAt(context({ bookings }), at('07:00')).size).toBe(1);
     expect(occupancyAt(context({ bookings }), at('09:00')).size).toBe(0);
   });
 
-  it('belegt auch, was eine Buchung anderswo blockiert', () => {
+  it('also occupies what a booking elsewhere blocks', () => {
     const blocked = booking({ workplaceId: 'holz-1', blockedWorkplaceIds: ['holz-2'] });
     const occupancy = occupancyAt(
       context({ blockages: new Map([['holz-2', [blocked]]]) }),
@@ -68,12 +68,12 @@ describe('occupancyAt', () => {
     const details = occupancy.get('holz-2')!;
 
     expect(details.isBlockage).toBe(true);
-    // Die Karte nennt den Platz, auf dem die Buchung tatsächlich liegt.
+    // The map names the workplace the booking actually sits on.
     expect(details.workplaceName).toBe('Holz 2');
     expect(details.bookedWorkplaceName).toBe('Holz 1');
   });
 
-  it('zieht die eigene Buchung einer Blockierung vor', () => {
+  it('prefers the workplace own booking over a blockage', () => {
     const own = booking({ id: 'eigen', workplaceId: 'holz-1' });
     const foreign = booking({ id: 'fremd', workplaceId: 'holz-2' });
 
@@ -89,7 +89,7 @@ describe('occupancyAt', () => {
     expect(occupancy.get('holz-1')!.isBlockage).toBe(false);
   });
 
-  it('greift aus mehreren Buchungen des Tages die laufende heraus', () => {
+  it('picks the running one out of several bookings on the day', () => {
     const morgens = booking({ id: 'morgens' });
     const abends = booking({
       id: 'abends',

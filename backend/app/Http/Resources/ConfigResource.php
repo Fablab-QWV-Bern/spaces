@@ -12,7 +12,7 @@ class ConfigResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            // MariaDB liefert TIME als "08:00:00", die API will "08:00".
+            // MariaDB returns TIME as "08:00:00", the API wants "08:00".
             'opensAt' => substr($this->opens_at, 0, 5),
             'closesAt' => substr($this->closes_at, 0, 5),
             'maxBookingEndOffsetDays' => $this->max_booking_end_offset_days,

@@ -10,9 +10,9 @@ use Illuminate\Http\Resources\Json\JsonResource;
 /**
  * @mixin BookingSeries
  *
- * `firstInstanceStart` und `firstInstanceEnd` gehen ohne Zeitzonenangabe hinaus —
- * anders als jede andere Zeit in dieser API. Sie sind Wanduhrzeit, und ein
- * angehängtes `Z` machte aus einer Serie um 09:00 im Winter eine um 10:00.
+ * `firstInstanceStart` and `firstInstanceEnd` go out without a timezone — unlike
+ * every other time in this API. They are wall-clock time, and an appended `Z`
+ * would turn a series at 09:00 into one at 10:00 in winter.
  */
 class BookingSeriesResource extends JsonResource
 {
@@ -32,7 +32,7 @@ class BookingSeriesResource extends JsonResource
         ];
     }
 
-    /** "2026-08-03 09:00:00" wird zu "2026-08-03T09:00", ohne dabei umzurechnen. */
+    /** "2026-08-03 09:00:00" becomes "2026-08-03T09:00", without converting. */
     private static function wallClock(string $value): string
     {
         return CarbonImmutable::parse($value)->format('Y-m-d\TH:i');

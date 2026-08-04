@@ -2,29 +2,28 @@ import { DestroyRef, Injectable, effect, inject, signal } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { RouterStateSnapshot, TitleStrategy } from '@angular/router';
 
-/** Steht hinten in jedem Fenstertitel — ein Reiter nennt sonst nur ein Datum. */
+/** Appended to every window title — a tab would otherwise name only a date. */
 export const APP_NAME = 'Quartierwerkstatt';
 
 /**
- * Der Fenstertitel, zweistufig: die Route weiss, welche Seite offen ist, die
- * Ansicht weiss, was auf ihr steht — "Arbeitsplatz im Monat" gegen "Werkbank /
- * August 2026". Das Zweite kann erst nennen, wer die Daten hat; das Erste steht
- * schon beim Navigieren fest und trägt so lange.
+ * The window title, in two stages: the route knows which page is open, the view
+ * knows what is on it — "Arbeitsplatz im Monat" versus "Werkbank / August 2026".
+ * Only whoever has the data can name the second; the first is settled at
+ * navigation time and carries until then.
  *
- * Beides läuft hier zusammen und nicht in zwei Schreibern, weil sonst die
- * Reihenfolge entschiede: die Strategie schreibt beim Navigieren, eine Ansicht
- * in einem Effekt irgendwann danach — wer zuletzt schreibt, gewinnt, und das
- * ist nicht verlässlich derselbe. Angemeldet wird darum nur die Quelle,
- * geschrieben wird an einer Stelle.
+ * Both converge here rather than in two writers, because otherwise the order
+ * would decide: the strategy writes on navigation, a view in an effect some time
+ * afterwards — whoever writes last wins, and that is not reliably the same one.
+ * So only the source is registered; writing happens in one place.
  */
 @Injectable({ providedIn: 'root' })
 export class PageTitle {
   private readonly title = inject(Title);
 
-  /** Was die Route weiss. */
+  /** What the route knows. */
   private readonly routeTitle = signal<string | undefined>(undefined);
 
-  /** Was die sichtbare Ansicht weiss, solange es sie gibt. */
+  /** What the visible view knows, for as long as it exists. */
   private readonly detail = signal<(() => string | null) | null>(null);
 
   constructor() {
@@ -41,10 +40,10 @@ export class PageTitle {
   }
 
   /**
-   * Die Ansicht meldet ihren Titel an und beim Zerstören wieder ab. An- und
-   * Abmeldung geschehen beim Aktivieren der Route und damit vor dem Titel der
-   * Route — eine abgelöste Ansicht kann den Titel der nächsten also nicht mehr
-   * überschreiben.
+   * The view registers its title and deregisters it on destruction. Registration
+   * and deregistration happen when the route activates, and therefore before the
+   * route's title — so a replaced view can no longer overwrite the next one's
+   * title.
    */
   refine(part: () => string | null): void {
     const destroyRef = inject(DestroyRef);
@@ -69,10 +68,10 @@ export class AppTitleStrategy extends TitleStrategy {
 }
 
 /**
- * Verfeinert den Titel der Route um das, was nur die Ansicht weiss. Gibt die
- * Funktion null zurück, bleibt der Titel der Route stehen.
+ * Refines the route's title with what only the view knows. If the function
+ * returns null, the route's title stays in place.
  *
- * Aufzurufen im Konstruktor einer Ansicht.
+ * To be called in the constructor of a view.
  */
 export function refinePageTitle(part: () => string | null): void {
   inject(PageTitle).refine(part);

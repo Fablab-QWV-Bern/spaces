@@ -29,7 +29,7 @@ class Booking extends Model
     protected function casts(): array
     {
         return [
-            // UTC, wie alles in dieser Tabelle.
+            // UTC, like everything in this table.
             'start_time' => 'immutable_datetime',
             'end_time' => 'immutable_datetime',
             'usage_rules_acknowledged' => 'boolean',
@@ -53,13 +53,13 @@ class Booking extends Model
         return $this->end_time->isPast();
     }
 
-    /** @var list<string>|null Memoisierter Snapshot, siehe blockedWorkplaceIds(). */
+    /** @var list<string>|null Memoised snapshot, see blockedWorkplaceIds(). */
     private ?array $blockedList = null;
 
     /**
-     * Der beim Erstellen bzw. Ändern festgehaltene Snapshot der blockierten
-     * Arbeitsplätze. Bewusst kein Eloquent-Verhältnis: die Liste zeigt auf
-     * Arbeitsplätze, die inzwischen gelöscht sein dürfen.
+     * The snapshot of blocked workplaces recorded on creation or change.
+     * Deliberately not an Eloquent relationship: the list points at workplaces
+     * that may have been deleted since.
      *
      * @return list<string>
      */
@@ -73,8 +73,8 @@ class Booking extends Model
     }
 
     /**
-     * Lädt die Snapshots einer ganzen Sammlung in einer Abfrage. Die
-     * Kalenderansicht holt hunderte Buchungen auf einmal.
+     * Loads the snapshots of a whole collection in one query. The calendar view
+     * fetches hundreds of bookings at once.
      *
      * @param  Collection<int, self>  $bookings
      */

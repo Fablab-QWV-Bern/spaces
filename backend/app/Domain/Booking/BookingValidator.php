@@ -8,9 +8,9 @@ use App\Models\Workplace;
 use Carbon\CarbonImmutable;
 
 /**
- * Prüft eine Buchung gegen sämtliche Regeln der Spec. Einziger Ort, an dem diese
- * Regeln implementiert sind — das Frontend fragt über `POST /bookings/validate`
- * hier nach, statt sie nachzubauen.
+ * Checks a booking against all the rules of the spec. The only place where these
+ * rules are implemented — the frontend asks here via `POST /bookings/validate`
+ * rather than reimplementing them.
  */
 final class BookingValidator
 {
@@ -38,7 +38,7 @@ final class BookingValidator
         $violations = [];
         $latestEnd = null;
 
-        // --- Raster und Reihenfolge ---------------------------------------
+        // --- Grid and ordering ---------------------------------------------
 
         if (! $this->isOnGrid($candidate->startTime) || ! $this->isOnGrid($candidate->endTime)) {
             $violations[] = ViolationCode::NotOnGrid;
@@ -48,7 +48,7 @@ final class BookingValidator
             $violations[] = ViolationCode::NotOnGrid;
         }
 
-        // --- Zustand des Arbeitsplatzes -----------------------------------
+        // --- State of the workplace ----------------------------------------
 
         if (! $workplace->isBookable()) {
             $violations[] = ViolationCode::WorkplaceNotBookable;
@@ -58,12 +58,12 @@ final class BookingValidator
             $violations[] = ViolationCode::UsageRulesNotAcknowledged;
         }
 
-        // --- Zeitregeln ----------------------------------------------------
+        // --- Time rules ------------------------------------------------------
 
-        // Nur beim Anlegen: eine bereits laufende Buchung soll sich weiterhin
-        // ändern lassen, und ihr Beginn liegt naturgemäss in der Vergangenheit.
-        // Dass eine vollständig vergangene Buchung unantastbar ist, regelt die
-        // Endzeit-Prüfung in der HTTP-Schicht.
+        // Only when creating: a booking already under way should still be
+        // changeable, and its start naturally lies in the past. That a fully past
+        // booking is untouchable is handled by the end-time check in the HTTP
+        // layer.
         if (! $candidate->isEdit() && $candidate->startTime->isPast()) {
             $violations[] = ViolationCode::StartsInPast;
         }
@@ -91,7 +91,7 @@ final class BookingValidator
             }
         }
 
-        // --- Kollisionen ---------------------------------------------------
+        // --- Collisions ------------------------------------------------------
 
         $blocked = $this->resolver->resolve($candidate->workplaceId);
 

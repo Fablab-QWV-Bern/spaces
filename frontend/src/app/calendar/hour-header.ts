@@ -3,11 +3,11 @@ import { Component, computed, input } from '@angular/core';
 import { TimeAxis, gridTemplateColumns, lineName } from './time-axis';
 
 /**
- * Die Stundenbeschriftung über einer Zeitachse.
+ * The hour labels above a time axis.
  *
- * Steht für sich, weil zwei Ansichten dieselbe Achse überschreiben: die
- * Tagesansicht über den Arbeitsplatzzeilen, die Einzelansicht über den
- * Tageszeilen. Unterschiedlich ist nur, was in den Zeilen darunter steht.
+ * Stands on its own because two views head the same axis: the day view above the
+ * workplace rows, the single-workplace view above the day rows. The only
+ * difference is what stands in the rows beneath.
  */
 @Component({
   selector: 'app-hour-header',
@@ -40,7 +40,7 @@ export class HourHeader {
 
   protected readonly template = computed(() => gridTemplateColumns(this.axis()));
 
-  /** Eine Stundenbeschriftung spannt über ihre vier Viertelstunden. */
+  /** An hour label spans its four quarter hours. */
   protected column(hour: number): string {
     const axis = this.axis();
 

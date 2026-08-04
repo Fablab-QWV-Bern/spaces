@@ -9,19 +9,18 @@ use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 
 /**
- * Legt das Foto eines Arbeitsplatzes ab und leitet ein Vorschaubild davon ab.
+ * Stores a workplace's photo and derives a thumbnail from it.
  *
- * Gerechnet wird mit GD und nicht mit einer Bildbibliothek aus Composer: das
- * Hosting bringt GD mit, und `vendor/` wird per FTP mitgeliefert — jede
- * zusätzliche Abhängigkeit ist dort Ballast. Für "gross skalieren, klein
- * speichern" reicht GD.
+ * The work is done with GD rather than with an image library from Composer: the
+ * hosting ships GD, and `vendor/` travels by FTP — every additional dependency is
+ * ballast there. For "scale down, store small" GD is enough.
  *
- * Beide Bilder werden als JPEG abgelegt, unabhängig vom Eingangsformat. Ein
- * durchsichtiges PNG bekommt dabei weissen Grund statt schwarzem.
+ * Both images are stored as JPEG regardless of the input format. A transparent
+ * PNG gets a white background rather than a black one in the process.
  */
 final class WorkplacePhotos
 {
-    /** Kantenlänge, auf die das Original heruntergerechnet wird. */
+    /** Edge length the original is scaled down to. */
     private const MAX_EDGE = 1600;
 
     private const THUMBNAIL_EDGE = 400;
@@ -38,15 +37,15 @@ final class WorkplacePhotos
 
         $this->remove($workplace);
 
-        // Ein Zeitstempel im Namen, damit der Browser nach dem Ersetzen nicht
-        // das alte Bild aus dem Cache zeigt — die URL ist sonst dieselbe.
+        // A timestamp in the name so that after a replacement the browser does
+        // not show the old image from cache — the URL would otherwise be the same.
         $stamp = now()->format('YmdHis');
 
         $photo = "{$directory}/foto-{$stamp}.jpg";
         $thumbnail = "{$directory}/vorschau-{$stamp}.jpg";
 
-        // Beide Grössen entstehen aus dem Original, nicht die kleine aus der
-        // grossen — zweimal skalieren kostet Schärfe.
+        // Both sizes are produced from the original, not the small one from the
+        // large one — scaling twice costs sharpness.
         foreach ([[$photo, self::MAX_EDGE], [$thumbnail, self::THUMBNAIL_EDGE]] as [$path, $edge]) {
             $scaled = $this->fit($image, $edge);
             $disk->put($path, $this->encode($scaled));
@@ -64,7 +63,7 @@ final class WorkplacePhotos
         ]);
     }
 
-    /** Löscht die Dateien und leert die Spalten. Ohne Foto passiert nichts. */
+    /** Deletes the files and clears the columns. With no photo, nothing happens. */
     public function remove(Workplace $workplace): void
     {
         $disk = Storage::disk('public');
@@ -84,16 +83,16 @@ final class WorkplacePhotos
         $image = $contents === false ? false : imagecreatefromstring($contents);
 
         if ($image === false) {
-            throw new RuntimeException('Das Bild liess sich nicht lesen.');
+            throw new RuntimeException('The image could not be read.');
         }
 
         return $image;
     }
 
     /**
-     * Dreht das Bild so, wie die Kamera es gemeint hat. Ohne das liegen Fotos
-     * vom Telefon quer — die Ausrichtung steckt bei JPEG nur in den
-     * EXIF-Daten, und die überleben das Neuzeichnen nicht.
+     * Rotates the image the way the camera meant it. Without this, photos from a
+     * phone lie sideways — for JPEG the orientation lives only in the EXIF data,
+     * and that does not survive the redraw.
      */
     private function orient(GdImage $image, string $path): GdImage
     {
@@ -124,7 +123,7 @@ final class WorkplacePhotos
         return $rotated;
     }
 
-    /** Verkleinert auf die längere Kante; kleinere Bilder bleiben, wie sie sind. */
+    /** Scales down to the longer edge; smaller images stay as they are. */
     private function fit(GdImage $image, int $edge): GdImage
     {
         $width = imagesx($image);
@@ -138,7 +137,7 @@ final class WorkplacePhotos
         $scaled = imagescale($image, (int) round($width * $edge / $longer));
 
         if ($scaled === false) {
-            throw new RuntimeException('Das Bild liess sich nicht skalieren.');
+            throw new RuntimeException('The image could not be scaled.');
         }
 
         return $scaled;
@@ -146,8 +145,8 @@ final class WorkplacePhotos
 
     private function encode(GdImage $image): string
     {
-        // Durchsichtigkeit auf Weiss legen: JPEG kennt keinen Alphakanal, und
-        // ohne diesen Zwischenschritt würde daraus Schwarz.
+        // Lay transparency onto white: JPEG has no alpha channel, and without
+        // this intermediate step it would turn black.
         $flat = imagecreatetruecolor(imagesx($image), imagesy($image));
         imagefill($flat, 0, 0, imagecolorallocate($flat, 255, 255, 255));
         imagecopy($flat, $image, 0, 0, 0, 0, imagesx($image), imagesy($image));

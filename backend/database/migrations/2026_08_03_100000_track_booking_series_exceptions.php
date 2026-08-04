@@ -5,27 +5,26 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Zwei Merkmale, die zusammen dafür sorgen, dass das Ändern einer Serie
- * individuelle Anpassungen nicht mehr abräumt. Sie tun bewusst zweierlei:
- * das Flag sagt „diese Zeile nicht anfassen", die Tabelle sagt „zu diesem
- * Zeitpunkt nichts erzeugen".
+ * Two markers that together ensure changing a series no longer clears away
+ * individual adjustments. They deliberately do two different things: the flag
+ * says "do not touch this row", the table says "produce nothing at this beat".
  */
 return new class extends Migration
 {
     public function up(): void
     {
         Schema::table('bookings', function (Blueprint $table) {
-            // Gesetzt, sobald jemand eine Serieninstanz von Hand ändert.
+            // Set as soon as somebody changes a series instance by hand.
             $table->boolean('series_detached')->default(false)->after('booking_series_id');
         });
 
         Schema::create('booking_series_exceptions', function (Blueprint $table) {
             $table->string('booking_series_id', 26);
 
-            // Der Takt-Zeitpunkt, an dem die Serie nichts mehr erzeugen soll —
-            // UTC, wie alle Zeitpunkte. Es entsteht eine Zeile, wenn eine Instanz
-            // gelöscht wird, und eine, wenn eine Instanz erstmals von ihrem
-            // Zeitpunkt wegbewegt wird; sonst käme dort ein Duplikat nach.
+            // The beat at which the series should no longer produce anything —
+            // UTC, like all instants. A row appears when an instance is deleted,
+            // and when an instance is first moved away from its time; otherwise a
+            // duplicate would follow at that spot.
             $table->dateTime('occurrence_start');
 
             $table->primary(['booking_series_id', 'occurrence_start'], 'bse_primary');

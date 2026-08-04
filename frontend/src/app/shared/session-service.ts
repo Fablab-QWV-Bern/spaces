@@ -18,12 +18,12 @@ export class SessionService {
   readonly canManageWorkplaces = computed(
     () => this.session()?.permissions.manageWorkplaces ?? false,
   );
-  /** Deckt beides ab: Rollen und die globale Konfiguration. */
+  /** Covers both: roles and the global configuration. */
   readonly canManageRoles = computed(() => this.session()?.permissions.manageRoles ?? false);
   readonly canManageBookingSeries = computed(
     () => this.session()?.permissions.manageBookingSeries ?? false,
   );
-  /** Ob überhaupt eine Verwaltungsansicht offensteht. */
+  /** Whether any admin view is available at all. */
   readonly canManageAnything = computed(
     () =>
       this.canManageAreas() ||
@@ -45,7 +45,7 @@ export class SessionService {
     );
   }
 
-  /** Für die Rollenknöpfe im Anmeldedialog — kein Freitextfeld. */
+  /** For the role buttons in the login dialog — not a free-text field. */
   loginableRoles(): Observable<string[]> {
     return listLoginableRoles(this.http, this.rootUrl).pipe(map((response) => response.body));
   }
@@ -57,7 +57,7 @@ export class SessionService {
     );
   }
 
-  /** Nach dem Abmelden gilt wieder die anonyme Rolle — die holen wir uns frisch. */
+  /** After logging out the anonymous role applies again — we fetch it afresh. */
   logout(): Observable<Session> {
     return logout(this.http, this.rootUrl).pipe(switchMap(() => this.load()));
   }

@@ -1,10 +1,10 @@
 :host {
   --gutter: 1.5rem;
 
-  // Wie die Kalenderansichten: die Ansicht füllt das Fenster und scrollt nicht
-  // selbst — gescrollt wird in `.stage`. Genau dadurch bleibt die Kopfleiste
-  // stehen, ohne dafür kleben zu müssen: sie liegt ausserhalb des
-  // Scrollcontainers und kommt gar nicht erst in Bewegung.
+  // Like the calendar views: the view fills the window and does not scroll
+  // itself — scrolling happens in `.stage`. That is exactly what keeps the header
+  // in place without it having to stick: it lies outside the scroll container and
+  // never starts moving in the first place.
   display: flex;
   flex-direction: column;
   height: 100dvh;
@@ -20,23 +20,23 @@
 
 .stage {
   flex: 1;
-  // Ohne das wächst ein Flex-Element auf seinen Inhalt statt zu scrollen.
+  // Without this a flex item grows to its content instead of scrolling.
   min-height: 0;
   padding: 0;
   overflow-y: auto;
 }
 
-// Der Plan nimmt die volle Breite und wird so hoch, wie sein Seitenverhältnis
-// es verlangt — bei einem hochkant gezeichneten Grundriss ist das mehr als das
-// Fenster hergibt, und man scrollt. Lieber gross und geblättert als ganz
-// sichtbar und unleserlich: auf einem Plan will man Beschriftungen lesen.
+// The plan takes the full width and becomes as tall as its aspect ratio demands
+// — for a portrait floor plan that is more than the window offers, so it scrolls.
+// Better large and scrolled than fully visible and illegible: on a plan one wants
+// to read the labels.
 //
-// Das Seitenverhältnis ist dabei nicht Kosmetik, sondern die Bedingung dafür,
-// dass die Figuren sitzen. Sie stehen in Prozent der Kartenfläche; bliebe
-// irgendwo ein Rand, weil das SVG in einem Kasten anderen Zuschnitts steckt,
-// zeigten dieselben Prozente daneben. Darum bekommt der Kasten das Verhältnis
-// der `viewBox` — und nicht das SVG einen Kasten, in den es sich einpassen
-// müsste.
+// The aspect ratio is not cosmetic here but the precondition for the figures
+// sitting right. They are positioned in percentages of the map area; if a margin
+// were left anywhere because the SVG sits in a box of a different shape, those
+// same percentages would point somewhere else. That is why the box gets the
+// `viewBox`'s ratio — rather than the SVG getting a box it has to fit itself
+// into.
 .plan {
   position: relative;
   aspect-ratio: var(--aspect-number, 1);
@@ -45,13 +45,13 @@
   overflow: hidden;
 }
 
-// Der eingehängte Grundriss. Absolut gesetzt, damit seine Höhe von 100% einen
-// festen Bezug hat — eine aus dem Seitenverhältnis abgeleitete Höhe ist nicht
-// überall eine, an der sich Prozente ausrechnen lassen.
+// The grafted-in floor plan. Positioned absolutely so that its height of 100% has
+// a fixed reference — a height derived from the aspect ratio is not everywhere one
+// that percentages can be computed against.
 //
-// Er ist Hintergrund und fängt keine Klicks; anklickbar sind allein die Figuren
-// darüber. Das erspart einen Selektor, der in den eingehängten Baum hineinragt:
-// `pointer-events` vererbt sich.
+// It is background and catches no clicks; only the figures above it are
+// clickable. That saves a selector reaching into the grafted tree:
+// `pointer-events` is inherited.
 .drawing {
   position: absolute;
   inset: 0;

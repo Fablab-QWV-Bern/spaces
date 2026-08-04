@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Setzt die `x-permissions` der API-Spec durch. Verwendung: `permission:viewBookings`.
+ * Enforces the `x-permissions` of the API spec. Usage: `permission:viewBookings`.
  */
 class EnsurePermission
 {

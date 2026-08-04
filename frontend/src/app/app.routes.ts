@@ -15,32 +15,32 @@ import { WeekCalendar } from './calendar/week-calendar';
 import { WorkplaceCalendar } from './calendar/workplace-calendar';
 import { MapView } from './map/map-view';
 
-// Jede Zoomstufe ist eine eigene Route: so bleibt eine Ansicht verlinkbar, und
-// der Zurück-Knopf führt zur vorigen Stufe statt zum vorigen Datum. Das Datum
-// reist als Abfrageparameter `datum` mit (siehe `date-in-url.ts`).
-// Die Titel hier sind die Auskunft, die ohne Daten möglich ist — sie sagen,
-// welche Seite offen ist. Was auf ihr steht, welcher Tag also und welcher
-// Arbeitsplatz, tragen die Ansichten selbst nach (`shared/page-title.ts`).
+// Every zoom level is its own route: that keeps a view linkable, and the back
+// button leads to the previous level rather than to the previous date. The date
+// travels along as the query parameter `datum` (see `date-in-url.ts`).
+// The titles here are the information available without data — they say which
+// page is open. What is on it, which day and which workplace, is added by the
+// views themselves (`shared/page-title.ts`).
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'tag' },
   { path: 'tag', component: DayCalendar, title: 'Tagesansicht' },
   { path: 'woche', component: WeekCalendar, title: 'Wochenansicht' },
 
-  // Die Einzelansicht ist keine dritte Zoomstufe, sondern eine eigene Sicht:
-  // fix ein Monat, ein Tag je Zeile. Der Arbeitsplatz reist als `arbeitsplatz`
-  // mit, damit auch sie verlinkbar ist.
+  // The single-workplace view is not a third zoom level but a view of its own: a
+  // fixed month, one day per row. The workplace travels along as `arbeitsplatz`
+  // so that it too is linkable.
   { path: 'arbeitsplatz', component: WorkplaceCalendar, title: 'Ein Arbeitsplatz im Monat' },
 
-  // Die Karte trägt kein Datum: sie zeigt, wer jetzt da ist, und fragt das jede
-  // Minute neu nach. Die Uhrzeit aus ihrer Überschrift gehört trotzdem nicht in
-  // den Titel — sie schriebe den Reiter jede Minute neu.
+  // The map carries no date: it shows who is here now and asks for it afresh
+  // every minute. The time from its heading nevertheless does not belong in the
+  // title — it would rewrite the tab every minute.
   { path: 'karte', component: MapView, title: 'Übersichtskarte — wer jetzt da ist' },
   { path: 'buchen', component: BookingForm, title: 'Neue Buchung' },
 
-  // Die Verwaltung ist nicht durch einen Guard geschützt, sondern durch das
-  // Backend: die Ansichten laden die Sitzung und zeigen einen Hinweis, wenn die
-  // Rolle nicht darf. Ein Guard könnte nur wiederholen, was der Server ohnehin
-  // entscheidet — und müsste dafür raten, solange die Sitzung noch lädt.
+  // The admin area is not protected by a guard but by the backend: the views
+  // load the session and show a notice when the role is not permitted. A guard
+  // could only repeat what the server decides anyway — and would have to guess
+  // while the session is still loading.
   { path: 'verwaltung', pathMatch: 'full', redirectTo: 'verwaltung/arbeitsplaetze' },
   { path: 'verwaltung/bereiche', component: AreaList, title: 'Bereiche verwalten' },
   { path: 'verwaltung/bereiche/neu', component: AreaForm, title: 'Neuer Bereich' },

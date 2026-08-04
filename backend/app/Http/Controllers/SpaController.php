@@ -5,9 +5,9 @@ namespace App\Http\Controllers;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
- * Liefert die gebaute Angular-Anwendung aus. Kommt nur zum Zug, wenn der
- * Webserver unter dem Pfad keine Datei gefunden hat — die Router-Pfade der SPA
- * (`/tag`, `/woche`, …) liegen nicht auf der Platte.
+ * Serves the built Angular application. Only comes into play when the web server
+ * found no file at the path — the SPA's router paths (`/tag`, `/woche`, …) do not
+ * exist on disk.
  */
 class SpaController extends Controller
 {
@@ -15,8 +15,8 @@ class SpaController extends Controller
     {
         $index = public_path('index.html');
 
-        // In der Entwicklung liefert `ng serve` die Oberfläche; unter
-        // `artisan serve` gibt es sie schlicht nicht.
+        // In development `ng serve` serves the interface; under `artisan serve`
+        // it simply does not exist.
         abort_unless(is_file($index), 404, 'Die Oberfläche ist nicht gebaut.');
 
         return response()->file($index);

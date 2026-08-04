@@ -5,8 +5,8 @@ namespace App\Support;
 use App\Models\Role;
 
 /**
- * Die Rolle, als die der aktuelle Aufruf handelt. Ohne Anmeldung ist das die
- * Rolle mit `is_anonymous` — es gibt keinen Zustand "kein Benutzer".
+ * The role the current call acts as. Without a login that is the role with
+ * `is_anonymous` — there is no "no user" state.
  */
 final class CurrentRole
 {

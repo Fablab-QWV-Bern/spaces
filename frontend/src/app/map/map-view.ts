@@ -18,29 +18,29 @@ import { FIGURE_ID, Box, parseViewBox, placeCentered } from './map-geometry';
 import { MapFigure } from './map-figure';
 import { occupancyAt } from './occupancy';
 
-/** Wie oft die Karte nachfragt, wer jetzt da ist. */
+/** How often the map asks again who is here now. */
 const REFRESH_MS = 60_000;
 
-/** Wo der Grundriss liegt. Er wird als Datei ausgeliefert, siehe unten. */
+/** Where the floor plan lives. It is shipped as a file, see below. */
 const PLAN_URL = '/karte.svg';
 
 /**
- * Die Übersichtskarte: der Grundriss der Werkstatt, und auf jedem belegten
- * Arbeitsplatz eine Figur. Ein Klick darauf zeigt dieselbe Detailkarte wie ein
- * Balken im Kalender.
+ * The overview map: the floor plan of the workshop, with a figure on every
+ * occupied workplace. Clicking one shows the same detail card as a bar in the
+ * calendar.
  *
- * Anders als die Kalenderansichten kennt sie kein Datum — sie zeigt den
- * Augenblick und fragt ihn jede Minute neu nach. Deshalb trägt ihre Kopfleiste
- * kein Blättern und keine Datumswahl, nur den Weg zurück in den Kalender.
+ * Unlike the calendar views it knows no date — it shows the present moment and
+ * asks for it afresh every minute. That is why its header carries no paging and
+ * no date picker, only the way back into the calendar.
  *
- * Der Grundriss wird zur Laufzeit geholt und nicht mit übersetzt: er ist eine
- * ausgelieferte Datei, kein Quelltext. Wer die Werkstatt umstellt, tauscht
- * `public/karte.svg` und baut nichts neu — und die 300 kB des Plans belasten
- * nicht das Bündel jeder anderen Ansicht.
+ * The floor plan is fetched at runtime and not compiled in: it is a shipped file,
+ * not source code. Rearranging the workshop means swapping `public/karte.svg` and
+ * rebuilding nothing — and the plan's 300 kB do not burden the bundle of every
+ * other view.
  *
- * Eingehängt wird er von Hand statt über `innerHTML`: Angulars Bereinigung
- * entfernt `id`-Attribute, und die sind hier der ganze Punkt — an ihnen hängt
- * die Zuordnung zu den Arbeitsplätzen.
+ * It is grafted in by hand rather than via `innerHTML`: Angular's sanitisation
+ * strips `id` attributes, and those are the whole point here — the mapping to the
+ * workplaces hangs off them.
  */
 @Component({
   selector: 'app-map-view',
@@ -60,13 +60,13 @@ export class MapView {
   private readonly plan = signal<string | null>(null);
   private readonly geometry = signal<PlanGeometry | null>(null);
 
-  /** Kein Signal: „schon eingehängt" ist kein Zustand der Ansicht, sondern die
-   *  Bremse des Effekts. Als Signal läse er, was er selbst schreibt. */
+  /** Not a signal: "already grafted in" is not a state of the view but the
+   *  effect's brake. As a signal it would read what it writes itself. */
   private mounted = false;
 
   constructor() {
-    // Der Kalenderspeicher lädt einen Tag — heute. Damit stehen die Buchungen
-    // bereit, aus denen sich der Augenblick ergibt.
+    // The calendar store loads one day — today. That makes available the bookings
+    // from which the present moment follows.
     this.store.span.set('day');
     this.store.goToToday();
 
@@ -75,8 +75,8 @@ export class MapView {
       error: () => this.planError.set('Der Grundriss konnte nicht geladen werden.'),
     });
 
-    // Über Mitternacht hinweg wechselt `goToToday` auch den geladenen Tag; ein
-    // blosses `load()` bliebe am gestrigen hängen.
+    // Across midnight `goToToday` also switches the loaded day; a bare `load()`
+    // would stay stuck on yesterday's.
     const timer = setInterval(() => {
       this.now.set(new Date());
       this.store.goToToday();
@@ -84,8 +84,9 @@ export class MapView {
 
     inject(DestroyRef).onDestroy(() => clearInterval(timer));
 
-    // Einhängen, sobald alle drei da sind: der Plan, sein Behälter und die
-    // Arbeitsplätze — ohne letztere wüsste das Messen nicht, wonach es sucht.
+    // Graft it in as soon as all three are there: the plan, its container and the
+    // workplaces — without the last, the measuring would not know what to look
+    // for.
     effect(() => {
       const plan = this.plan();
       const drawing = this.drawing()?.nativeElement;
@@ -102,7 +103,7 @@ export class MapView {
 
   protected readonly heading = computed(() => `Jetzt, ${formatTime(this.now())} Uhr`);
 
-  /** Das Seitenverhältnis des Plans, als blosse Zahl — `map-view.scss` rechnet damit. */
+  /** The plan's aspect ratio, as a bare number — `map-view.scss` computes with it. */
   protected readonly aspect = computed(() => {
     const geometry = this.geometry();
 
@@ -112,10 +113,10 @@ export class MapView {
   protected readonly figureBox = computed(() => this.geometry()?.figure ?? null);
 
   /**
-   * Die Figuren: für jeden belegten Arbeitsplatz, der auf dem Plan vorkommt,
-   * eine. Ein Arbeitsplatz ohne Element auf der Karte erscheint nicht, ein
-   * Element ohne Arbeitsplatz bleibt, wie es gezeichnet ist — beides ist kein
-   * Fehler, sondern der erwartete Zustand einer Karte, die von Hand entsteht.
+   * The figures: one for every occupied workplace that appears on the plan. A
+   * workplace with no element on the map does not appear, and an element with no
+   * workplace stays as it is drawn — neither is an error, but the expected state
+   * of a map that is produced by hand.
    */
   protected readonly figures = computed(() => {
     const geometry = this.geometry();
@@ -147,11 +148,11 @@ export class MapView {
   });
 
   /**
-   * Hängt den Plan ein und misst ihn — einmal, sobald beides da ist.
+   * Grafts the plan in and measures it — once, as soon as both are there.
    *
-   * Gemessen wird am eingehängten Dokument und nicht am Quelltext: `getBBox()`
-   * kennt Gruppen, Transformationen und Kurven, ein Ausrechnen aus den
-   * Pfaddaten hiesse, den Renderer nachzubauen.
+   * Measuring happens on the grafted document rather than on the source text:
+   * `getBBox()` knows about groups, transforms and curves, whereas computing from
+   * the path data would mean reimplementing the renderer.
    */
   private mountPlan(svg: string, drawing: HTMLElement, workplaces: Workplace[]): void {
     const root = new DOMParser().parseFromString(svg, 'image/svg+xml').documentElement;
@@ -192,10 +193,10 @@ export class MapView {
       }
     }
 
-    // Die Vorlage wandert nach dem Messen in die `defs`: dort wird sie nicht
-    // mehr gezeichnet, bleibt für `<use>` aber erreichbar. Ohne das stünde auf
-    // dem Plan eine Figur ohne Arbeitsplatz herum. Erst messen, dann verstecken
-    // — was nicht gezeichnet wird, hat auch keinen Kasten.
+    // After measuring, the template moves into the `defs`: there it is no longer
+    // drawn but stays reachable for `<use>`. Without this a figure with no
+    // workplace would stand around on the plan. Measure first, then hide — what is
+    // not drawn has no bounding box either.
     defsOf(plan).append(figure);
 
     this.geometry.set({ viewBox, figure: figureBox, boxes });
@@ -204,9 +205,9 @@ export class MapView {
 
 interface PlanGeometry {
   viewBox: Box;
-  /** Der Kasten der Vorlage, aus der jede Figur entsteht. */
+  /** The box of the template every figure is made from. */
   figure: Box;
-  /** Der Kasten je Arbeitsplatz, den der Plan zeigt. */
+  /** The box for each workplace the plan shows. */
   boxes: Map<string, Box>;
 }
 

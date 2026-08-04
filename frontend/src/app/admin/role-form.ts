@@ -6,19 +6,19 @@ import { map, of, switchMap } from 'rxjs';
 
 import { ApiConfiguration } from '../api/api-configuration';
 import { createRole, listRoles, updateRole } from '../api/functions';
-// Umbenannt, damit das generierte Modell das globale Error nicht verdeckt.
+// Renamed so that the generated model does not shadow the global Error.
 import { Error as ApiError, Permissions, Role, RoleWrite } from '../api/models';
 import { refinePageTitle } from '../shared/page-title';
 import { SessionService } from '../shared/session-service';
 import { AdminHeader } from './admin-header';
 import { PERMISSION_LABELS, PermissionKey } from './permission-labels';
 
-/** Kürzer nimmt das Backend es nicht an. */
+/** The backend will not accept anything shorter. */
 const MIN_PASSWORD_LENGTH = 8;
 
 interface RoleFormValue {
   name: string;
-  /** Leer heisst beim Bearbeiten "bleibt, wie es ist". */
+  /** When editing, empty means "stays as it is". */
   password: string;
 }
 
@@ -48,10 +48,10 @@ export class RoleForm {
 
   protected readonly labels = PERMISSION_LABELS;
 
-  /** Gesetzt, wenn eine bestehende Rolle bearbeitet wird. */
+  /** Set when an existing role is being edited. */
   protected readonly editing = signal<Role | null>(null);
 
-  /** Die übrigen Rollen — für die Frage, wer sonst noch verwalten darf. */
+  /** The other roles — for the question of who else may manage. */
   private readonly others = signal<Role[]>([]);
 
   protected readonly loading = signal(true);
@@ -60,27 +60,27 @@ export class RoleForm {
   protected readonly saveError = signal<string | null>(null);
 
   /**
-   * Die Berechtigungen stehen neben dem Formularmodell: eine Reihe von
-   * Ankreuzfeldern führt sich als Objekt einfacher als als Feld — wie die
-   * blockierten Arbeitsplätze im Arbeitsplatzformular.
+   * The permissions live beside the form model: a row of checkboxes is easier to
+   * carry as an object than as a field — like the blocked workplaces in the
+   * workplace form.
    */
   protected readonly permissions = signal<Permissions>({ ...NO_PERMISSIONS });
 
   protected readonly model = signal<RoleFormValue>({ name: '', password: '' });
 
-  /** Wie im Buchungsformular: nur Pflichtfelder hier, alles Weitere im Backend. */
+  /** As in the booking form: only required fields here, everything else in the backend. */
   protected readonly roleForm = form(this.model, (path) => {
     required(path.name, { message: 'Bitte einen Namen angeben.' });
   });
 
   protected readonly heading = computed(() => (this.editing() ? 'Rolle bearbeiten' : 'Neue Rolle'));
 
-  /** Die anonyme Rolle hat kein Kennwort — sie ist der Zustand vor der Anmeldung. */
+  /** The anonymous role has no password — it is the state before logging in. */
   protected readonly isAnonymous = computed(() => this.editing()?.isAnonymous ?? false);
 
   /**
-   * Ob diese Rolle die einzige verwaltende ist. Dann bleibt das Kreuz stehen:
-   * ohne eine solche Rolle käme niemand mehr an die Verwaltung.
+   * Whether this role is the only managing one. Then the checkbox stays put:
+   * without such a role nobody could reach the admin area any more.
    */
   protected readonly lastAdmin = computed(
     () =>
@@ -88,7 +88,7 @@ export class RoleForm {
       !this.others().some((role) => role.permissions.manageRoles),
   );
 
-  /** Ein neues Kennwort braucht es beim Anlegen immer, beim Bearbeiten nie. */
+  /** A new password is always needed when creating, never when editing. */
   protected readonly passwordRequired = computed(() => this.editing() === null);
 
   protected readonly passwordTooShort = computed(() => {
@@ -106,9 +106,8 @@ export class RoleForm {
   );
 
   constructor() {
-    // Der Name zuerst: welcher Rolle bearbeitet wird, ist im Reiter die
-    // eigentliche Auskunft. Beim Anlegen gibt es keinen, dann bleibt der
-    // Titel der Route stehen.
+    // The name first: which role is being edited is the real information in the
+    // tab. When creating there is none, and then the route's title stays.
     refinePageTitle(() => {
       const editing = this.editing();
 
@@ -117,8 +116,8 @@ export class RoleForm {
 
     const id = this.route.snapshot.paramMap.get('id');
 
-    // Die ganze Liste statt nur der einen Rolle: für die Frage, ob dies die
-    // letzte verwaltende Rolle ist, braucht es ohnehin die anderen.
+    // The whole list rather than just the one role: answering whether this is the
+    // last managing role needs the others anyway.
     this.session
       .load()
       .pipe(
@@ -160,14 +159,14 @@ export class RoleForm {
     return this.permissions()[key];
   }
 
-  /** Was sich nicht ändern lässt, steht angekreuzt und stumpf da. */
+  /** What cannot be changed stands there checked and greyed out. */
   protected locked(key: PermissionKey): boolean {
     if (key !== 'manageRoles') {
       return false;
     }
 
-    // Der anonymen Rolle würde das Backend dieses Recht ohnehin verweigern:
-    // damit könnte sich jeder ohne Anmeldung selbst zum Verwalter machen.
+    // The backend would refuse this permission to the anonymous role anyway: with
+    // it, anyone could make themselves an administrator without logging in.
     return this.isAnonymous() || this.lastAdmin();
   }
 
@@ -196,8 +195,8 @@ export class RoleForm {
     const body: RoleWrite = {
       name: value.name.trim(),
       permissions: this.permissions(),
-      // Ein leeres Feld heisst "unverändert", nicht "kein Kennwort" — sonst
-      // müsste man es bei jeder Umbenennung neu setzen.
+      // An empty field means "unchanged", not "no password" — otherwise it would
+      // have to be set again on every rename.
       ...(value.password === '' ? {} : { password: value.password }),
     };
 

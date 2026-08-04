@@ -30,7 +30,7 @@ function workplacePayload(array $overrides = []): array
     ], $overrides);
 }
 
-it('legt einen Arbeitsplatz an', function () {
+it('creates a workplace', function () {
     $this->actingAs($this->admin)
         ->postJson('/api/workplaces', workplacePayload([
             'description' => 'Lange Bank am Fenster.',
@@ -42,26 +42,26 @@ it('legt einen Arbeitsplatz an', function () {
         ->assertValidRequest()
         ->assertValidResponse(201)
         ->assertJsonPath('id', 'hobelbank-1')
-        // Tags kommen ohne "#" und ohne Dublette zurück, die erste Schreibweise gewinnt.
+        // Tags come back without "#" and without duplicates; the first spelling wins.
         ->assertJsonPath('tags', ['Laut', 'Staubig'])
         ->assertJsonPath('blocksWorkplaceIds', ['holz-2'])
         ->assertJsonPath('blocksWorkplacesWithTag', ['leise'])
         ->assertHeader('Location');
 });
 
-it('weist eine doppelte Kennung mit 409 ab', function () {
+it('rejects a duplicate identifier with 409', function () {
     $this->actingAs($this->admin)
         ->postJson('/api/workplaces', workplacePayload(['id' => 'holz-1']))
         ->assertValidResponse(409);
 });
 
-it('weist eine Kennung ab, die nicht in eine URL passt', function () {
+it('rejects an identifier that does not fit into a URL', function () {
     $this->actingAs($this->admin)
         ->postJson('/api/workplaces', workplacePayload(['id' => 'Hobelbank 1']))
         ->assertValidResponse(422);
 });
 
-it('aendert einen Arbeitsplatz', function () {
+it('changes a workplace', function () {
     $this->actingAs($this->admin)
         ->putJson('/api/workplaces/holz-1', workplacePayload([
             'name' => 'Holz 1 neu',
@@ -77,8 +77,8 @@ it('aendert einen Arbeitsplatz', function () {
         ->assertJsonPath('maxBookingDurationMinutes', 120);
 });
 
-// Die Kennung steht im Pfad; eine im Rumpf mitgeschickte wird nicht beachtet.
-it('aendert die Kennung nicht mit', function () {
+// The identifier is in the path; one sent along in the body is ignored.
+it('does not change the identifier along with it', function () {
     $this->actingAs($this->admin)
         ->putJson('/api/workplaces/holz-1', workplacePayload(['id' => 'ganz-anders']))
         ->assertValidResponse(200)
@@ -87,7 +87,7 @@ it('aendert die Kennung nicht mit', function () {
     expect(Workplace::find('ganz-anders'))->toBeNull();
 });
 
-it('blockiert sich nicht selbst', function () {
+it('does not block itself', function () {
     $this->actingAs($this->admin)
         ->putJson('/api/workplaces/holz-1', workplacePayload([
             'blocksWorkplaceIds' => ['holz-1', 'holz-2'],
@@ -96,7 +96,7 @@ it('blockiert sich nicht selbst', function () {
         ->assertJsonPath('blocksWorkplaceIds', ['holz-2']);
 });
 
-it('loescht einen Arbeitsplatz und raeumt ihn aus fremden Blockierlisten', function () {
+it('deletes a workplace and clears it from other blocking lists', function () {
     $this->actingAs($this->admin)
         ->putJson('/api/workplaces/holz-2', workplacePayload([
             'id' => 'holz-2',
@@ -114,7 +114,7 @@ it('loescht einen Arbeitsplatz und raeumt ihn aus fremden Blockierlisten', funct
     expect(Workplace::findOrFail('holz-2')->blocksWorkplaces()->pluck('id')->all())->toBe([]);
 });
 
-it('verweigert das Loeschen bei kuenftigen Buchungen', function () {
+it('refuses deletion when there are future bookings', function () {
     Booking::create([
         'workplace_id' => 'holz-3',
         'name' => 'Später', 'contact' => 'spaeter@example.org',
@@ -130,7 +130,7 @@ it('verweigert das Loeschen bei kuenftigen Buchungen', function () {
     expect(Workplace::find('holz-3'))->not->toBeNull();
 });
 
-it('laesst nur manageWorkplaces schreiben', function () {
+it('lets only manageWorkplaces write', function () {
     $this->actingAs($this->member)
         ->postJson('/api/workplaces', workplacePayload())
         ->assertValidResponse(403);
@@ -138,10 +138,10 @@ it('laesst nur manageWorkplaces schreiben', function () {
     $this->deleteJson('/api/workplaces/holz-1')->assertValidResponse(403);
 });
 
-// Nur die Antwort wird gegen die Spec geprüft: Spectator vergleicht den
-// Medientyp der Anfrage buchstäblich und stolpert über das "; boundary=…", das
-// jede multipart-Anfrage mitführt.
-it('nimmt ein Foto entgegen und leitet ein Vorschaubild ab', function () {
+// Only the response is checked against the spec: Spectator compares the
+// request's media type literally and trips over the "; boundary=…" that every
+// multipart request carries.
+it('accepts a photo and derives a thumbnail', function () {
     Storage::fake('public');
 
     $response = $this->actingAs($this->admin)
@@ -155,7 +155,7 @@ it('nimmt ein Foto entgegen und leitet ein Vorschaubild ab', function () {
     $photo = $response->json('photoUrl');
     $thumbnail = $response->json('photoThumbnailUrl');
 
-    // Ohne Schema und Host — API, Ablage und SPA liegen auf demselben Host.
+    // Without scheme and host — API, storage and SPA live on the same host.
     expect($photo)->toStartWith('/storage/')
         ->and($thumbnail)->toStartWith('/storage/')
         ->and($photo)->not->toBe($thumbnail);
@@ -165,12 +165,12 @@ it('nimmt ein Foto entgegen und leitet ein Vorschaubild ab', function () {
     Storage::disk('public')->assertExists($workplace->photo_path);
     Storage::disk('public')->assertExists($workplace->photo_thumbnail_path);
 
-    // Auf die längere Kante heruntergerechnet, Seitenverhältnis erhalten.
+    // Scaled down to the longer edge, aspect ratio preserved.
     $size = getimagesizefromstring(Storage::disk('public')->get($workplace->photo_thumbnail_path));
     expect($size[0])->toBe(400)->and($size[1])->toBe(200);
 });
 
-it('ersetzt ein vorhandenes Foto und laesst nichts liegen', function () {
+it('replaces an existing photo and leaves nothing behind', function () {
     Storage::fake('public');
 
     $upload = fn () => $this->actingAs($this->admin)->post(
@@ -191,7 +191,7 @@ it('ersetzt ein vorhandenes Foto und laesst nichts liegen', function () {
     Storage::disk('public')->assertMissing($first);
 });
 
-it('loescht das Foto', function () {
+it('deletes the photo', function () {
     Storage::fake('public');
 
     $this->actingAs($this->admin)->post(
@@ -211,7 +211,7 @@ it('loescht das Foto', function () {
     expect(Workplace::findOrFail('holz-1')->photo_path)->toBeNull();
 });
 
-it('weist eine Datei ab, die kein Bild ist', function () {
+it('rejects a file that is not an image', function () {
     Storage::fake('public');
 
     $this->actingAs($this->admin)

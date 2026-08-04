@@ -4,8 +4,8 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  // Unten kein Abstand: die klebende Leiste soll bündig mit dem Seitenende
-  // abschliessen, sonst rutscht sie am Ende des Scrollens noch ein Stück hoch.
+  // No spacing at the bottom: the sticky bar should close flush with the end of
+  // the page, otherwise it slides up a little at the end of the scroll.
   padding: 0 1.5rem;
   max-width: 48rem;
 }
@@ -34,7 +34,7 @@
   font-size: 0.75rem;
 }
 
-// --- Foto -------------------------------------------------------------------
+// --- Photo ------------------------------------------------------------------
 
 .photo {
   display: flex;
@@ -68,8 +68,8 @@
   align-items: flex-start;
   gap: 0.5rem;
 
-  // Das eigentliche Dateifeld ist unsichtbar; die Beschriftung ist die
-  // Schaltfläche. So sieht es aus wie die anderen Knöpfe.
+  // The actual file field is invisible; the label is the button. That way it
+  // looks like the other buttons.
   input[type='file'] {
     position: absolute;
     width: 1px;
@@ -94,11 +94,11 @@
   }
 }
 
-// --- Blockierungen ----------------------------------------------------------
+// --- Blocking ---------------------------------------------------------------
 
-// Ohne eigenen Scrollbereich: die Liste ist eine Übersicht über die ganze
-// Werkstatt, und die will man am Stück sehen. Sie steht darum als Spalten im
-// Formular und wächst mit ihm.
+// Without a scroll area of its own: the list is an overview of the whole
+// workshop, and one wants to see that in one piece. It therefore sits as columns
+// in the form and grows with it.
 .blocks {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));

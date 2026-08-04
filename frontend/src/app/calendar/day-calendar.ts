@@ -25,8 +25,8 @@ export class DayCalendar {
 
   protected readonly now = signal(new Date());
 
-  /** Länge der Vorschau unter dem Zeiger — dieselbe Dauer, die das Formular
-   *  nach dem Klick voreinstellt. */
+  /** Length of the preview under the pointer — the same duration the form
+   *  prefills after the click. */
   protected readonly previewMinutes = DEFAULT_DURATION_MINUTES;
 
   constructor() {
@@ -34,12 +34,12 @@ export class DayCalendar {
     syncDateWithUrl();
     this.store.load();
 
-    // Im Reiter steht, was in der Überschrift steht — ein Kalender ohne Datum
-    // ist keine Auskunft.
+    // The tab shows what the heading shows — a calendar without a date is no
+    // information at all.
     refinePageTitle(this.heading);
 
-    // Die Jetzt-Linie bewegt sich viertelstündlich weiter; häufiger wäre für ein
-    // 15-Minuten-Raster ohne Aussage.
+    // The now-line moves on every quarter hour; more often would say nothing on
+    // a 15-minute grid.
     setInterval(() => this.now.set(new Date()), 60_000);
   }
 
@@ -52,7 +52,7 @@ export class DayCalendar {
     }),
   );
 
-  /** Position der Jetzt-Linie, oder null wenn heute nicht dargestellt wird. */
+  /** Position of the now-line, or null when today is not being shown. */
   protected readonly nowPercent = computed<number | null>(() => {
     const axis = this.store.axis();
     const now = this.now();
@@ -65,8 +65,8 @@ export class DayCalendar {
   });
 
   /**
-   * Die Balken je Arbeitsplatz, einmal berechnet. Als Methode im Template
-   * würden sie bei jedem Change-Detection-Durchlauf neu entstehen.
+   * The bars per workplace, computed once. As a method in the template they would
+   * be rebuilt on every change detection pass.
    */
   private readonly blocksByWorkplace = computed(() => {
     const axis = this.store.axis();
@@ -106,10 +106,10 @@ export class DayCalendar {
   }
 
   /**
-   * Der Hinweis je Bereich, wenn der dargestellte Tag jenseits seines Vorlaufs
-   * liegt — sonst null. Der Text entsteht einmal je Bereich und nicht je
-   * Abgleich, damit die Bindung im Template nicht bei jedem Durchlauf eine
-   * neue Zeichenkette sieht.
+   * The notice per area when the day being shown lies beyond its booking horizon
+   * — otherwise null. The text is built once per area rather than per change
+   * detection pass, so that the binding in the template does not see a new string
+   * on every run.
    */
   private readonly noticeByArea = computed(() => {
     const config = this.store.config();
@@ -127,7 +127,7 @@ export class DayCalendar {
     return map;
   });
 
-  /** Nur wo tatsächlich gebucht werden kann, ist die Fläche anklickbar. */
+  /** Only where booking is actually possible is the area clickable. */
   protected isBookable(workplace: Workplace, area: Area): boolean {
     return (
       workplace.status === 'OK' &&
@@ -137,18 +137,17 @@ export class DayCalendar {
   }
 
   /**
-   * Warum ein Klick hier nichts anlegt — beim Überfahren an der Stelle, an der
-   * sonst die Vorschau läge.
+   * Why a click here creates nothing — shown on hover where the preview would
+   * otherwise be.
    *
-   * Für die anonyme Rolle ist die Antwort immer dieselbe und sie steht vor dem
-   * Vorlauf: wer sich erst anmelden muss, kann mit der Auskunft, ab wann dieser
-   * Tag freigäbe, nichts anfangen. Genannt wird sie nur, wo eine Anmeldung
-   * tatsächlich zum Buchen führte — an einem defekten Arbeitsplatz wäre sie ein
-   * falsches Versprechen.
+   * For the anonymous role the answer is always the same and it comes before the
+   * horizon: someone who has to log in first can do nothing with the information
+   * about when this day would be released. It is only stated where logging in
+   * would actually lead to booking — on a broken workplace it would be a false
+   * promise.
    *
-   * Sonst gilt: nur in Zeilen, die ohnehin buchbar wären. Wo nichts anzulegen
-   * ist, wäre die Auskunft über den Vorlauf eine Antwort auf eine Frage, die
-   * niemand gestellt hat.
+   * Otherwise: only in rows that would be bookable anyway. Where nothing can be
+   * created, information about the horizon would answer a question nobody asked.
    */
   protected notice(workplace: Workplace, area: Area): string | null {
     if (workplace.status !== 'OK') {
@@ -171,7 +170,7 @@ export class DayCalendar {
       queryParams: {
         workplace: workplace.id,
         start: toLocalIso(instantAt(this.store.date(), minutes)),
-        // Keine Dauer mitgeben: das Formular setzt selbst seine Standarddauer.
+        // Do not pass a duration: the form sets its own default.
       },
     });
   }

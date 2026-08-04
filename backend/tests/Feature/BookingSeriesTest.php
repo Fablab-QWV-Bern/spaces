@@ -12,8 +12,8 @@ beforeEach(function () {
     Spectator::using('reservation-api.yml');
     $this->seed(DatabaseSeeder::class);
 
-    // Fester Bezugspunkt vor der Öffnung, damit "in der Vergangenheit" eindeutig
-    // ist. Der 3. August 2026 ist ein Montag.
+    // A fixed reference point before opening time, so that "in the past" is
+    // unambiguous. 3 August 2026 is a Monday.
     $this->travelTo(CarbonImmutable::parse('2026-08-03 07:00', 'Europe/Zurich'));
 
     $this->admin = Role::where('name', 'Admin')->firstOrFail();
@@ -34,7 +34,7 @@ function seriesPayload(array $overrides = []): array
     ], $overrides);
 }
 
-/** Die Instanzen einer Serie als lokale Zeitstempel, in der Reihenfolge der Zeit. */
+/** A series' instances as local timestamps, in chronological order. */
 function instances(BookingSeries $series): array
 {
     return $series->bookings()
@@ -46,7 +46,7 @@ function instances(BookingSeries $series): array
         ->all();
 }
 
-it('legt eine Serie an und erzeugt ihre Instanzen', function () {
+it('creates a series and generates its instances', function () {
     $this->actingAs($this->admin)
         ->postJson('/api/booking-series', seriesPayload())
         ->assertValidRequest()
@@ -65,8 +65,8 @@ it('legt eine Serie an und erzeugt ihre Instanzen', function () {
     ]);
 });
 
-it('kopiert Name, Kontakt und Blockierungen auf jede Instanz', function () {
-    // kurse-holz blockiert holz-1 bis holz-5.
+it('copies name, contact and blocking onto every instance', function () {
+    // kurse-holz blocks holz-1 through holz-5.
     $this->actingAs($this->admin)
         ->postJson('/api/booking-series', seriesPayload([
             'workplaceId' => 'kurse-holz',
@@ -85,13 +85,13 @@ it('kopiert Name, Kontakt und Blockierungen auf jede Instanz', function () {
         ->toBe(['holz-1', 'holz-2', 'holz-3', 'holz-4', 'holz-5']);
 });
 
-it('bleibt ueber die Zeitumstellung bei derselben Uhrzeit', function () {
+it('stays at the same time of day across a DST change', function () {
     $this->actingAs($this->admin)
         ->postJson('/api/booking-series', seriesPayload(['endDate' => '2026-10-26']))
         ->assertStatus(201);
 
-    // Die Sommerzeit endet am 25. Oktober 2026. Lokal bleibt es 09:00, in UTC
-    // wandert der Zeitpunkt von 07:00 auf 08:00.
+    // Summer time ends on 25 October 2026. Locally it stays 09:00; in UTC the
+    // instant moves from 07:00 to 08:00.
     $starts = Booking::orderBy('start_time')
         ->get()
         ->mapWithKeys(fn (Booking $booking): array => [
@@ -102,7 +102,7 @@ it('bleibt ueber die Zeitumstellung bei derselben Uhrzeit', function () {
         ->and($starts['2026-10-26'])->toBe('2026-10-26T08:00:00Z');
 });
 
-it('ueberspringt bei MONTHLY die Monate ohne diesen Tag', function () {
+it('skips the months without that day for MONTHLY', function () {
     $this->actingAs($this->admin)
         ->postJson('/api/booking-series', seriesPayload([
             'interval' => 'MONTHLY',
@@ -112,8 +112,8 @@ it('ueberspringt bei MONTHLY die Monate ohne diesen Tag', function () {
         ]))
         ->assertStatus(201);
 
-    // September, November und Februar haben keinen 31. — sie fallen aus, statt
-    // auf den letzten Tag des Monats zu rutschen.
+    // September, November and February have no 31st — they drop out rather than
+    // sliding onto the last day of the month.
     expect(instances(BookingSeries::firstOrFail()))->toBe([
         '2026-08-31 09:00',
         '2026-10-31 09:00',
@@ -123,7 +123,7 @@ it('ueberspringt bei MONTHLY die Monate ohne diesen Tag', function () {
     ]);
 });
 
-it('rechnet die Intervall-Anzahl mit', function () {
+it('takes the interval count into account', function () {
     $this->actingAs($this->admin)
         ->postJson('/api/booking-series', seriesPayload([
             'intervalCount' => 2,
@@ -140,7 +140,7 @@ it('rechnet die Intervall-Anzahl mit', function () {
     ]);
 });
 
-it('erzeugt ohne Endtag bis ein Jahr im Voraus', function () {
+it('generates up to a year ahead when there is no end date', function () {
     $this->actingAs($this->admin)
         ->postJson('/api/booking-series', seriesPayload([
             'interval' => 'MONTHLY',
@@ -150,12 +150,12 @@ it('erzeugt ohne Endtag bis ein Jahr im Voraus', function () {
         ->assertJsonPath('series.endDate', null)
         ->assertJsonPath('series.instantiatedUntil', '2027-08-03');
 
-    // August 2026 bis Juli 2027; der 3. August 2027 wäre der 13. und liegt genau
-    // auf dem Horizont.
+    // August 2026 to July 2027; 3 August 2027 would be the 13th and sits exactly
+    // on the horizon.
     expect(Booking::count())->toBe(13);
 });
 
-it('laesst kollidierende Instanzen aus und meldet sie', function () {
+it('leaves out colliding instances and reports them', function () {
     $collision = Booking::create([
         'workplace_id' => 'holz-1',
         'name' => 'Bereits da', 'contact' => 'da@example.org',
@@ -179,7 +179,7 @@ it('laesst kollidierende Instanzen aus und meldet sie', function () {
     ]);
 });
 
-it('beginnt bei einer laengst angefangenen Serie erst jetzt', function () {
+it('starts only from now for a series that began long ago', function () {
     $this->actingAs($this->admin)
         ->postJson('/api/booking-series', seriesPayload([
             'firstInstanceStart' => '2026-06-01T09:00',
@@ -189,7 +189,7 @@ it('beginnt bei einer laengst angefangenen Serie erst jetzt', function () {
         ->assertValidResponse(201)
         ->assertJsonPath('series.firstInstanceStart', '2026-06-01T09:00');
 
-    // Die Serie beschreibt einen Rhythmus. Erzeugt wird nur, was noch bevorsteht.
+    // The series describes a rhythm. Only what is still ahead gets generated.
     expect(instances(BookingSeries::firstOrFail()))->toBe([
         '2026-08-03 09:00',
         '2026-08-10 09:00',
@@ -199,8 +199,8 @@ it('beginnt bei einer laengst angefangenen Serie erst jetzt', function () {
     ]);
 });
 
-it('unterliegt nicht dem maximalen Vorlauf', function () {
-    // maxBookingEndOffsetDays ist 90 Tage; eine Serie reicht trotzdem ein Jahr.
+it('is not subject to the maximum booking horizon', function () {
+    // maxBookingEndOffsetDays is 90 days; a series still reaches a year.
     $this->actingAs($this->admin)
         ->postJson('/api/booking-series', seriesPayload(['endDate' => null]))
         ->assertStatus(201);
@@ -208,7 +208,7 @@ it('unterliegt nicht dem maximalen Vorlauf', function () {
     expect(Booking::max('start_time'))->toBeGreaterThan('2027-07-01');
 });
 
-it('weist eine Serie ausserhalb der Oeffnungszeiten zurueck', function () {
+it('rejects a series outside the opening hours', function () {
     $this->actingAs($this->admin)
         ->postJson('/api/booking-series', seriesPayload([
             'firstInstanceStart' => '2026-08-03T06:00',
@@ -220,7 +220,7 @@ it('weist eine Serie ausserhalb der Oeffnungszeiten zurueck', function () {
     expect(BookingSeries::count())->toBe(0);
 });
 
-it('weist eine Serie neben dem Viertelstundenraster zurueck', function () {
+it('rejects a series off the quarter-hour grid', function () {
     $this->actingAs($this->admin)
         ->postJson('/api/booking-series', seriesPayload([
             'firstInstanceStart' => '2026-08-03T09:07',
@@ -229,14 +229,14 @@ it('weist eine Serie neben dem Viertelstundenraster zurueck', function () {
         ->assertValidResponse(422);
 });
 
-it('erzeugt die kuenftigen Instanzen beim Aendern neu', function () {
+it('regenerates the future instances when changed', function () {
     $this->actingAs($this->admin)
         ->postJson('/api/booking-series', seriesPayload())
         ->assertStatus(201);
 
     $series = BookingSeries::firstOrFail();
 
-    // Erst nach der ersten Instanz: sie ist dann vergangen und bleibt.
+    // Only after the first instance: by then it is past and stays.
     $this->travelTo(CarbonImmutable::parse('2026-08-04 07:00', 'Europe/Zurich'));
 
     $this->actingAs($this->admin)
@@ -249,7 +249,7 @@ it('erzeugt die kuenftigen Instanzen beim Aendern neu', function () {
         ->assertJsonPath('series.firstInstanceStart', '2026-08-03T14:00');
 
     expect(instances($series))->toBe([
-        // Vergangen, darum unangetastet auf der alten Uhrzeit.
+        // Past, therefore untouched at the old time.
         '2026-08-03 09:00',
         '2026-08-10 14:00',
         '2026-08-17 14:00',
@@ -258,7 +258,7 @@ it('erzeugt die kuenftigen Instanzen beim Aendern neu', function () {
     ]);
 });
 
-it('behaelt die IDs der Termine, die es weiterhin gibt', function () {
+it('keeps the IDs of the occurrences that still exist', function () {
     $this->actingAs($this->admin)
         ->postJson('/api/booking-series', seriesPayload())
         ->assertStatus(201);
@@ -266,20 +266,20 @@ it('behaelt die IDs der Termine, die es weiterhin gibt', function () {
     $series = BookingSeries::firstOrFail();
     $before = $series->bookings()->orderBy('start_time')->pluck('id')->all();
 
-    // Nur der Kontakt ändert sich — am Takt bewegt sich nichts.
+    // Only the contact changes — nothing moves in the rhythm.
     $this->actingAs($this->admin)
         ->putJson("/api/booking-series/{$series->id}", seriesPayload([
             'contact' => 'neu@example.org',
         ]))
         ->assertValidResponse(200);
 
-    // Die IDs sind die UIDs im iCal-Feed: würden sie wechseln, verschwänden in
-    // jedem Abo alle künftigen Termine und kämen als neue zurück.
+    // The IDs are the UIDs in the iCal feed: if they changed, all future
+    // occurrences would vanish from every subscription and come back as new ones.
     expect($series->bookings()->orderBy('start_time')->pluck('id')->all())->toBe($before)
         ->and($series->bookings()->pluck('contact')->unique()->all())->toBe(['neu@example.org']);
 });
 
-it('laesst eine von Hand geaenderte Instanz beim Aendern der Serie stehen', function () {
+it('leaves a hand-edited instance alone when the series changes', function () {
     $this->actingAs($this->admin)
         ->postJson('/api/booking-series', seriesPayload())
         ->assertStatus(201);
@@ -287,7 +287,7 @@ it('laesst eine von Hand geaenderte Instanz beim Aendern der Serie stehen', func
     $series = BookingSeries::firstOrFail();
     $moved = $series->bookings()->orderBy('start_time')->skip(2)->firstOrFail();
 
-    // Der Termin vom 17. wandert auf 14:00.
+    // The occurrence on the 17th moves to 14:00.
     $this->actingAs($this->admin)
         ->putJson("/api/bookings/{$moved->id}", [
             'workplaceId' => 'holz-1',
@@ -305,8 +305,8 @@ it('laesst eine von Hand geaenderte Instanz beim Aendern der Serie stehen', func
         ]))
         ->assertValidResponse(200);
 
-    // Der verschobene Termin bleibt, wo er ist — und der freigewordene Takt-
-    // Zeitpunkt wird nicht mit einem Duplikat nachbesetzt.
+    // The moved occurrence stays where it is — and the vacated beat is not
+    // refilled with a duplicate.
     expect(instances($series))->toBe([
         '2026-08-03 09:00',
         '2026-08-10 09:00',
@@ -318,7 +318,7 @@ it('laesst eine von Hand geaenderte Instanz beim Aendern der Serie stehen', func
     expect($moved->refresh()->contact)->toBe('reparatur@example.org');
 });
 
-it('laesst einen gestrichenen Termin gestrichen', function () {
+it('leaves a cancelled occurrence cancelled', function () {
     $this->actingAs($this->admin)
         ->postJson('/api/booking-series', seriesPayload())
         ->assertStatus(201);
@@ -344,7 +344,7 @@ it('laesst einen gestrichenen Termin gestrichen', function () {
     ]);
 });
 
-it('nagelt eine Instanz nicht fest, die ungeaendert gespeichert wird', function () {
+it('does not pin down an instance that is saved unchanged', function () {
     $this->actingAs($this->admin)
         ->postJson('/api/booking-series', seriesPayload())
         ->assertStatus(201);
@@ -363,7 +363,8 @@ it('nagelt eine Instanz nicht fest, die ungeaendert gespeichert wird', function 
         ->assertValidResponse(200)
         ->assertJsonPath('seriesDetached', false);
 
-    // Kein Eingriff, keine Ausnahme: die Serie darf den Termin weiter pflegen.
+    // No intervention, no exception: the series may keep maintaining the
+    // occurrence.
     $this->actingAs($this->admin)
         ->putJson("/api/booking-series/{$series->id}", seriesPayload([
             'contact' => 'neu@example.org',
@@ -373,7 +374,7 @@ it('nagelt eine Instanz nicht fest, die ungeaendert gespeichert wird', function 
     expect($untouched->refresh()->contact)->toBe('neu@example.org');
 });
 
-it('raeumt weggefallene Termine weg, wenn der Takt sich aendert', function () {
+it('clears away dropped occurrences when the rhythm changes', function () {
     $this->actingAs($this->admin)
         ->postJson('/api/booking-series', seriesPayload())
         ->assertStatus(201);
@@ -393,7 +394,7 @@ it('raeumt weggefallene Termine weg, wenn der Takt sich aendert', function () {
     ]);
 });
 
-it('laesst beim Loeschen die vergangenen Instanzen stehen', function () {
+it('leaves the past instances standing when deleted', function () {
     $this->actingAs($this->admin)
         ->postJson('/api/booking-series', seriesPayload())
         ->assertStatus(201);
@@ -416,14 +417,14 @@ it('laesst beim Loeschen die vergangenen Instanzen stehen', function () {
         ->and($survivor->name)->toBe('Reparaturcafé');
 });
 
-it('holt im Tageslauf nach und bleibt dabei wiederholbar', function () {
+it('catches up in the daily run and stays repeatable', function () {
     $this->actingAs($this->admin)
         ->postJson('/api/booking-series', seriesPayload(['endDate' => null, 'interval' => 'MONTHLY']))
         ->assertStatus(201);
 
     $before = Booking::count();
 
-    // Ein halbes Jahr später ist der Horizont ein halbes Jahr weitergerückt.
+    // Half a year later the horizon has moved on by half a year.
     $this->travelTo(CarbonImmutable::parse('2027-02-03 03:00', 'Europe/Zurich'));
 
     $this->artisan('booking-series:instantiate')->assertSuccessful();
@@ -431,25 +432,25 @@ it('holt im Tageslauf nach und bleibt dabei wiederholbar', function () {
     expect(BookingSeries::firstOrFail()->instantiated_until->toDateString())->toBe('2028-02-03')
         ->and(Booking::count())->toBe($before + 6);
 
-    // Ein zweiter Lauf am selben Tag erzeugt nichts mehr.
+    // A second run on the same day generates nothing more.
     $this->artisan('booking-series:instantiate')->assertSuccessful();
 
     expect(Booking::count())->toBe($before + 6);
 });
 
-it('gibt den Serienzeilen der Testdaten eine echte Serie', function () {
-    // Sonst zeigte der Kalender in der Entwicklung nirgends ein Wiederholungs-Icon.
+it('gives the test data series rows a real series', function () {
+    // Otherwise the calendar would show a repeat icon nowhere in development.
     $this->seed(BookingSeeder::class);
 
     expect(BookingSeries::count())->toBe(3)
         ->and(Booking::whereNotNull('booking_series_id')->count())->toBe(3);
 
-    // Nur die heutige Instanz — der Rest käme aus dem Tageslauf.
+    // Only today's instance — the rest would come from the daily run.
     expect(BookingSeries::firstOrFail()->instantiated_until->toDateString())
         ->toBe('2026-08-03');
 });
 
-it('verlangt manageBookingSeries zum Schreiben', function () {
+it('requires manageBookingSeries for writing', function () {
     $this->actingAs($this->member)
         ->postJson('/api/booking-series', seriesPayload())
         ->assertValidResponse(403);
@@ -457,7 +458,7 @@ it('verlangt manageBookingSeries zum Schreiben', function () {
     expect(BookingSeries::count())->toBe(0);
 });
 
-it('haelt den Vertrag fuer das Lesen der Serien', function () {
+it('holds the contract for reading the series', function () {
     $this->actingAs($this->admin)
         ->postJson('/api/booking-series', seriesPayload())
         ->assertStatus(201);

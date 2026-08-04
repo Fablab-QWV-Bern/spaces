@@ -32,9 +32,9 @@ class WorkplaceResource extends JsonResource
     }
 
     /**
-     * Bewusst ohne Schema und Host: API, Ablage und SPA liegen auf demselben
-     * Host. Eine absolute URL käme aus APP_URL, und ein falsch gesetztes APP_URL
-     * auf dem Hosting würde jedes Foto auf einmal unerreichbar machen.
+     * Deliberately without scheme and host: API, storage and SPA live on the same
+     * host. An absolute URL would come from APP_URL, and a misconfigured APP_URL
+     * on the hosting would make every photo unreachable at once.
      */
     private function url(?string $path): ?string
     {

@@ -1,15 +1,14 @@
 /**
- * Wer sitzt gerade wo — die Frage, die die Übersichtskarte beantwortet.
+ * Who is sitting where right now — the question the overview map answers.
  *
- * Belegt ist ein Arbeitsplatz, wenn eine Buchung auf ihm den Augenblick
- * überdeckt, oder wenn ihn eine Buchung auf einem *anderen* Platz zu diesem
- * Zeitpunkt mitblockiert. Beides zugleich kann nicht auftreten — genau das
- * verhindern die Kollisionsregeln im Backend. Käme es trotzdem vor, gewinnt die
- * eigene Buchung: sie ist die Aussage über diesen Platz, die Blockierung nur
- * ein Schatten.
+ * A workplace is occupied when a booking on it covers the present moment, or when
+ * a booking on *another* workplace also blocks it at that moment. Both at once
+ * cannot occur — that is exactly what the collision rules in the backend prevent.
+ * Should it happen anyway, the workplace's own booking wins: it is the statement
+ * about this workplace, the blockage only a shadow.
  *
- * Der Inhalt der Detailkarte entsteht hier und nicht in der Ansicht, damit die
- * Karte auf der Übersicht dieselbe ist wie im Kalender — sie bekommt dieselbe
+ * The detail card's content is built here rather than in the view, so that the
+ * card on the overview is the same one as in the calendar — it receives the same
  * `CardDetails`.
  */
 
@@ -17,19 +16,19 @@ import { Booking } from '../api/models';
 import { CardDetails } from '../calendar/blocks';
 import { formatTime } from '../calendar/time-axis';
 
-/** Was die Belegung über ihre Umgebung wissen muss. */
+/** What the occupancy needs to know about its surroundings. */
 export interface OccupancyContext {
-  /** Buchungen je Arbeitsplatz — die eigenen. */
+  /** Bookings per workplace — the workplace's own. */
   bookings: Map<string, Booking[]>;
-  /** Buchungen auf anderen Plätzen, die diesen hier mitbelegen. */
+  /** Bookings on other workplaces that also occupy this one. */
   blockages: Map<string, Booking[]>;
-  /** Auflösung einer Arbeitsplatz-Kennung auf ihren Namen. */
+  /** Resolves a workplace identifier to its name. */
   nameOf: (workplaceId: string) => string;
 }
 
 /**
- * Die Detailkarten der belegten Arbeitsplätze, nach Arbeitsplatz-Kennung.
- * Freie Plätze fehlen in der Map — auf der Karte steht dort niemand.
+ * The detail cards of the occupied workplaces, keyed by workplace identifier.
+ * Free workplaces are absent from the map — nobody stands there on the plan.
  */
 export function occupancyAt(context: OccupancyContext, now: Date): Map<string, CardDetails> {
   const occupied = new Map<string, CardDetails>();
@@ -57,8 +56,8 @@ export function occupancyAt(context: OccupancyContext, now: Date): Map<string, C
 }
 
 /**
- * Die erste Buchung, die den Augenblick überdeckt. Das Ende zählt nicht mehr
- * dazu: um Punkt zwölf ist der Platz frei, nicht doppelt belegt.
+ * The first booking that covers the present moment. The end no longer counts:
+ * at twelve on the dot the workplace is free, not doubly occupied.
  */
 function covering(bookings: Booking[] | undefined, now: Date): Booking | null {
   const instant = now.getTime();

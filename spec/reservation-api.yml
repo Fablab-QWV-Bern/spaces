@@ -33,10 +33,10 @@ tags:
   - name: Integrations
     description: Read-only feeds for external consumers.
 
-# Kein Endpunkt *verlangt* eine Anmeldung: ohne Session-Cookie handelt der Aufruf
-# als die Rolle mit `isAnonymous`. Was diese Rolle darf, entscheidet ihre
-# Berechtigungsliste — deshalb steht hier keine Security-Anforderung, sondern nur
-# `x-permissions` an den einzelnen Operationen.
+# No endpoint *requires* a login: without a session cookie the call acts as the
+# role with `isAnonymous`. What that role may do is decided by its permission
+# list — which is why there is no security requirement here, only `x-permissions`
+# on the individual operations.
 security: []
 
 components:
@@ -590,8 +590,8 @@ components:
                   - OUTSIDE_OPENING_HOURS
                   - EXCEEDS_MAX_DURATION
                   - EXCEEDS_MAX_END_OFFSET
-                  # Nur beim Anlegen. Beim Ändern darf der Beginn zurückliegen,
-                  # sonst liesse sich eine laufende Buchung nicht mehr anpassen.
+                  # Only when creating. When changing, the start may lie in the
+                  # past — otherwise a running booking could no longer be adjusted.
                   - STARTS_IN_PAST
                   - NOT_ON_GRID
                   - SPANS_NIGHT_NOT_ALLOWED

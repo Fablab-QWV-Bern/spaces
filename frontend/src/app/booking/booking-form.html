@@ -21,9 +21,9 @@
     <p><a routerLink="/">Zurück zur Kalenderansicht</a></p>
   </div>
 } @else {
-  <!-- Natives submit-Ereignis: (ngSubmit) stammt aus FormsModule, das Signal
-       Forms nicht mehr braucht — ohne preventDefault würde der Browser das
-       Formular selbst abschicken. -->
+  <!-- Native submit event: (ngSubmit) comes from FormsModule, which Signal
+       Forms no longer needs — without preventDefault the browser would submit
+       the form itself. -->
   <form class="form" (submit)="$event.preventDefault(); submit()">
     @if (editing()?.bookingSeriesId) {
       <p class="series-note">
@@ -146,7 +146,7 @@
         }
       </p>
 
-      <!-- Vorschau: bestehende Buchungen des Tages und die geplante. -->
+      <!-- Preview: the day's existing bookings and the planned one. -->
       @if (axis(); as axis) {
         <div class="preview">
           <div class="preview-track">

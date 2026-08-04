@@ -1,5 +1,5 @@
-// Gemeinsames Aussehen der Verwaltungsansichten. Sie sind einander ähnlicher
-// als dem Kalender: eine schmale Spalte mit Kopfzeile, Tabelle oder Formular.
+// The shared look of the admin views. They resemble each other more than they
+// resemble the calendar: a narrow column with a header, a table or a form.
 
 :host {
   display: block;
@@ -71,9 +71,9 @@
   }
 }
 
-// Erklärender Kleintext. Steht bewusst ausserhalb von `.field`, denn erklärt
-// wird auch neben einem Kreuz oder in einem freien Absatz — dort erbte er sonst
-// die Grundschrift und geriete grösser als das, was er erklärt.
+// Explanatory small print. Deliberately outside `.field`, because explaining also
+// happens next to a checkbox or in a free paragraph — there it would otherwise
+// inherit the base font and end up larger than what it explains.
 .note {
   color: var(--text-soft);
   font-size: 0.75rem;
@@ -84,7 +84,7 @@
   flex-wrap: wrap;
   gap: 0.75rem;
 
-  // Nur nebeneinander sollen die Felder wachsen.
+  // The fields should only grow side by side.
   .field {
     flex: 1 1 12rem;
   }
@@ -144,11 +144,10 @@ button,
   align-items: center;
 }
 
-// Die Formulare speichern nichts von selbst. Darum bleibt die Leiste am unteren
-// Rand stehen, auch wenn das Formular länger ist als der Bildschirm — sonst
-// sähe man nach dem Ausfüllen nichts mehr, was auf das Speichern hinweist.
-// Sie reicht bis an die Ränder der Spalte, damit sie als Leiste liest und nicht
-// als vergessener Knopf.
+// The forms save nothing by themselves. That is why the bar stays at the bottom
+// edge even when the form is longer than the screen — otherwise, after filling it
+// in, nothing would be visible to point at saving. It reaches to the edges of the
+// column so that it reads as a bar and not as a forgotten button.
 .actions.sticky {
   position: sticky;
   bottom: 0;
@@ -159,15 +158,15 @@ button,
   backdrop-filter: blur(6px);
 }
 
-// Der Fehler gehört in die Leiste: er entsteht beim Speichern, und dort schaut
-// man in dem Moment hin.
+// The error belongs in the bar: it arises on saving, and that is where one is
+// looking at that moment.
 .save-error {
   color: var(--danger-text);
   font-size: 0.85rem;
 }
 
-// Schiebt alles Folgende nach rechts — für das Löschen, das nicht neben dem
-// Speichern stehen soll.
+// Pushes everything after it to the right — for the delete action, which should
+// not stand next to saving.
 .spacer {
   margin-left: auto;
 }

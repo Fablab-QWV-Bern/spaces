@@ -7,14 +7,14 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Singleton-Tabelle: enthält genau eine Zeile mit id = 1.
+     * Singleton table: contains exactly one row with id = 1.
      */
     public function up(): void
     {
         Schema::create('global_settings', function (Blueprint $table) {
             $table->unsignedTinyInteger('id')->primary();
 
-            // Öffnungszeiten als lokale Tageszeit, gültig an allen Wochentagen.
+            // Opening hours as local time of day, valid on all weekdays.
             $table->time('opens_at');
             $table->time('closes_at');
 

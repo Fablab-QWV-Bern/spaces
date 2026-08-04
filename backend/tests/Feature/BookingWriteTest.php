@@ -10,7 +10,7 @@ beforeEach(function () {
     Spectator::using('reservation-api.yml');
     $this->seed(DatabaseSeeder::class);
 
-    // Fester Bezugspunkt vor der Öffnung, damit "in der Vergangenheit" eindeutig ist.
+    // A fixed reference point before opening, so that "in the past" is unambiguous.
     $this->travelTo(CarbonImmutable::parse('2026-08-03 07:00', 'Europe/Zurich'));
 
     $this->member = Role::where('name', 'Mitglied')->firstOrFail();
@@ -38,7 +38,7 @@ function existingBooking(string $workplaceId = 'holz-1', string $from = '09:00',
     ]);
 }
 
-it('legt eine Buchung an', function () {
+it('creates a booking', function () {
     $this->actingAs($this->member)
         ->postJson('/api/bookings', payload())
         ->assertValidRequest()
@@ -50,8 +50,8 @@ it('legt eine Buchung an', function () {
     expect(Booking::count())->toBe(1);
 });
 
-it('haelt den Blockierungs-Snapshot beim Anlegen fest', function () {
-    // kurse-holz blockiert holz-1 bis holz-5.
+it('records the blocking snapshot on creation', function () {
+    // kurse-holz blocks holz-1 through holz-5.
     $this->actingAs($this->member)
         ->postJson('/api/bookings', payload(['workplaceId' => 'kurse-holz']))
         ->assertStatus(201);
@@ -60,7 +60,7 @@ it('haelt den Blockierungs-Snapshot beim Anlegen fest', function () {
         ->toBe(['holz-1', 'holz-2', 'holz-3', 'holz-4', 'holz-5']);
 });
 
-it('meldet eine Kollision mit 409 und nennt die Buchung', function () {
+it('reports a collision with 409 and names the booking', function () {
     $existing = existingBooking();
 
     $this->actingAs($this->member)
@@ -71,7 +71,7 @@ it('meldet eine Kollision mit 409 und nennt die Buchung', function () {
     expect(Booking::count())->toBe(1);
 });
 
-it('meldet Regelverstoesse mit 422 und Feldfehlern', function () {
+it('reports rule violations with 422 and field errors', function () {
     $this->actingAs($this->member)
         ->postJson('/api/bookings', payload([
             'startTime' => CarbonImmutable::parse('2026-08-03 06:00', 'Europe/Zurich')->utc()->toIso8601ZuluString(),
@@ -83,8 +83,8 @@ it('meldet Regelverstoesse mit 422 und Feldfehlern', function () {
     expect(Booking::count())->toBe(0);
 });
 
-it('verlangt die Bestaetigung der Nutzungsregeln', function () {
-    // shaper-origin hat Nutzungsregeln hinterlegt.
+it('requires the usage rules to be acknowledged', function () {
+    // shaper-origin has usage rules configured.
     $this->actingAs($this->member)
         ->postJson('/api/bookings', payload(['workplaceId' => 'shaper-origin']))
         ->assertStatus(422)
@@ -98,11 +98,11 @@ it('verlangt die Bestaetigung der Nutzungsregeln', function () {
         ->assertStatus(201);
 });
 
-it('verweigert das Anlegen ohne manageBookings', function () {
+it('refuses creation without manageBookings', function () {
     $this->postJson('/api/bookings', payload())->assertValidResponse(403);
 });
 
-it('aendert eine Buchung', function () {
+it('changes a booking', function () {
     $booking = existingBooking();
 
     $this->actingAs($this->member)
@@ -116,16 +116,16 @@ it('aendert eine Buchung', function () {
         ->assertJsonPath('name', 'Geändert');
 });
 
-it('laesst die geaenderte Buchung nicht mit sich selbst kollidieren', function () {
+it('does not let the changed booking collide with itself', function () {
     $booking = existingBooking();
 
-    // Gleicher Zeitraum, nur ein anderer Name — darf nicht als Kollision gelten.
+    // Same time range, only a different name — must not count as a collision.
     $this->actingAs($this->member)
         ->putJson("/api/bookings/{$booking->id}", payload(['name' => 'Neuer Name']))
         ->assertStatus(200);
 });
 
-it('loescht eine Buchung', function () {
+it('deletes a booking', function () {
     $booking = existingBooking();
 
     $this->actingAs($this->member)
@@ -135,7 +135,7 @@ it('loescht eine Buchung', function () {
     expect(Booking::count())->toBe(0);
 });
 
-it('laesst vergangene Buchungen in Ruhe', function () {
+it('leaves past bookings alone', function () {
     $booking = existingBooking();
     $this->travelTo(CarbonImmutable::parse('2026-08-04 09:00', 'Europe/Zurich'));
 
@@ -150,10 +150,10 @@ it('laesst vergangene Buchungen in Ruhe', function () {
     expect(Booking::count())->toBe(1);
 });
 
-it('laesst eine laufende Buchung noch aendern', function () {
+it('still allows a running booking to be changed', function () {
     $booking = existingBooking('holz-1', '09:00', '11:00');
 
-    // Mitten in der Buchung: der Beginn liegt jetzt zurück, das Ende noch nicht.
+    // In the middle of the booking: the start now lies behind us, the end does not.
     $this->travelTo(CarbonImmutable::parse('2026-08-03 10:00', 'Europe/Zurich'));
 
     $this->actingAs($this->member)
@@ -162,7 +162,7 @@ it('laesst eine laufende Buchung noch aendern', function () {
         ->assertJsonPath('name', 'Verlängert');
 });
 
-it('prueft eine Buchung vorab, ohne sie anzulegen', function () {
+it('pre-checks a booking without creating it', function () {
     $this->actingAs($this->member)
         ->postJson('/api/bookings/validate', payload())
         ->assertValidRequest()
@@ -174,7 +174,7 @@ it('prueft eine Buchung vorab, ohne sie anzulegen', function () {
     expect(Booking::count())->toBe(0);
 });
 
-it('meldet in der Vorabpruefung Kollision und Verstoesse', function () {
+it('reports collision and violations in the pre-check', function () {
     $existing = existingBooking();
 
     $this->actingAs($this->member)
@@ -187,7 +187,7 @@ it('meldet in der Vorabpruefung Kollision und Verstoesse', function () {
         ->assertJsonPath('violations.0.code', 'COLLISION');
 });
 
-it('nimmt in der Vorabpruefung die eigene Buchung aus', function () {
+it('excludes the booking itself in the pre-check', function () {
     $booking = existingBooking();
 
     $this->actingAs($this->member)
@@ -196,8 +196,8 @@ it('nimmt in der Vorabpruefung die eigene Buchung aus', function () {
         ->assertJsonPath('valid', true);
 });
 
-it('rechnet die Nettodauer einer Buchung ueber Nacht', function () {
-    // Der Bereich Fablab erlaubt Buchungen über Nacht.
+it('computes the net duration of an overnight booking', function () {
+    // The Fablab area allows overnight bookings.
     $this->actingAs($this->member)
         ->postJson('/api/bookings', payload([
             'workplaceId' => 'prusa-xl',
@@ -205,11 +205,11 @@ it('rechnet die Nettodauer einer Buchung ueber Nacht', function () {
             'endTime' => CarbonImmutable::parse('2026-08-04 09:00', 'Europe/Zurich')->utc()->toIso8601ZuluString(),
         ]))
         ->assertStatus(201)
-        // Nur die Stunden innerhalb der Öffnungszeiten zählen.
+        // Only the hours within the opening hours count.
         ->assertJsonPath('chargeableDurationMinutes', 120);
 });
 
-it('sperrt Buchungen ueber Nacht ausserhalb solcher Bereiche', function () {
+it('blocks overnight bookings outside such areas', function () {
     $this->actingAs($this->member)
         ->postJson('/api/bookings', payload([
             'startTime' => CarbonImmutable::parse('2026-08-03 20:00', 'Europe/Zurich')->utc()->toIso8601ZuluString(),
@@ -219,7 +219,7 @@ it('sperrt Buchungen ueber Nacht ausserhalb solcher Bereiche', function () {
         ->assertJsonValidationErrors(['endTime']);
 });
 
-it('verweigert defekte Arbeitsplaetze', function () {
+it('refuses broken workplaces', function () {
     $this->actingAs($this->member)
         ->postJson('/api/bookings', payload(['workplaceId' => 'metall-cnc']))
         ->assertStatus(422)

@@ -7,12 +7,12 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Listenwertige Felder des Arbeitsplatzes als eigene Tabellen statt als
-     * JSON-Spalten: indexierbar und unabhängig von der MariaDB-Version.
+     * The workplace's list-valued fields as tables of their own rather than JSON
+     * columns: indexable and independent of the MariaDB version.
      *
-     * Tags werden ohne führendes "#" gespeichert. Der Vergleich ist dank der
-     * Kollation utf8mb4_unicode_ci case-insensitiv — "Lärmig" und "lärmig" sind
-     * damit auch im Primärschlüssel derselbe Tag.
+     * Tags are stored without a leading "#". Thanks to the utf8mb4_unicode_ci
+     * collation the comparison is case-insensitive — so "Lärmig" and "lärmig" are
+     * the same tag in the primary key as well.
      */
     public function up(): void
     {
@@ -26,7 +26,7 @@ return new class extends Migration
             $table->foreign('workplace_id')->references('id')->on('workplaces')->cascadeOnDelete();
         });
 
-        // "Blockiert Arbeitsplätze" — explizite IDs.
+        // "Blocks workplaces" — explicit IDs.
         Schema::create('workplace_blocks_workplaces', function (Blueprint $table) {
             $table->string('workplace_id', 64);
             $table->string('blocked_workplace_id', 64);
@@ -36,12 +36,12 @@ return new class extends Migration
 
             $table->foreign('workplace_id')->references('id')->on('workplaces')->cascadeOnDelete();
 
-            // Beim Löschen eines Arbeitsplatzes verschwindet er auch aus den
-            // Blockierlisten der anderen.
+            // When a workplace is deleted it also disappears from the others'
+            // blocking lists.
             $table->foreign('blocked_workplace_id')->references('id')->on('workplaces')->cascadeOnDelete();
         });
 
-        // "Blockiert Arbeitsplätze via Tag" — Regel, nicht aufgelöste Liste.
+        // "Blocks workplaces by tag" — a rule, not a resolved list.
         Schema::create('workplace_blocks_tags', function (Blueprint $table) {
             $table->string('workplace_id', 64);
             $table->string('tag', 64);

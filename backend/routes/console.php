@@ -8,9 +8,9 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-// Nachts, weil der Lauf bei vielen Serien hunderte Buchungen schreibt.
-// `withoutOverlapping` schützt gegen einen zweiten Lauf, solange der erste
-// hängt — auf dem Hosting gibt es keine Warteschlange, die das täte.
+// At night, because with many series the run writes hundreds of bookings.
+// `withoutOverlapping` guards against a second run while the first is stuck — on
+// the hosting there is no queue that would do that.
 Schedule::command('booking-series:instantiate')
     ->dailyAt('03:00')
     ->withoutOverlapping();

@@ -1,17 +1,17 @@
 :host {
-  // Popover-Standardstile des Browsers zurücksetzen: die zentrieren das Element
-  // im Viewport, wir hängen es stattdessen an den überfahrenen Balken.
-  // Kein Aussenabstand: die Karte liegt lückenlos am Balken, damit der Zeiger
-  // ohne Zwischenraum hinüberwandern kann.
+  // Reset the browser's default popover styles: they centre the element in the
+  // viewport, whereas we attach it to the hovered bar.
+  // No outer margin: the card sits flush against the bar so that the pointer can
+  // travel over without a gap.
   inset: auto;
   margin: 0;
   padding: 0.6rem 0.75rem;
   border: 1px solid var(--line-strong);
 
-  // Gegenstück zum `anchor-name` in calendar-block.scss.
+  // Counterpart to the `anchor-name` in calendar-block.scss.
   position-anchor: --block;
   position-area: block-end span-inline-end;
-  // Am Viewport-Rand nach oben bzw. zur anderen Seite umklappen.
+  // Flip upwards or to the other side at the viewport edge.
   position-try-fallbacks:
     flip-block,
     flip-inline,
@@ -26,8 +26,8 @@
   font-size: 0.82rem;
   line-height: 1.35;
   color: var(--ink);
-  // Der Balken schreibt seinen Inhalt einzeilig; die Karte liegt in seinem
-  // Teilbaum und erbt das.
+  // The bar sets its content on a single line; the card sits in its subtree and
+  // inherits that.
   white-space: normal;
 }
 

@@ -28,8 +28,8 @@ class BookingController extends Controller
     public function index(Request $request): AnonymousResourceCollection
     {
         $filters = $request->validate([
-            // Pflicht, damit die Antwort begrenzt bleibt — der Kalender kennt
-            // sein Zeitfenster immer.
+            // Required so that the response stays bounded — the calendar always
+            // knows its time window.
             'from' => ['required', 'date'],
             'to' => ['required', 'date', 'after:from'],
             'workplaceId' => ['sometimes', 'string'],
@@ -40,7 +40,7 @@ class BookingController extends Controller
         $to = CarbonImmutable::parse($filters['to'])->utc();
 
         $bookings = Booking::query()
-            // Alles, was das Fenster überschneidet, halboffen verglichen.
+            // Everything overlapping the window, compared half-open.
             ->where('start_time', '<', $to)
             ->where('end_time', '>', $from)
             ->when($filters['workplaceId'] ?? null, fn ($query, $id) => $query->where('workplace_id', $id))
@@ -90,9 +90,9 @@ class BookingController extends Controller
 
         $data = $this->validatePayload($request);
 
-        // Das Feld ist im Vertrag optional. Beim Ändern heisst „weggelassen"
-        // aber nicht „widerrufen" — sonst nähme ein Aufruf ohne das Feld die
-        // Bestätigung zurück, ohne dass jemand das wollte.
+        // The field is optional in the contract. When changing, however,
+        // "omitted" does not mean "revoked" — otherwise a call without the field
+        // would withdraw the acknowledgement without anyone intending it.
         $data['usageRulesAcknowledged'] ??= $booking->usage_rules_acknowledged;
 
         try {
@@ -120,7 +120,7 @@ class BookingController extends Controller
         return response()->json(status: 204);
     }
 
-    /** Vorabprüfung für die Echtzeit-Anzeige im Formular. Schreibt nichts. */
+    /** Pre-flight check for the real-time display in the form. Writes nothing. */
     public function check(Request $request): JsonResponse
     {
         $data = $this->validatePayload($request);
@@ -167,8 +167,8 @@ class BookingController extends Controller
     }
 
     /**
-     * Eine Kollision ist ein Konflikt mit fremdem Zustand (409), alles andere ein
-     * Fehler in der Eingabe selbst (422).
+     * A collision is a conflict with someone else's state (409); everything else
+     * is an error in the input itself (422).
      */
     private function ruleFailure(BookingRuleException $exception): JsonResponse
     {
@@ -201,12 +201,12 @@ class BookingController extends Controller
     }
 
     /**
-     * Der Text zum Verstoss.
+     * The text for a violation.
      *
-     * Der Vorlauf ist die einzige Regel, deren Grenze aus der Konfiguration
-     * kommt und nicht aus der Eingabe — sie steht darum in der Meldung. Ohne
-     * sie bliebe offen, wie weit "so weit im Voraus" reicht, und man müsste
-     * sich an die Datumsliste herantasten.
+     * The booking horizon is the only rule whose limit comes from the
+     * configuration rather than from the input — which is why it appears in the
+     * message. Without it, how far "this far in advance" reaches would stay open
+     * and you would have to feel your way along the date list.
      */
     private function message(ViolationCode $code, ValidationResult $result): string
     {
