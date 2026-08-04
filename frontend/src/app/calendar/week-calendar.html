@@ -50,8 +50,8 @@
                 [class.hovered]="hoveredDay() === day.date"
                 [axis]="axis"
                 [blocks]="blocks(workplace, day.date)"
-                [clickable]="isBookable(workplace)"
-                (mouseenter)="onCellEnter(workplace, day.date)"
+                [clickable]="true"
+                (mouseenter)="hoveredDay.set(day.date)"
                 (slotClick)="openDay(day.date)"
               />
             }

@@ -32,6 +32,11 @@ interface WeekDay {
  * Gebucht wird hier nicht: bei rund hundert Pixeln für dreizehn Stunden wäre
  * eine Viertelstunde keine zwei Pixel breit, ein Klick träfe nie das Gemeinte.
  * Er öffnet darum den Tag in der Tagesansicht.
+ *
+ * Daraus folgt, dass jede Zelle anklickbar ist: Blättern ist keine Buchung. Wer
+ * nicht angemeldet ist, kommt hier genauso in den Tag wie ein Mitglied, und ein
+ * defekter Arbeitsplatz ist kein Grund, seinen Tag nicht zeigen zu wollen. Ob
+ * dort etwas anzulegen ist, sagt die Tagesansicht.
  */
 @Component({
   selector: 'app-week-calendar',
@@ -82,10 +87,6 @@ export class WeekCalendar {
    * genau das zeigt die Spalte an.
    */
   protected readonly hoveredDay = signal<IsoDate | null>(null);
-
-  protected onCellEnter(workplace: Workplace, date: IsoDate): void {
-    this.hoveredDay.set(this.isBookable(workplace) ? date : null);
-  }
 
   /** "27. – 31. Juli 2026", über einen Monatswechsel hinweg ausgeschrieben. */
   protected readonly heading = computed(() => {
@@ -162,11 +163,6 @@ export class WeekCalendar {
 
     return percent === null ? null : { column: index + 1, percent };
   });
-
-  /** Wie in der Tagesansicht: die Fläche lädt nur dort ein, wo buchbar ist. */
-  protected isBookable(workplace: Workplace): boolean {
-    return workplace.status === 'OK' && this.store.canManageBookings();
-  }
 
   protected openDay(date: IsoDate): void {
     this.router.navigate(['/tag'], { queryParams: { datum: date } });

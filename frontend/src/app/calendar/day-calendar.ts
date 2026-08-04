@@ -137,12 +137,29 @@ export class DayCalendar {
   }
 
   /**
-   * Der Hinweis, aber nur in Zeilen, die sonst buchbar wären: wo ohnehin nichts
-   * anzulegen ist, wäre die Auskunft über den Vorlauf eine Antwort auf eine
-   * Frage, die niemand gestellt hat.
+   * Warum ein Klick hier nichts anlegt — beim Überfahren an der Stelle, an der
+   * sonst die Vorschau läge.
+   *
+   * Für die anonyme Rolle ist die Antwort immer dieselbe und sie steht vor dem
+   * Vorlauf: wer sich erst anmelden muss, kann mit der Auskunft, ab wann dieser
+   * Tag freigäbe, nichts anfangen. Genannt wird sie nur, wo eine Anmeldung
+   * tatsächlich zum Buchen führte — an einem defekten Arbeitsplatz wäre sie ein
+   * falsches Versprechen.
+   *
+   * Sonst gilt: nur in Zeilen, die ohnehin buchbar wären. Wo nichts anzulegen
+   * ist, wäre die Auskunft über den Vorlauf eine Antwort auf eine Frage, die
+   * niemand gestellt hat.
    */
   protected notice(workplace: Workplace, area: Area): string | null {
-    if (workplace.status !== 'OK' || !this.store.canManageBookings()) {
+    if (workplace.status !== 'OK') {
+      return null;
+    }
+
+    if (this.store.isAnonymous()) {
+      return 'Melde dich an, um eine Buchung zu erstellen';
+    }
+
+    if (!this.store.canManageBookings()) {
       return null;
     }
 

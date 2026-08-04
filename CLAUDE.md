@@ -350,6 +350,11 @@ ausgeliefert, den `storage:link` bei jeder Bereitstellung erneuert.
   jeder Änderung — jeder Lauf löst sonst grosse Datei-Meldungen aus.
 - Browser-Verifikation nur, wo sie etwas findet: bei Logik und Geometrie ja, bei
   reinen CSS-Anpassungen nachfragen statt Screenshots zu schiessen.
+- In Komponenten mit eingebetteter Vorlage (`template:`, `styles:`) keine
+  Backticks in Kommentaren — sie beenden das Template-Literal. Gemeldet wird der
+  Fehler dann auf `@Component({` und nicht dort, wo er steht, und `ng serve`
+  liefert stumm den letzten heilen Bundle weiter. Man sucht die Ursache
+  erfahrungsgemäss zuerst im Browser statt in der Ausgabe des Servers.
 - Bei einem neuen, in sich geschlossenen Auftrag lohnt sich eine frische Sitzung
   mehr als das Fortführen dieser — der Verlauf wird sonst bei jedem Turn
   mitgeschickt.

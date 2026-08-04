@@ -51,6 +51,7 @@ export class CalendarStore {
   readonly canManageBookings = this.sessionService.canManageBookings;
   readonly canManageBookingSeries = this.sessionService.canManageBookingSeries;
   readonly noTimeRestrictions = this.sessionService.noTimeRestrictions;
+  readonly isAnonymous = this.sessionService.isAnonymous;
 
   /** Die Zeitachse aus den konfigurierten Öffnungszeiten. */
   readonly axis = computed<TimeAxis | null>(() => {

@@ -11,9 +11,12 @@ import { SessionService } from './session-service';
  * Anmeldung als Rolle. Es gibt keine Benutzer — man wählt die Rolle, unter der
  * man handelt, und teilt sich deren Kennwort mit allen anderen.
  *
- * Der Dialog zeigt zuerst eine Schaltfläche pro Rolle statt eines
- * Freitextfelds — die Rollen sind eine kleine, bekannte Liste, aus der man
- * auswählt statt sie zu tippen. Erst nach der Auswahl erscheint das Kennwortfeld.
+ * Die Rolle steht als Umschalter neben dem Kennwortfeld und nicht als eigener
+ * Schritt davor: die Liste ist kurz und bekannt, und fast jede Anmeldung meint
+ * ohnehin die erste. Voreingestellt ist darum die erste — `GET /session/roles`
+ * gibt sie in der Reihenfolge ihrer Entstehung zurück, und angelegt wird die
+ * alltägliche Rolle vor den verwaltenden. Wer sie meint, tippt nur noch das
+ * Kennwort.
  */
 @Component({
   selector: 'app-session-bar',
@@ -39,52 +42,68 @@ import { SessionService } from './session-service';
     </div>
 
     <dialog #dialog class="login">
-      @if (!selectedRole()) {
-        <div class="roles">
-          <h2>Anmelden als</h2>
+      <form method="dialog" (submit)="$event.preventDefault(); submit()">
+        <h2>Anmelden</h2>
 
-          @if (loadingRoles()) {
-            <p class="hint">Wird geladen …</p>
-          } @else {
+        @if (loadingRoles()) {
+          <p class="hint">Wird geladen …</p>
+        } @else {
+          <div class="roles" role="group" aria-label="Rolle">
             @for (role of roles(); track role) {
-              <button type="button" class="role-choice" (click)="selectRole(role)">
+              <button
+                type="button"
+                class="role-choice"
+                [class.selected]="selectedRole() === role"
+                [attr.aria-pressed]="selectedRole() === role"
+                (click)="selectRole(role)"
+              >
                 {{ role }}
               </button>
             }
-          }
-
-          <div class="actions">
-            <button type="button" (click)="close()">Abbrechen</button>
           </div>
+        }
+
+        <!-- Der Kennwortverwalter des Browsers braucht neben dem Kennwort einen
+             Benutzernamen, sonst weiss er nicht, wozu er das Gemerkte ablegen
+             und wann er es anbieten soll. Sichtbar ist er hier nicht — die
+             Rolle steht schon als Umschalter darüber. Aus dem Layout genommen
+             wird er per Zuschnitt und nicht über hidden oder display: none —
+             was der Browser gar nicht darstellt, zählt er auch nicht als Feld. -->
+        <input
+          class="username"
+          type="text"
+          name="username"
+          autocomplete="username"
+          [value]="selectedRole() ?? ''"
+          readonly
+          tabindex="-1"
+          aria-hidden="true"
+        />
+
+        <label>
+          <span>Kennwort</span>
+          <input
+            #passwordField
+            type="password"
+            [ngModel]="password()"
+            (ngModelChange)="password.set($event)"
+            name="password"
+            autocomplete="current-password"
+            required
+          />
+        </label>
+
+        @if (error(); as message) {
+          <p class="error" role="alert">{{ message }}</p>
+        }
+
+        <div class="actions">
+          <button type="submit" class="primary" [disabled]="busy() || !selectedRole()">
+            Anmelden
+          </button>
+          <button type="button" (click)="close()">Abbrechen</button>
         </div>
-      } @else {
-        <form method="dialog" (submit)="$event.preventDefault(); submit()">
-          <h2>Anmelden als {{ selectedRole() }}</h2>
-
-          <label>
-            <span>Kennwort</span>
-            <input
-              #passwordField
-              type="password"
-              [ngModel]="password()"
-              (ngModelChange)="password.set($event)"
-              name="password"
-              autocomplete="current-password"
-              required
-            />
-          </label>
-
-          @if (error(); as message) {
-            <p class="error" role="alert">{{ message }}</p>
-          }
-
-          <div class="actions">
-            <button type="submit" class="primary" [disabled]="busy()">Anmelden</button>
-            <button type="button" (click)="back()">Andere Rolle</button>
-            <button type="button" (click)="close()">Abbrechen</button>
-          </div>
-        </form>
-      }
+      </form>
     </dialog>
   `,
   styles: `
@@ -154,18 +173,61 @@ import { SessionService } from './session-service';
         font-size: 1.1rem;
       }
 
-      form,
-      .roles {
+      form {
         display: flex;
         flex-direction: column;
         gap: 0.6rem;
         font-family: system-ui, sans-serif;
       }
 
+      // Ein zusammenhängender Umschalter und keine Reihe einzelner Knöpfe: es
+      // ist eine Wahl und nicht mehrere Angebote. Gebaut wie der Zoomumschalter
+      // in der Kopfleiste — geteilte Kante, Rundung nur aussen, ausgezeichnet
+      // in --text-muted. Der Akzent bleibt dem Anmelden-Knopf: was gewählt
+      // ist, ist etwas anderes als was der Klick tut.
+      .roles {
+        display: flex;
+      }
+
       .role-choice {
-        padding: 0.6rem 0.75rem;
-        text-align: left;
+        flex: 1;
+        padding: 0.5rem 0.75rem;
         font-size: 0.95rem;
+        border-radius: 0;
+
+        // Die Innenkanten liegen aufeinander; sonst stünde dort ein doppelter
+        // Strich.
+        &:not(:first-child) {
+          margin-left: -1px;
+        }
+
+        &:first-child {
+          border-radius: 0.25rem 0 0 0.25rem;
+        }
+
+        &:last-child {
+          border-radius: 0 0.25rem 0.25rem 0;
+        }
+
+        // Nach vorn geholt, damit die dunkle Kante der gewählten Rolle nicht
+        // unter der ihres Nachbarn verschwindet.
+        &.selected {
+          position: relative;
+          background: var(--text-muted);
+          border-color: var(--text-muted);
+          color: var(--paper);
+        }
+      }
+
+      // Zugeschnitten statt versteckt — warum, steht an der Stelle selbst.
+      .username {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        border: 0;
+        clip-path: inset(50%);
+        overflow: hidden;
       }
 
       label {
@@ -219,29 +281,31 @@ export class SessionBar {
     this.password.set('');
     this.error.set(null);
     this.dialogRef()?.nativeElement.showModal();
+    // Der Fokus gehört ins Kennwortfeld und nicht auf den ersten Rollenknopf:
+    // die Rolle ist schon gewählt, das Kennwort ist die offene Frage. Einen
+    // Tick später, weil `showModal()` selbst noch fokussiert.
+    setTimeout(() => this.passwordFieldRef()?.nativeElement.focus());
 
     this.loadingRoles.set(true);
     this.session.loginableRoles().subscribe({
       next: (roles) => {
         this.roles.set(roles);
+        this.selectedRole.set(roles[0] ?? null);
         this.loadingRoles.set(false);
       },
       error: () => this.loadingRoles.set(false),
     });
   }
 
+  /**
+   * Das Kennwort bleibt beim Umschalten stehen. Wer es getippt hat und erst
+   * dann merkt, dass die andere Rolle gemeint war, soll es nicht zweimal
+   * tippen; der Fehler von vorhin gilt der alten Rolle und verschwindet.
+   */
   protected selectRole(role: string): void {
     this.selectedRole.set(role);
-    this.password.set('');
     this.error.set(null);
-    // Der Dialog rendert das Kennwortfeld erst in diesem Moment neu — der
-    // Fokus muss deshalb einen Tick später gesetzt werden.
-    setTimeout(() => this.passwordFieldRef()?.nativeElement.focus());
-  }
-
-  protected back(): void {
-    this.selectedRole.set(null);
-    this.error.set(null);
+    this.passwordFieldRef()?.nativeElement.focus();
   }
 
   protected close(): void {
