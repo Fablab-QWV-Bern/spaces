@@ -16,8 +16,8 @@
     </p>
   </div>
 } @else if (result()) {
-  <!-- Die ausgelassenen Termine stehen nur hier: die API merkt sie sich nicht.
-       Darum wird nach dem Speichern nicht weitergeleitet. -->
+  <!-- The skipped occurrences appear only here: the API does not remember them.
+       That is why there is no redirect after saving. -->
   <div class="done">
     <section class="panel">
       <h2>Serie gespeichert</h2>
@@ -57,8 +57,8 @@
     </div>
   </div>
 } @else {
-  <!-- Natives submit-Ereignis: (ngSubmit) stammt aus FormsModule, das Signal
-       Forms nicht mehr braucht. -->
+  <!-- Native submit event: (ngSubmit) comes from FormsModule, which Signal
+       Forms no longer needs. -->
   <form class="form" (submit)="$event.preventDefault(); submit()">
     <section class="panel">
       <label class="field">

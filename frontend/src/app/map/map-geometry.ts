@@ -1,18 +1,18 @@
 /**
- * Das Rechnen der Übersichtskarte: aus Kästen im Koordinatensystem des SVG
- * werden Prozentwerte auf dessen Fläche.
+ * The arithmetic of the overview map: boxes in the SVG's coordinate system become
+ * percentages of its surface.
  *
- * Wie die Zeitachse bewusst frei von Angular und frei vom DOM — hereingereicht
- * werden nur Zahlen. Gemessen wird an einer Stelle, im `MapView`; gerechnet
- * hier, wo man es prüfen kann.
+ * Like the time axis, deliberately free of Angular and free of the DOM — only
+ * numbers are passed in. Measuring happens in one place, in `MapView`; the
+ * arithmetic happens here, where it can be tested.
  *
- * Prozent und nicht Bildpunkte, weil die Karte mit dem Fenster wächst. Das geht
- * nur auf, solange die dargestellte Fläche genau das Seitenverhältnis der
- * `viewBox` hat — sonst bliebe ein Rand, den die Prozente nicht kennen. Dafür
- * sorgt `map-view.scss`.
+ * Percentages rather than pixels, because the map grows with the window. That
+ * only works out as long as the rendered area has exactly the aspect ratio of the
+ * `viewBox` — otherwise a margin would remain that the percentages know nothing
+ * about. `map-view.scss` sees to that.
  */
 
-/** Ein Kasten im Koordinatensystem des SVG — die Form von `getBBox()`. */
+/** A box in the SVG's coordinate system — the shape of `getBBox()`. */
 export interface Box {
   x: number;
   y: number;
@@ -20,7 +20,7 @@ export interface Box {
   height: number;
 }
 
-/** Platzierung auf der Karte, in Prozent ihrer Breite bzw. Höhe. */
+/** Placement on the map, as a percentage of its width or height. */
 export interface Placement {
   leftPercent: number;
   topPercent: number;
@@ -29,13 +29,13 @@ export interface Placement {
 }
 
 /**
- * Die Kennung der Figur im SVG. Sie ist Teil des Vertrags mit der Datei, so wie
- * es die Kennungen der Arbeitsplätze sind: die Karte bringt eine Figur mit, wir
- * setzen sie so oft, wie jemand da ist.
+ * The figure's identifier in the SVG. It is part of the contract with the file,
+ * just as the workplace identifiers are: the map brings one figure along, and we
+ * place it as many times as somebody is present.
  */
 export const FIGURE_ID = 'figur';
 
-/** `viewBox="0 0 1184 2082"` als Kasten; null, wenn das Attribut fehlt oder unlesbar ist. */
+/** `viewBox="0 0 1184 2082"` as a box; null when the attribute is missing or unreadable. */
 export function parseViewBox(value: string | null | undefined): Box | null {
   if (!value) {
     return null;
@@ -54,11 +54,11 @@ export function parseViewBox(value: string | null | undefined): Box | null {
 }
 
 /**
- * Setzt die Figur mittig auf einen Arbeitsplatz — in ihrer natürlichen Grösse.
+ * Places the figure centred on a workplace — at its natural size.
  *
- * Nicht auf die Grösse des Arbeitsplatzes gestreckt: die Figur ist im Massstab
- * der Karte gezeichnet, und eine Werkbank ist breiter als ein Mensch. Gestreckt
- * stünde auf der Hobelbank ein Riese und am Lötplatz ein Zwerg.
+ * Not stretched to the size of the workplace: the figure is drawn at the map's
+ * scale, and a workbench is wider than a person. Stretched, a giant would stand
+ * at the planing bench and a dwarf at the soldering station.
  */
 export function placeCentered(viewBox: Box, target: Box, figure: Box): Placement {
   return {
@@ -69,7 +69,7 @@ export function placeCentered(viewBox: Box, target: Box, figure: Box): Placement
   };
 }
 
-/** Der Ausschnitt, den die Figur allein füllt — die `viewBox` ihres eigenen SVG. */
+/** The excerpt the figure alone fills — the `viewBox` of its own SVG. */
 export function figureViewBox(figure: Box): string {
   return `${figure.x} ${figure.y} ${figure.width} ${figure.height}`;
 }

@@ -30,7 +30,7 @@ function rolePayload(array $overrides = []): array
     ], $overrides);
 }
 
-it('listet die Rollen', function () {
+it('lists the roles', function () {
     $this->actingAs($this->admin)
         ->getJson('/api/roles')
         ->assertValidRequest()
@@ -38,7 +38,7 @@ it('listet die Rollen', function () {
         ->assertJsonCount(3);
 });
 
-it('legt eine Rolle an', function () {
+it('creates a role', function () {
     $this->actingAs($this->admin)
         ->postJson('/api/roles', rolePayload())
         ->assertValidRequest()
@@ -54,19 +54,19 @@ it('legt eine Rolle an', function () {
     expect(Hash::check('kursleitung-kennwort', $role->password))->toBeTrue();
 });
 
-it('verlangt beim Anlegen ein Kennwort', function () {
+it('requires a password on creation', function () {
     $this->actingAs($this->admin)
         ->postJson('/api/roles', rolePayload(['password' => null]))
         ->assertValidResponse(422);
 });
 
-it('weist einen doppelten Namen ab', function () {
+it('rejects a duplicate name', function () {
     $this->actingAs($this->admin)
         ->postJson('/api/roles', rolePayload(['name' => 'Mitglied']))
         ->assertValidResponse(422);
 });
 
-it('aendert Name und Berechtigungen', function () {
+it('changes name and permissions', function () {
     $this->actingAs($this->admin)
         ->putJson("/api/roles/{$this->member->id}", rolePayload([
             'name' => 'Mitglieder',
@@ -79,8 +79,8 @@ it('aendert Name und Berechtigungen', function () {
         ->assertJsonPath('permissions.manageBookings', false);
 });
 
-// Sonst müsste man das Kennwort bei jeder Umbenennung neu setzen.
-it('laesst ein weggelassenes Kennwort stehen', function () {
+// Otherwise the password would have to be set again on every rename.
+it('leaves an omitted password in place', function () {
     $before = $this->member->password;
 
     $this->actingAs($this->admin)
@@ -94,7 +94,7 @@ it('laesst ein weggelassenes Kennwort stehen', function () {
     expect($this->member->fresh()->password)->toBe($before);
 });
 
-it('setzt ein neues Kennwort', function () {
+it('sets a new password', function () {
     $this->actingAs($this->admin)
         ->putJson("/api/roles/{$this->member->id}", rolePayload([
             'name' => 'Mitglied',
@@ -105,7 +105,7 @@ it('setzt ein neues Kennwort', function () {
     expect(Hash::check('ganz-neues-kennwort', $this->member->fresh()->password))->toBeTrue();
 });
 
-it('gibt der anonymen Rolle kein Kennwort', function () {
+it('gives the anonymous role no password', function () {
     $this->actingAs($this->admin)
         ->putJson("/api/roles/{$this->anonymous->id}", rolePayload([
             'name' => 'Anonym',
@@ -117,8 +117,8 @@ it('gibt der anonymen Rolle kein Kennwort', function () {
     expect($this->anonymous->fresh()->password)->toBeNull();
 });
 
-// Sonst könnte sich jeder Aufruf ohne Anmeldung selbst zum Verwalter machen.
-it('gibt der anonymen Rolle kein manageRoles', function () {
+// Otherwise any call without a login could make itself an administrator.
+it('gives the anonymous role no manageRoles', function () {
     $this->actingAs($this->admin)
         ->putJson("/api/roles/{$this->anonymous->id}", rolePayload([
             'name' => 'Anonym',
@@ -128,7 +128,7 @@ it('gibt der anonymen Rolle kein manageRoles', function () {
         ->assertValidResponse(422);
 });
 
-it('nimmt der letzten verwaltenden Rolle das Recht nicht weg', function () {
+it('does not strip the permission from the last managing role', function () {
     $this->actingAs($this->admin)
         ->putJson("/api/roles/{$this->admin->id}", rolePayload([
             'name' => 'Admin',
@@ -140,7 +140,7 @@ it('nimmt der letzten verwaltenden Rolle das Recht nicht weg', function () {
     expect($this->admin->fresh()->manage_roles)->toBeTrue();
 });
 
-it('erlaubt den Entzug, sobald eine zweite Rolle verwalten darf', function () {
+it('permits revocation once a second role may manage', function () {
     $this->actingAs($this->admin)
         ->postJson('/api/roles', rolePayload([
             'name' => 'Vorstand',
@@ -157,7 +157,7 @@ it('erlaubt den Entzug, sobald eine zweite Rolle verwalten darf', function () {
         ->assertValidResponse(200);
 });
 
-it('loescht eine Rolle', function () {
+it('deletes a role', function () {
     $this->actingAs($this->admin)
         ->deleteJson("/api/roles/{$this->member->id}")
         ->assertValidRequest()
@@ -166,9 +166,9 @@ it('loescht eine Rolle', function () {
     expect(Role::find($this->member->id))->toBeNull();
 });
 
-// Die Buchung ist ein historischer Beleg: sie behält die Rollen-ID, auch wenn
-// dahinter keine Rolle mehr steht.
-it('laesst Buchungen der geloeschten Rolle stehen', function () {
+// The booking is a historical trace: it keeps the role ID even when there is no
+// role behind it any more.
+it('leaves bookings of the deleted role standing', function () {
     $booking = Booking::create([
         'workplace_id' => 'holz-1',
         'creator_role_id' => $this->member->id,
@@ -186,7 +186,7 @@ it('laesst Buchungen der geloeschten Rolle stehen', function () {
     expect($booking->fresh()->creator_role_id)->toBe($this->member->id);
 });
 
-it('loescht weder die anonyme noch die letzte verwaltende Rolle', function () {
+it('deletes neither the anonymous nor the last managing role', function () {
     $this->actingAs($this->admin)
         ->deleteJson("/api/roles/{$this->anonymous->id}")
         ->assertValidResponse(422);
@@ -198,7 +198,7 @@ it('loescht weder die anonyme noch die letzte verwaltende Rolle', function () {
     expect(Role::count())->toBe(3);
 });
 
-it('laesst nur manageRoles lesen und schreiben', function () {
+it('lets only manageRoles read and write', function () {
     $this->actingAs($this->member)->getJson('/api/roles')->assertValidResponse(403);
     $this->actingAs($this->member)->postJson('/api/roles', rolePayload())->assertValidResponse(403);
     $this->getJson('/api/roles')->assertValidResponse(403);

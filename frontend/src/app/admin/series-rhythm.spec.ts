@@ -11,7 +11,7 @@ function series(overrides: Partial<BookingSeries> = {}): BookingSeries {
     contact: 'reparatur@example.org',
     interval: 'WEEKLY',
     intervalCount: 1,
-    // Der 3. August 2026 ist ein Montag.
+    // 3 August 2026 is a Monday.
     firstInstanceStart: '2026-08-03T09:00',
     firstInstanceEnd: '2026-08-03T11:00',
     endDate: null,
@@ -21,35 +21,35 @@ function series(overrides: Partial<BookingSeries> = {}): BookingSeries {
 }
 
 describe('rhythmOf', () => {
-  it('erkennt die drei angebotenen Takte', () => {
+  it('recognises the three offered rhythms', () => {
     expect(rhythmOf({ interval: 'WEEKLY', intervalCount: 1 })).toBe('weekly');
     expect(rhythmOf({ interval: 'WEEKLY', intervalCount: 2 })).toBe('biweekly');
     expect(rhythmOf({ interval: 'MONTHLY', intervalCount: 1 })).toBe('monthly');
   });
 
-  // Über die API lässt sich jede Anzahl anlegen; das Formular bietet nur drei an.
-  it('fällt bei einem fremden Takt auf den nächstliegenden zurück', () => {
+  // Any count can be created through the API; the form offers only three.
+  it('falls back to the nearest rhythm for an unfamiliar one', () => {
     expect(rhythmOf({ interval: 'WEEKLY', intervalCount: 3 })).toBe('weekly');
     expect(rhythmOf({ interval: 'MONTHLY', intervalCount: 4 })).toBe('monthly');
   });
 });
 
 describe('rhythmByKey', () => {
-  it('macht aus „alle zwei Wochen" wieder WEEKLY mit 2', () => {
+  it('turns "alle zwei Wochen" back into WEEKLY with 2', () => {
     expect(rhythmByKey('biweekly')).toMatchObject({ interval: 'WEEKLY', intervalCount: 2 });
   });
 });
 
 describe('describeRhythm', () => {
-  it('nennt den Wochentag, der aus dem Datum folgt', () => {
+  it('names the weekday that follows from the date', () => {
     expect(describeRhythm(series())).toBe('jeden Montag, 09:00–11:00');
   });
 
-  it('unterscheidet zweiwöchentlich von wöchentlich', () => {
+  it('distinguishes fortnightly from weekly', () => {
     expect(describeRhythm(series({ intervalCount: 2 }))).toBe('jeden zweiten Montag, 09:00–11:00');
   });
 
-  it('nennt bei MONTHLY den Tag im Monat', () => {
+  it('names the day of the month for MONTHLY', () => {
     expect(
       describeRhythm(
         series({
@@ -61,16 +61,16 @@ describe('describeRhythm', () => {
     ).toBe('am 31. jedes Monats, 14:00–17:00');
   });
 
-  // Wäre die Wanduhrzeit als UTC gelesen, verschöbe sie sich um zwei Stunden
-  // und der Wochentag könnte kippen.
-  it('liest die Wanduhrzeit als Ortszeit', () => {
+  // If the wall-clock time were read as UTC it would shift by two hours and the
+  // weekday could flip.
+  it('reads the wall-clock time as local time', () => {
     expect(describeRhythm(series({ firstInstanceStart: '2026-08-03T00:15' }))).toContain('Montag');
     expect(describeRhythm(series({ firstInstanceStart: '2026-08-03T00:15' }))).toContain('00:15');
   });
 });
 
 describe('skipsMonths', () => {
-  it('warnt ab dem 29., weil der Februar ihn meist nicht hat', () => {
+  it('warns from the 29th, because February usually does not have it', () => {
     expect(skipsMonths(28)).toBe(false);
     expect(skipsMonths(29)).toBe(true);
     expect(skipsMonths(31)).toBe(true);

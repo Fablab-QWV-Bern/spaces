@@ -14,8 +14,8 @@ use Database\Seeders\GlobalSettingSeeder;
 beforeEach(function () {
     $this->seed(GlobalSettingSeeder::class);
 
-    // Fester Bezugspunkt: Montag, 3. August 2026, 07:00 Schweizer Zeit — also vor
-    // der Oeffnung. Damit sind "in der Vergangenheit" und der Vorlauf bestimmbar.
+    // A fixed reference point: Monday, 3 August 2026, 07:00 Swiss time — that is,
+    // before opening. This makes "in the past" and the horizon determinable.
     $this->travelTo(CarbonImmutable::parse('2026-08-03 07:00', 'Europe/Zurich'));
 
     $this->area = Area::create([
@@ -54,15 +54,15 @@ function check(
     );
 }
 
-it('akzeptiert eine gewoehnliche Buchung', function () {
+it('accepts an ordinary booking', function () {
     $result = check('2026-08-03 09:00', '2026-08-03 11:00');
 
     expect($result->isValid())->toBeTrue()
         ->and($result->chargeableDurationMinutes)->toBe(120);
 });
 
-it('akzeptiert den ganzen Tag von Oeffnung bis Schliessung', function () {
-    // 08:00 als Beginn und 21:00 als Ende liegen beide noch im offenen Bereich.
+it('accepts the whole day from opening to closing', function () {
+    // 08:00 as a start and 21:00 as an end both still lie within the open window.
     $this->area->update(['max_booking_duration_minutes' => 780]);
 
     $result = check('2026-08-03 08:00', '2026-08-03 21:00');
@@ -71,83 +71,83 @@ it('akzeptiert den ganzen Tag von Oeffnung bis Schliessung', function () {
         ->and($result->chargeableDurationMinutes)->toBe(780);
 });
 
-it('besteht auf dem 15-Minuten-Raster', function () {
+it('insists on the 15-minute grid', function () {
     expect(check('2026-08-03 09:10', '2026-08-03 11:00')->has(ViolationCode::NotOnGrid))->toBeTrue();
 });
 
-it('weist ein Ende vor dem Start zurueck', function () {
+it('rejects an end before the start', function () {
     expect(check('2026-08-03 11:00', '2026-08-03 09:00')->has(ViolationCode::NotOnGrid))->toBeTrue();
 });
 
-it('weist Zeiten ausserhalb der Oeffnungszeiten zurueck', function () {
+it('rejects times outside the opening hours', function () {
     expect(check('2026-08-03 07:00', '2026-08-03 09:00')->has(ViolationCode::OutsideOpeningHours))->toBeTrue()
         ->and(check('2026-08-03 20:00', '2026-08-03 22:00')->has(ViolationCode::OutsideOpeningHours))->toBeTrue();
 });
 
-it('verbietet Buchungen ueber Nacht ohne allowNightlyActivities', function () {
+it('forbids overnight bookings without allowNightlyActivities', function () {
     expect(check('2026-08-03 20:00', '2026-08-04 09:00')->has(ViolationCode::SpansNightNotAllowed))
         ->toBeTrue();
 });
 
-it('erlaubt Buchungen ueber Nacht mit allowNightlyActivities und rechnet netto', function () {
+it('allows overnight bookings with allowNightlyActivities and charges net', function () {
     $this->area->update(['allow_nightly_activities' => true]);
 
     $result = check('2026-08-03 20:00', '2026-08-04 09:00');
 
     expect($result->isValid())->toBeTrue()
-        // Nur die zwei Stunden innerhalb der Oeffnungszeiten zaehlen.
+        // Only the two hours within the opening hours count.
         ->and($result->chargeableDurationMinutes)->toBe(120);
 });
 
-it('begrenzt die anrechenbare Dauer', function () {
+it('limits the chargeable duration', function () {
     $this->area->update(['max_booking_duration_minutes' => 60]);
 
     expect(check('2026-08-03 09:00', '2026-08-03 11:00')->has(ViolationCode::ExceedsMaxDuration))
         ->toBeTrue();
 });
 
-it('laesst den Arbeitsplatz die Dauer des Bereichs ueberschreiben', function () {
+it('lets the workplace override the area duration', function () {
     $this->area->update(['max_booking_duration_minutes' => 60]);
     $this->workplace->update(['max_booking_duration_minutes' => 240]);
 
     expect(check('2026-08-03 09:00', '2026-08-03 11:00')->isValid())->toBeTrue();
 });
 
-it('hebt mit noTimeRestrictions die maximale Dauer auf', function () {
+it('lifts the maximum duration with noTimeRestrictions', function () {
     $this->area->update(['max_booking_duration_minutes' => 60]);
 
     expect(check('2026-08-03 09:00', '2026-08-03 11:00', $this->admin)->isValid())->toBeTrue();
 });
 
-it('begrenzt den Vorlauf in die Zukunft', function () {
-    // Global sind 90 Tage konfiguriert.
+it('limits how far into the future one may book', function () {
+    // 90 days are configured globally.
     expect(check('2026-12-01 09:00', '2026-12-01 11:00')->has(ViolationCode::ExceedsMaxEndOffset))
         ->toBeTrue();
 });
 
-it('laesst den Bereich den globalen Vorlauf ueberschreiben', function () {
+it('lets the area override the global horizon', function () {
     $this->area->update(['max_booking_end_offset_days' => 365]);
 
     expect(check('2026-12-01 09:00', '2026-12-01 11:00')->isValid())->toBeTrue();
 });
 
-it('hebt mit noTimeRestrictions den Vorlauf auf', function () {
+it('lifts the horizon with noTimeRestrictions', function () {
     expect(check('2026-12-01 09:00', '2026-12-01 11:00', $this->admin)->isValid())->toBeTrue();
 });
 
-it('verbietet neue Buchungen in der Vergangenheit auch mit noTimeRestrictions', function () {
+it('forbids new bookings in the past even with noTimeRestrictions', function () {
     expect(check('2026-08-02 09:00', '2026-08-02 11:00', $this->admin)->has(ViolationCode::StartsInPast))
         ->toBeTrue();
 });
 
-it('laesst einen Beginn in der Vergangenheit beim Aendern zu', function () {
-    // Eine laufende Buchung soll sich weiterhin anpassen lassen — ihr Beginn
-    // liegt dann zwangsläufig zurück.
+it('permits a start in the past when changing', function () {
+    // A running booking should still be adjustable — its start then necessarily
+    // lies behind us.
     expect(check('2026-08-02 09:00', '2026-08-02 11:00', excludeBookingId: 'irgendeine-id')
         ->has(ViolationCode::StartsInPast))->toBeFalse();
 });
 
-it('verweigert defekte und deaktivierte Arbeitsplaetze', function () {
+it('refuses broken and disabled workplaces', function () {
     $this->workplace->update(['status' => Workplace::STATUS_DEFECT]);
     expect(check('2026-08-03 09:00', '2026-08-03 11:00')->has(ViolationCode::WorkplaceNotBookable))->toBeTrue();
 
@@ -155,14 +155,14 @@ it('verweigert defekte und deaktivierte Arbeitsplaetze', function () {
     expect(check('2026-08-03 09:00', '2026-08-03 11:00')->has(ViolationCode::WorkplaceNotBookable))->toBeTrue();
 });
 
-it('verlangt die Bestaetigung der Nutzungsregeln, wenn welche hinterlegt sind', function () {
+it('requires the usage rules to be acknowledged when there are any', function () {
     $this->workplace->update(['usage_rules' => 'Schutzbrille tragen.']);
 
     expect(check('2026-08-03 09:00', '2026-08-03 11:00')->has(ViolationCode::UsageRulesNotAcknowledged))->toBeTrue()
         ->and(check('2026-08-03 09:00', '2026-08-03 11:00', acknowledged: true)->isValid())->toBeTrue();
 });
 
-it('meldet Kollisionen mitsamt der betroffenen Buchung', function () {
+it('reports collisions along with the affected booking', function () {
     $existing = Booking::create([
         'workplace_id' => 'holz-1',
         'name' => 'Testperson', 'contact' => 'test@example.org',
@@ -177,7 +177,7 @@ it('meldet Kollisionen mitsamt der betroffenen Buchung', function () {
         ->and($result->conflictingBookingIds)->toBe([$existing->id]);
 });
 
-it('liefert den Snapshot mit, der bei einer gueltigen Buchung gespeichert wird', function () {
+it('returns the snapshot that gets stored for a valid booking', function () {
     Workplace::create(['id' => 'holz-2', 'name' => 'Holz 2', 'area_id' => $this->area->id]);
     $this->workplace->blocksWorkplaces()->sync(['holz-2']);
 

@@ -2,15 +2,14 @@ import { Area, Config } from '../api/models';
 import { IsoDate, isoDate, todayIso } from './calendar-store';
 
 /**
- * Der Vorlauf, der für diesen Bereich gilt — sein eigener Wert vor dem globalen.
- * Null, wenn die Rolle ohne Zeitbeschränkung bucht.
+ * The booking horizon that applies to this area — its own value before the
+ * global one. Null when the role books without time restrictions.
  *
- * Durchgesetzt wird der Vorlauf im Backend. Hier steht er trotzdem, weil die
- * Oberfläche ihn schon *vor* der Prüfung braucht: die Datumsliste im Formular
- * reicht so weit, und im Kalender endet dort das Angebot, per Klick zu buchen.
- * Wer den Rand doch erreicht, bekommt den Verstoss aus
- * `POST /bookings/validate` — nachgebaut wird die Regel also nicht, nur
- * vorweggenommen.
+ * The horizon is enforced in the backend. It still appears here because the
+ * interface needs it *before* the check: the date list in the form reaches this
+ * far, and in the calendar this is where the offer to book by click ends. Anyone
+ * who does reach the edge gets the violation from `POST /bookings/validate` — so
+ * the rule is not reimplemented, only anticipated.
  */
 export function leadDays(
   config: Config,
@@ -22,7 +21,7 @@ export function leadDays(
     : (area?.maxBookingEndOffsetDays ?? config.maxBookingEndOffsetDays);
 }
 
-/** Der letzte Tag, an dem eine Buchung enden darf, oder null ohne Grenze. */
+/** The last day on which a booking may end, or null when there is no limit. */
 export function lastBookableDay(
   config: Config,
   area: Area | null,
@@ -34,11 +33,11 @@ export function lastBookableDay(
 }
 
 /**
- * Warum dieser Tag noch nicht zu buchen ist — oder null, solange er innerhalb
- * des Vorlaufs liegt.
+ * Why this day cannot be booked yet — or null while it lies within the horizon.
  *
- * Genannt wird beides: die Regel und wann sie diesen Tag freigibt. Nur die
- * Regel liesse den Leser rechnen, nur das Datum liesse offen, warum.
+ * Both are stated: the rule and when it releases this day. The rule alone would
+ * leave the reader to do the arithmetic; the date alone would leave the reason
+ * open.
  */
 export function leadTimeNotice(
   config: Config,
@@ -57,19 +56,19 @@ export function leadTimeNotice(
   return `${days} ${unit} im Voraus buchbar (ab dem ${formatDate(shiftDays(day, -days))})`;
 }
 
-/** "11. August" — mit Jahr, sobald es nicht das laufende ist. */
+/** "11. August" — with the year as soon as it is not the current one. */
 export function formatDate(day: IsoDate | Date): string {
   return asDate(day).toLocaleDateString('de-CH', options(day));
 }
 
-/** "Di., 11. August" — dasselbe mit vorangestelltem Wochentag. */
+/** "Di., 11. August" — the same with the weekday prefixed. */
 export function formatDay(day: IsoDate | Date): string {
   return asDate(day).toLocaleDateString('de-CH', { weekday: 'short', ...options(day) });
 }
 
 /**
- * Ein Datum ohne Jahr liest sich leichter und meint fast immer eindeutig den
- * nächsten solchen Tag; jenseits des Jahreswechsels tut es das nicht mehr.
+ * A date without a year reads more easily and almost always unambiguously means
+ * the next such day; beyond the turn of the year it no longer does.
  */
 function options(day: IsoDate | Date): Intl.DateTimeFormatOptions {
   const thisYear = asDate(day).getFullYear() === new Date().getFullYear();
@@ -82,10 +81,10 @@ function asDate(day: IsoDate | Date): Date {
 }
 
 /**
- * Der Tag, der so viele Tage nach dem gegebenen liegt.
+ * The day that lies the given number of days after this one.
  *
- * Über Mittag gerechnet: an einem Tag mit Zeitumstellung wäre der Schritt über
- * Mitternacht 23 oder 25 Stunden lang und träfe den Nachbartag.
+ * Computed via midday: on a day with a DST change the step across midnight would
+ * be 23 or 25 hours long and would land on the neighbouring day.
  */
 function shiftDays(day: IsoDate, offset: number): IsoDate {
   const date = new Date(`${day}T12:00:00`);

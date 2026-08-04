@@ -22,7 +22,7 @@
 } @else if (store.axis(); as axis) {
   <div class="calendar">
     <div class="grid">
-      <!-- Kopfzeile: Stundenbeschriftung -->
+      <!-- Header row: hour labels -->
       <div class="row header">
         <div class="label">Tag</div>
         <app-hour-header [axis]="axis" />
@@ -41,8 +41,8 @@
             (slotClick)="onSlotClick(day.date, $event)"
           />
 
-          <!-- Die Jetzt-Linie steht in der Zeile des heutigen Tages, nicht über
-               dem ganzen Raster: jede andere Zeile ist ein anderer Tag. -->
+          <!-- The now-line stands in today's row rather than over the whole
+               grid: every other row is a different day. -->
           @if (day.isToday && nowPercent() !== null) {
             <div class="now-layer">
               <div class="now" [style.left.%]="nowPercent()"></div>

@@ -5,20 +5,19 @@ import { CalendarBlock } from './calendar-block';
 import { GRID_MINUTES, TimeAxis, gridTemplateColumns, lineName, slotAtOffset } from './time-axis';
 
 /**
- * Der Hinweis für die anonyme Rolle, der an der Stelle der Vorschau erscheint.
- * Er steht hier bei der Zelle, weil ihn jede Ansicht zeigt, in der gebucht
- * wird — als zweites Exemplar ginge er beim Umformulieren in einer davon
- * verloren.
+ * The notice for the anonymous role that appears where the preview would be. It
+ * lives here with the cell because every view in which booking happens shows it —
+ * as a second copy it would get lost when reworded in one of them.
  */
 export const SIGN_IN_NOTICE = 'Melde dich an, um eine Buchung zu erstellen';
 
 /**
- * Ein Zeitstrahl über die Öffnungszeiten eines Tages, mit den Balken darauf.
+ * A timeline across the opening hours of one day, with the bars on it.
  *
- * Das ist die Zelle, aus der alle Zoomstufen bestehen: die Tagesansicht hat
- * eine davon je Zeile, die Wochenansicht sieben, der Monat entsprechend mehr.
- * Weil jede Zelle ihr eigenes Raster mitbringt, bedeutet die Linie `t0900` in
- * jeder Spalte dasselbe — die Namen brauchen keine Tagesangabe.
+ * This is the cell every zoom level is made of: the day view has one per row, the
+ * week view seven, the month correspondingly more. Because every cell brings its
+ * own grid, the line `t0900` means the same thing in every column — the names
+ * need no day component.
  */
 @Component({
   selector: 'app-day-track',
@@ -37,33 +36,32 @@ export const SIGN_IN_NOTICE = 'Melde dich an, um eine Buchung zu erstellen';
 export class DayTrack {
   readonly axis = input.required<TimeAxis>();
   readonly blocks = input.required<Block[]>();
-  /** Ob auf freie Fläche geklickt werden kann, um zu buchen. */
+  /** Whether empty space can be clicked to book. */
   readonly clickable = input(false);
   /**
-   * Dauer des Vorschaubalkens unter dem Zeiger, in Minuten; 0 schaltet ihn ab.
+   * Length of the preview bar under the pointer, in minutes; 0 turns it off.
    *
-   * Nur die Tagesansicht setzt ihn: in der Woche legt ein Klick keine Buchung
-   * an, sondern öffnet den Tag — ein Balken würde dort etwas anderes
-   * versprechen, als der Klick tut.
+   * Only the day view sets it: in the week a click creates no booking but opens
+   * the day — a bar would promise something other than what the click does.
    */
   readonly previewMinutes = input(0);
   /**
-   * Warum hier nichts anzulegen ist, obwohl der Arbeitsplatz es zuliesse —
-   * etwa weil der Tag jenseits des Vorlaufs liegt. Der Satz erscheint beim
-   * Überfahren an der Stelle, an der sonst die Vorschau läge; über alle Zeilen
-   * hinweg stünde er sonst dutzendfach da.
+   * Why nothing can be created here even though the workplace would allow it —
+   * for instance because the day lies beyond the booking horizon. The sentence
+   * appears on hover where the preview would otherwise be; across all rows it
+   * would otherwise stand there dozens of times.
    */
   readonly notice = input<string | null>(null);
 
-  /** Der angeklickte Zeitschlitz, in Minuten seit Mitternacht. */
+  /** The clicked time slot, in minutes since midnight. */
   readonly slotClick = output<number>();
 
-  /** Der Zeitschlitz unter dem Zeiger, oder null ausserhalb freier Fläche. */
+  /** The time slot under the pointer, or null outside empty space. */
   protected readonly hoveredSlot = signal<number | null>(null);
 
   protected readonly template = computed(() => gridTemplateColumns(this.axis()));
 
-  /** Breite einer Viertelstunde — für die Rasterlinien im Hintergrund. */
+  /** The width of a quarter hour — for the grid lines in the background. */
   protected readonly quarterPercent = computed(() => {
     const axis = this.axis();
 
@@ -71,9 +69,9 @@ export class DayTrack {
   });
 
   /**
-   * Der Balken, den ein Klick hier anlegen würde: er beginnt auf derselben
-   * Rasterlinie, die `onClick` meldet, und ist so lang wie die Standarddauer.
-   * Am Tagesende wird er abgeschnitten — weiter reicht die Achse nicht.
+   * The bar a click here would create: it starts on the same grid line that
+   * `onClick` reports and is as long as the default duration. At the end of the
+   * day it gets cut off — the axis reaches no further.
    */
   protected readonly preview = computed(() => {
     const slot = this.hoveredSlot();
@@ -100,16 +98,16 @@ export class DayTrack {
   }
 
   protected onMove(event: MouseEvent): void {
-    // Nur über freier Fläche: liegt der Zeiger auf einem Balken oder einer
-    // aufgeklappten Karte, legt ein Klick dort nichts an.
+    // Only over empty space: if the pointer is on a bar or an expanded card, a
+    // click there creates nothing.
     if (!this.clickable() || event.target !== event.currentTarget) {
       this.hoveredSlot.set(null);
 
       return;
     }
 
-    // Bleibt der Zeiger in derselben Viertelstunde, ändert sich das Signal
-    // nicht — die Vorschau wird nicht bei jedem Pixel neu gezeichnet.
+    // As long as the pointer stays in the same quarter hour the signal does not
+    // change — the preview is not redrawn at every pixel.
     this.hoveredSlot.set(this.slotUnder(event));
   }
 

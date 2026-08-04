@@ -6,17 +6,17 @@ import { Icon } from '../shared/icon';
 import { CalendarStore } from './calendar-store';
 
 /**
- * Die Beschriftung einer Arbeitsplatzzeile: Name, Zustand, Wiki-Link.
+ * The label of a workplace row: name, status, wiki link.
  *
- * Der Host trägt die Klasse `label` und wird damit vom Gerüst der Ansicht
- * gestylt (`_calendar-chrome.scss`) — die Zeile sieht gleich aus wie eine
- * Kopf- oder Gruppenbeschriftung. Nur was hier drin steht, gehört hierher.
+ * The host carries the class `label` and is therefore styled by the view's
+ * chrome (`_calendar-chrome.scss`) — the row looks the same as a header or group
+ * label. Only what is written inside belongs here.
  *
- * Der Name führt in die Einzelansicht: die Zeile zeigt einen Tag bzw. eine
- * Woche dieses Arbeitsplatzes, der Klick den ganzen Monat. Das dargestellte
- * Datum kommt aus dem Store und nicht als Eingabe — die Beschriftung steht
- * ohnehin nur in Ansichten, die ihn gefüllt haben, und zwei Ansichten müssten
- * es sonst durchreichen, ohne selbst etwas damit zu tun.
+ * The name leads into the single-workplace view: the row shows one day or week of
+ * this workplace, the click shows the whole month. The displayed date comes from
+ * the store rather than as an input — the label only appears in views that have
+ * filled it anyway, and two views would otherwise have to pass it through without
+ * doing anything with it themselves.
  */
 @Component({
   selector: 'app-workplace-label',
@@ -49,8 +49,8 @@ import { CalendarStore } from './calendar-store';
     }
   `,
   styles: `
-    // Als Link, aber nicht wie einer gesetzt: die Spalte ist eine Beschriftung
-    // und keine Linkliste. Erst beim Überfahren gibt sie sich zu erkennen.
+    // A link, but not styled like one: the column is a label, not a list of
+    // links. Only on hover does it reveal itself.
     .name {
       overflow: hidden;
       text-overflow: ellipsis;
@@ -86,7 +86,7 @@ export class WorkplaceLabel {
 
   readonly workplace = input.required<Workplace>();
 
-  /** Null, solange der Platz benutzbar ist — dann steht nur der Name da. */
+  /** Null while the workplace is usable — then only the name is shown. */
   protected readonly status = computed(
     () => ({ DEFECT: 'defekt', DISABLED: 'ausgeblendet', OK: null })[this.workplace().status],
   );

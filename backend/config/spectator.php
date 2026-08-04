@@ -6,7 +6,7 @@ return [
     'sources' => [
         'local' => [
             'source' => 'local',
-            // Die API-Spec liegt neben dem Backend im Repo, nicht darin.
+            // The API spec sits next to the backend in the repo, not inside it.
             'base_path' => env('SPEC_PATH', dirname(__DIR__, 2).'/spec'),
         ],
     ],
@@ -15,7 +15,7 @@ return [
 
     'error_format' => env('SPECTATOR_ERROR_FORMAT', 'text'),
 
-    // Unsere API-Routen laufen in der web-Gruppe (Session-Cookie, CSRF), nicht in
-    // der zustandslosen api-Gruppe — dort muss die Middleware also greifen.
+    // Our API routes run in the web group (session cookie, CSRF), not in the
+    // stateless api group — so the middleware has to take effect there.
     'middleware_groups' => ['web'],
 ];

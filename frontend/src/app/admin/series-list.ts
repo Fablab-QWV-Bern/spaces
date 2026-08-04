@@ -5,7 +5,7 @@ import { forkJoin, map } from 'rxjs';
 
 import { ApiConfiguration } from '../api/api-configuration';
 import { deleteBookingSeries, listBookingSeries, listWorkplaces } from '../api/functions';
-// Umbenannt, damit das generierte Modell das globale Error nicht verdeckt.
+// Renamed so that the generated model does not shadow the global Error.
 import { BookingSeries, Error as ApiError } from '../api/models';
 import { SessionService } from '../shared/session-service';
 import { AdminHeader } from './admin-header';
@@ -40,7 +40,7 @@ export class SeriesList {
     return this.workplaceNames().get(series.workplaceId) ?? series.workplaceId;
   }
 
-  /** „ab 03.08.2026" und, wenn es eines gibt, das Ende. */
+  /** "ab 03.08.2026" and, if there is one, the end. */
   protected period(series: BookingSeries): string {
     const from = formatDate(series.firstInstanceStart.slice(0, 10));
 
@@ -54,9 +54,9 @@ export class SeriesList {
     forkJoin({
       session: this.session.load(),
       series: listBookingSeries(this.http, this.rootUrl).pipe(map((r) => r.body)),
-      // Auch die ausgeblendeten: eine Serie kann auf einem Arbeitsplatz liegen,
-      // der inzwischen nicht mehr buchbar ist, und braucht dort erst recht einen
-      // Namen statt einer Kennung.
+      // Including the hidden ones: a series can sit on a workplace that is no
+      // longer bookable, and there it needs a name rather than an identifier all
+      // the more.
       workplaces: listWorkplaces(this.http, this.rootUrl, { includeDisabled: true }).pipe(
         map((r) => r.body),
       ),
@@ -74,7 +74,7 @@ export class SeriesList {
   }
 
   protected remove(series: BookingSeries): void {
-    // Nennt vor allem, was bleibt: das ist die beruhigende Hälfte und die wahre.
+    // States above all what remains: that is the reassuring half, and the true one.
     const confirmed = confirm(
       `Serie „${series.name}“ wirklich löschen?\n\n` +
         'Alle künftigen Termine verschwinden mit ihr. Vergangene und laufende ' +

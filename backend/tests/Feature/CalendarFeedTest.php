@@ -12,7 +12,7 @@ beforeEach(function () {
     $this->anonymous = Role::where('is_anonymous', true)->firstOrFail();
     $this->admin = Role::where('name', 'Admin')->firstOrFail();
 
-    // Relativ zu jetzt, weil der Feed ein gleitendes Fenster um den Abruf legt.
+    // Relative to now, because the feed puts a sliding window around the request.
     $this->start = CarbonImmutable::now()->utc()->addWeek()->startOfHour();
 
     $this->booking = Booking::create([
@@ -30,7 +30,7 @@ function feed(array $query = []): string
     return '/api/calendar.ics'.($query === [] ? '' : '?'.http_build_query($query));
 }
 
-it('liefert ein iCalendar-Dokument aus', function () {
+it('serves an iCalendar document', function () {
     $response = $this->get(feed())->assertOk();
 
     $response->assertHeader('Content-Type', 'text/calendar; charset=utf-8');
@@ -43,12 +43,12 @@ it('liefert ein iCalendar-Dokument aus', function () {
         ->and(substr_count($body, 'BEGIN:VEVENT'))->toBe(1);
 });
 
-it('nennt Arbeitsplatz und Buchenden in der Zusammenfassung', function () {
+it('names workplace and booker in the summary', function () {
     expect($this->get(feed())->getContent())
         ->toContain('SUMMARY:Holz 1: Hans Cramer');
 });
 
-it('schreibt die Zeiten in UTC', function () {
+it('writes the times in UTC', function () {
     $body = $this->get(feed())->getContent();
 
     expect($body)
@@ -56,14 +56,14 @@ it('schreibt die Zeiten in UTC', function () {
         ->toContain('DTEND:'.$this->start->addHours(2)->format('Ymd\THis\Z'));
 });
 
-it('vergibt eine UID, die die Buchung eindeutig bezeichnet', function () {
+it('assigns a UID that identifies the booking uniquely', function () {
     expect($this->get(feed())->getContent())
         ->toContain("UID:{$this->booking->id}@localhost");
 });
 
-it('nennt den Ort des Arbeitsplatzes, sonst Name und Bereich', function () {
+it('names the workplace location, otherwise name and area', function () {
     Booking::create([
-        'workplace_id' => 'holz-6', // trägt "Untergeschoss" als Ort
+        'workplace_id' => 'holz-6', // carries "Untergeschoss" as its location
         'name' => 'Ida Roth',
         'contact' => 'ida@example.org',
         'start_time' => $this->start,
@@ -76,7 +76,7 @@ it('nennt den Ort des Arbeitsplatzes, sonst Name und Bereich', function () {
         ->toContain('LOCATION:Untergeschoss');
 });
 
-it('verschweigt den Kontakt, solange die anonyme Rolle ihn nicht sehen darf', function () {
+it('withholds the contact while the anonymous role may not see it', function () {
     expect($this->get(feed())->getContent())->not->toContain('hans@example.org');
 
     $this->anonymous->update(['view_bookings_details' => true]);
@@ -84,28 +84,28 @@ it('verschweigt den Kontakt, solange die anonyme Rolle ihn nicht sehen darf', fu
     expect($this->get(feed())->getContent())->toContain('DESCRIPTION:hans@example.org');
 });
 
-it('zeigt einer angemeldeten Rolle nichts anderes als dem Kalenderclient', function () {
+it('shows a logged-in role nothing other than the calendar client sees', function () {
     $anonymously = $this->get(feed())->getContent();
 
-    // Der Admin darf Kontakte sehen — im Feed trotzdem nicht, sonst zeigte die
-    // Vorschau im Browser mehr als das Abo danach liefert.
+    // The admin may see contacts — but not in the feed, otherwise the preview in
+    // the browser would show more than the subscription delivers afterwards.
     $asAdmin = $this->actingAs($this->admin)->get(feed())->getContent();
 
     expect($asAdmin)->not->toContain('hans@example.org');
 
-    // Bis auf den Zeitstempel des Abrufs ist es dasselbe Dokument.
+    // Apart from the request timestamp it is the same document.
     $withoutStamp = fn (string $body): string => preg_replace('/^DTSTAMP:.*$/m', '', $body);
 
     expect($withoutStamp($asAdmin))->toBe($withoutStamp($anonymously));
 });
 
-it('verweigert den Feed, wenn die anonyme Rolle keine Buchungen sehen darf', function () {
+it('refuses the feed when the anonymous role may not see bookings', function () {
     $this->anonymous->update(['view_bookings' => false]);
 
     $this->get(feed())->assertForbidden();
 });
 
-it('filtert nach Arbeitsplatz und Bereich', function () {
+it('filters by workplace and area', function () {
     Booking::create([
         'workplace_id' => 'metall-vorne',
         'name' => 'Ida Roth',
@@ -126,12 +126,12 @@ it('filtert nach Arbeitsplatz und Bereich', function () {
         ->not->toContain('Hans Cramer');
 });
 
-it('beantwortet einen unbekannten Filter mit 404 statt mit einem leeren Kalender', function () {
+it('answers an unknown filter with 404 rather than an empty calendar', function () {
     $this->get(feed(['workplaceId' => 'gibt-es-nicht']))->assertNotFound();
     $this->get(feed(['areaId' => 'gibt-es-nicht']))->assertNotFound();
 });
 
-it('deckt drei Monate in beide Richtungen ab', function () {
+it('covers three months in both directions', function () {
     $outside = fn (CarbonImmutable $start) => Booking::create([
         'workplace_id' => 'holz-2',
         'name' => 'Weit weg',
@@ -153,18 +153,18 @@ it('deckt drei Monate in beide Richtungen ab', function () {
         ->and($body)->toContain('DTSTART:'.$inside->format('Ymd\THis\Z'));
 });
 
-it('maskiert Sonderzeichen und faltet lange Zeilen', function () {
+it('escapes special characters and folds long lines', function () {
     $this->booking->update(['name' => 'Meier, Hans; Werkstatt für Möbel und andere grössere Holzarbeiten']);
 
     $body = $this->get(feed())->getContent();
 
-    // Komma und Semikolon maskiert, nichts davon als Trennzeichen missverstanden.
+    // Comma and semicolon escaped, neither misread as a separator.
     expect($body)->toContain('SUMMARY:Holz 1: Meier\, Hans\; Werkstatt für Möbel und ');
 
     foreach (explode("\r\n", $body) as $line) {
         expect(strlen($line))->toBeLessThanOrEqual(75);
     }
 
-    // Die Faltung darf kein Zeichen zerlegen: das Dokument bleibt gültiges UTF-8.
+    // The folding must not split a character: the document stays valid UTF-8.
     expect(mb_check_encoding($body, 'UTF-8'))->toBeTrue();
 });

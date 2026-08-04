@@ -5,7 +5,7 @@ import { map, of, switchMap } from 'rxjs';
 
 import { ApiConfiguration } from '../api/api-configuration';
 import { deleteRole, listRoles } from '../api/functions';
-// Umbenannt, damit das generierte Modell das globale Error nicht verdeckt.
+// Renamed so that the generated model does not shadow the global Error.
 import { Error as ApiError, Role } from '../api/models';
 import { SessionService } from '../shared/session-service';
 import { AdminHeader } from './admin-header';
@@ -30,14 +30,14 @@ export class RoleList {
     this.load();
   }
 
-  /** Die erteilten Berechtigungen als kurze Wörter, in der Reihenfolge der Spec. */
+  /** The granted permissions as short words, in the order of the spec. */
   protected granted(role: Role): string[] {
     return PERMISSION_LABELS.filter((permission) => role.permissions[permission.key]).map(
       (permission) => permission.short,
     );
   }
 
-  /** Wie viele Rollen verwalten dürfen — die letzte davon ist unantastbar. */
+  /** How many roles may manage — the last of them is untouchable. */
   private readonly admins = computed(
     () => this.roles().filter((role) => role.permissions.manageRoles).length,
   );
@@ -47,8 +47,8 @@ export class RoleList {
   }
 
   /**
-   * Das Backend verweigert beides ohnehin; hier bleibt der Knopf gleich stumpf,
-   * statt erst nach dem Klick zu erklären, warum nicht.
+   * The backend refuses both anyway; here the button is greyed out straight away
+   * rather than explaining why only after the click.
    */
   protected deletable(role: Role): boolean {
     return !role.isAnonymous && !this.lastAdmin(role);
@@ -67,9 +67,9 @@ export class RoleList {
   }
 
   /**
-   * Anders als Bereiche und Arbeitsplätze ist schon die Liste geschützt — dort
-   * stehen die Berechtigungen aller Rollen. Deshalb erst die Sitzung, dann die
-   * Liste: ohne die Berechtigung gäbe es nur einen 403 statt des Hinweises.
+   * Unlike areas and workplaces, the list itself is protected — it holds the
+   * permissions of all roles. Hence the session first, then the list: without the
+   * permission there would only be a 403 instead of the notice.
    */
   private load(): void {
     this.loading.set(true);

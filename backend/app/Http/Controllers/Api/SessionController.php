@@ -13,14 +13,14 @@ use Illuminate\Support\Facades\RateLimiter;
 
 class SessionController extends Controller
 {
-    /** Anmeldeversuche pro IP und Minute, bevor gebremst wird. */
+    /** Login attempts per IP and minute before throttling kicks in. */
     private const MAX_ATTEMPTS = 5;
 
     public function __construct(private readonly CurrentRole $currentRole) {}
 
     /**
-     * Antwortet nie mit 401: ohne Anmeldung ist die aktuelle Rolle die anonyme.
-     * Das Frontend entscheidet daraus, was es überhaupt anzeigt.
+     * Never answers with 401: without a login the current role is the anonymous
+     * one. The frontend decides from that what it shows at all.
      */
     public function show(): SessionResource
     {
@@ -28,9 +28,9 @@ class SessionController extends Controller
     }
 
     /**
-     * Öffentlich: der Login zeigt eine Schaltfläche pro Rolle statt eines
-     * Freitextfelds. Nur Namen, keine Berechtigungen — die anonyme Rolle fehlt,
-     * sie hat kein Kennwort und kann sich nicht anmelden.
+     * Public: the login shows one button per role rather than a free-text field.
+     * Names only, no permissions — the anonymous role is absent, it has no
+     * password and cannot log in.
      */
     public function roles(): JsonResponse
     {
@@ -55,8 +55,8 @@ class SessionController extends Controller
             ], 429);
         }
 
-        // Die anonyme Rolle hat kein Kennwort und darf sich nicht anmelden —
-        // sonst käme man über einen leeren Hash-Vergleich hinein.
+        // The anonymous role has no password and must not log in — otherwise one
+        // could get in through an empty hash comparison.
         $role = Role::where('name', $credentials['roleName'])
             ->where('is_anonymous', false)
             ->first();
@@ -69,7 +69,7 @@ class SessionController extends Controller
 
         RateLimiter::clear($throttleKey);
 
-        // Gegen Session Fixation: nach der Anmeldung eine neue Session-ID.
+        // Against session fixation: a new session ID after logging in.
         $request->session()->regenerate();
 
         return new SessionResource($role);

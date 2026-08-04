@@ -70,8 +70,8 @@
   }
 
   .no-photo {
-    // Grösser als der Fliesstext ringsum: das Symbol steht allein in einem
-    // 4×3-Kasten und ist kein Zeichen in einer Zeile.
+    // Larger than the surrounding body text: the icon stands alone in a 4×3 box
+    // and is not a glyph in a line of text.
     font-size: 1.4rem;
     opacity: 0.35;
   }
@@ -114,7 +114,7 @@
     color: var(--text-soft);
   }
 
-  // Der Normalfall braucht keine Auszeichnung.
+  // The normal case needs no marking.
   &.OK {
     display: none;
   }

@@ -4,24 +4,24 @@ import { BookingCard } from '../calendar/booking-card';
 import { CardDetails } from '../calendar/blocks';
 import { FIGURE_ID, Box, Placement, figureViewBox } from './map-geometry';
 
-/** Verknüpft Auslöser und Karte — wie im Kalender aus einem Zähler, damit die
- *  Kennung im Dokument eindeutig bleibt. */
+/** Links trigger and card — from a counter as in the calendar, so that the
+ *  identifier stays unique within the document. */
 let nextId = 0;
 
 /**
- * Eine Figur auf der Übersichtskarte samt ihrer Detailkarte. Sie steht dort,
- * wo gerade jemand arbeitet; ein Klick klappt die Karte auf.
+ * A figure on the overview map together with its detail card. It stands where
+ * somebody is working right now; a click opens the card.
  *
- * Aufbau wie `CalendarBlock`, und aus demselben Grund: der Auslöser ist ein
- * `<button popovertarget>`, die Karte das benannte Popover daneben — Umschalten,
- * Escape, Klick daneben und Tastatur kommen von der Plattform. Der Host erzeugt
- * keine eigene Box, damit der Knopf direkt auf der Kartenfläche liegt und seine
- * Prozentwerte sich auf sie beziehen.
+ * Built like `CalendarBlock`, and for the same reason: the trigger is a
+ * `<button popovertarget>`, the card the named popover next to it — toggling,
+ * Escape, clicking outside and keyboard handling come from the platform. The host
+ * creates no box of its own so that the button sits directly on the map surface
+ * and its percentages relate to it.
  *
- * Gezeichnet wird die Figur nicht hier: `<use>` holt sie aus dem eingefügten
- * Plan, wo sie der Gestalter im richtigen Massstab und in der Farbe der Karte
- * hinterlegt hat. Ein eigener Pfad wäre eine zweite Wahrheit — und würde beim
- * nächsten Austausch der Datei nicht mitwandern.
+ * The figure is not drawn here: `<use>` fetches it from the grafted-in plan,
+ * where the designer deposited it at the right scale and in the map's colour. A
+ * path of our own would be a second source of truth — and would not travel along
+ * the next time the file is swapped.
  */
 @Component({
   selector: 'app-map-figure',
@@ -48,8 +48,8 @@ let nextId = 0;
     :host {
       display: contents;
 
-      // Beschränkt den Ankernamen auf dieses Paar aus Figur und Karte — wie es
-      // calendar-block.scss für Balken und Karte tut.
+      // Scopes the anchor name to this pair of figure and card — as
+      // calendar-block.scss does for bar and card.
       anchor-scope: --block;
     }
 
@@ -60,8 +60,8 @@ let nextId = 0;
       background: none;
       cursor: pointer;
 
-      // Gegenstück zum position-anchor in booking-card.scss. Der Name gehört
-      // zur Karte, nicht zum Kalender — beide Auslöser tragen ihn.
+      // Counterpart to the position-anchor in booking-card.scss. The name
+      // belongs to the card, not to the calendar — both triggers carry it.
       anchor-name: --block;
 
       &:focus-visible {
@@ -81,7 +81,7 @@ let nextId = 0;
 export class MapFigure {
   readonly placement = input.required<Placement>();
   readonly details = input.required<CardDetails>();
-  /** Der Kasten der Figur im Plan — er wird zur `viewBox` dieses Ausschnitts. */
+  /** The figure's box in the plan — it becomes the `viewBox` of this excerpt. */
   readonly figure = input.required<Box>();
 
   protected readonly cardId = `kartenkarte-${nextId++}`;

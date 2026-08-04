@@ -13,9 +13,9 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
 
 /**
- * Buchungen für den heutigen Tag, nachgebaut nach dem Screenshot des bestehenden
- * Systems. Nur für die Entwicklung — läuft bewusst an der Validierung vorbei,
- * damit auch vergangene Zeiten des laufenden Tages entstehen.
+ * Bookings for today, reconstructed from the screenshot of the existing system.
+ * For development only — deliberately bypasses validation so that past times of
+ * the current day can be created too.
  */
 class BookingSeeder extends Seeder
 {
@@ -29,7 +29,7 @@ class BookingSeeder extends Seeder
         $today = CarbonImmutable::now($settings->timezone)->toDateString();
         $creatorRoleId = Role::where('name', 'Mitglied')->value('id');
 
-        // [Arbeitsplatz, Name, Kontakt, von, bis, Teil einer Serie?]
+        // [workplace, name, contact, from, to, part of a series?]
         $rows = [
             ['betreuung-offene-ws', 'Christoph Bettler', 'christoph@example.org', '14:00', '17:00', true],
 
@@ -75,9 +75,9 @@ class BookingSeeder extends Seeder
 
             ['fraese-deckel', 'Daniel Gerber', 'daniel@example.org', '08:00', '09:30', false],
 
-            // Ein Kurs, der die Metall-Plätze mitblockiert — macht die grauen
-            // Blöcke in der Ansicht sichtbar. Das Fenster ist bewusst so gewählt,
-            // dass es mit keiner der obigen Buchungen kollidiert.
+            // A course that also blocks the metal workplaces — makes the grey
+            // blocks visible in the view. The window is deliberately chosen so
+            // that it collides with none of the bookings above.
             ['kurse-metall', 'Maschinenkurs Metall', 'kurse@example.org', '09:00', '12:00', false],
         ];
 
@@ -85,9 +85,9 @@ class BookingSeeder extends Seeder
             $start = CarbonImmutable::parse("{$today} {$from}", $settings->timezone)->utc();
             $end = CarbonImmutable::parse("{$today} {$to}", $settings->timezone)->utc();
 
-            // Der Seeder geht an der Validierung vorbei, damit auch vergangene
-            // Zeiten entstehen — die Kollisionsfreiheit prüfen wir trotzdem,
-            // sonst enthielten die Testdaten Zustände, die es nie geben kann.
+            // The seeder bypasses validation so that past times can be created
+            // too — we still check for collision freedom, otherwise the test data
+            // would contain states that can never exist.
             $conflicts = $collisions->conflictingBookingIds($workplaceId, $start, $end);
 
             if ($conflicts !== []) {
@@ -96,10 +96,10 @@ class BookingSeeder extends Seeder
                 continue;
             }
 
-            // Die Serie wird angelegt, aber nicht instanziert: der Seeder baut den
-            // heutigen Tag nach, und ein Jahr Instanzen im Voraus kollidierte
-            // reihenweise mit den übrigen Zeilen. `instantiated_until` steht
-            // deshalb auf heute — den Rest holt der Tageslauf nach.
+            // The series is created but not instantiated: the seeder reconstructs
+            // today, and a year of instances ahead would collide with the other
+            // rows wholesale. `instantiated_until` is therefore set to today — the
+            // daily run catches up on the rest.
             $series = $isSeries ? BookingSeries::create([
                 'workplace_id' => $workplaceId,
                 'name' => $name,
@@ -114,7 +114,7 @@ class BookingSeeder extends Seeder
 
             $booking = Booking::create([
                 'workplace_id' => $workplaceId,
-                // Serieninstanzen haben keinen Ersteller — sie entstehen aus der Serie.
+                // Series instances have no creator — they arise from the series.
                 'creator_role_id' => $isSeries ? null : $creatorRoleId,
                 'ip_address' => '192.0.2.'.random_int(2, 250),
                 'name' => $name,

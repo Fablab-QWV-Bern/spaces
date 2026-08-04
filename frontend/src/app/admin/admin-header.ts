@@ -5,11 +5,11 @@ import { SessionBar } from '../shared/session-bar';
 import { SessionService } from '../shared/session-service';
 
 /**
- * Kopfzeile der Verwaltung: Titel, Wechsel zwischen den Bereichen der
- * Verwaltung, Weg zurück in den Kalender, Anmeldung.
+ * The admin header: title, switching between the admin sections, the way back
+ * into the calendar, login.
  *
- * Ein Reiter erscheint nur, wenn die angemeldete Rolle ihn auch benutzen darf —
- * ein Link, der zuverlässig auf einen Hinweis führt, ist kein Link.
+ * A tab only appears when the logged-in role may actually use it — a link that
+ * reliably leads to a notice is not a link.
  */
 @Component({
   selector: 'app-admin-header',
@@ -96,10 +96,10 @@ export class AdminHeader {
   protected readonly session = inject(SessionService);
 
   /**
-   * `webcal:` statt `https:`, damit ein Klick den Kalender abonniert statt eine
-   * einmalige Datei herunterzuladen — das Schema ist der ganze Unterschied
-   * zwischen Abo und Momentaufnahme. Wer die Adresse zum Einfügen braucht,
-   * findet sie im Titel des Links.
+   * `webcal:` rather than `https:`, so that a click subscribes to the calendar
+   * instead of downloading a one-off file — the scheme is the entire difference
+   * between a subscription and a snapshot. Anyone who needs the address for
+   * pasting finds it in the link's title.
    */
   protected readonly feedUrl = `webcal://${location.host}/api/calendar.ics`;
 

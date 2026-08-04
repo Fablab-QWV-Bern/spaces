@@ -1,38 +1,38 @@
 /**
- * Das Ansichtsmodell eines Balkens im Kalender. Wie die Zeitachse bewusst frei
- * von Angular — und wie sie von allen Zoomstufen geteilt: ein Balken entsteht
- * immer gleich, egal ob er in einer Tages-, Wochen- oder Monatszelle liegt.
+ * The view model of a bar in the calendar. Like the time axis, deliberately free
+ * of Angular — and like it, shared by all zoom levels: a bar is built the same
+ * way whether it sits in a day, week or month cell.
  *
- * Ein Block trägt alles fertig aufbereitet, auch den Inhalt seiner Detailkarte.
- * Damit muss die Zelle, die ihn darstellt, nichts über Arbeitsplätze und
- * Bereiche wissen.
+ * A block carries everything fully prepared, including the content of its detail
+ * card. That way the cell rendering it needs to know nothing about workplaces and
+ * areas.
  */
 
 import { Booking } from '../api/models';
 import { TimeAxis, formatTime, gridColumn, visibleRange } from './time-axis';
 
-/** Die aufgeklappte Detailkarte zu einem Block. */
+/** The expanded detail card for a block. */
 export interface CardDetails {
   booking: Booking;
-  /** Der Arbeitsplatz, in dessen Zeile der Block liegt. */
+  /** The workplace in whose row the block sits. */
   workplaceName: string;
-  /** Bei einer Blockierung der Platz, auf dem die Buchung tatsächlich liegt. */
+  /** For a blockage, the workplace the booking actually sits on. */
   bookedWorkplaceName: string;
   timeRange: string;
   isBlockage: boolean;
 }
 
 export interface Block {
-  /** Eindeutig innerhalb einer Zelle — dieselbe Buchung kann als Buchung und
-   *  als Blockierung auftreten. */
+  /** Unique within a cell — the same booking can appear both as a booking and
+   *  as a blockage. */
   id: string;
   booking: Booking;
   label: string;
   title: string;
-  /** Platzierung im Spaltenraster, z.B. "t0900 / t1300". */
+  /** Placement in the column grid, e.g. "t0900 / t1300". */
   gridColumn: string;
-  /** Farbe des Bereichs; null bei Blockierungen, die ihre Schraffur aus dem
-   *  Stylesheet beziehen. */
+  /** The area's colour; null for blockages, which take their hatching from the
+   *  stylesheet. */
   color: string | null;
   clippedStart: boolean;
   clippedEnd: boolean;
@@ -41,21 +41,20 @@ export interface Block {
   card: CardDetails;
 }
 
-/** Was ein Block über seine Umgebung wissen muss, um sich selbst zu bauen. */
+/** What a block needs to know about its surroundings in order to build itself. */
 export interface BlockContext {
   axis: TimeAxis;
-  /** Der dargestellte Tag. Blöcke werden auf ihn beschnitten — eine Buchung
-   *  über Nacht erscheint dadurch in beiden Tageszellen. */
+  /** The day being shown. Blocks are clipped to it — which is why an overnight
+   *  booking appears in both day cells. */
   day: Date;
   workplaceName: string;
   color: string;
-  /** Auflösung einer Arbeitsplatz-Kennung auf ihren Namen. */
+  /** Resolves a workplace identifier to its name. */
   nameOf: (workplaceId: string) => string;
 }
 
 /**
- * Die Balken einer Zelle, Blockierungen zuerst — so liegen die eigenen
- * Buchungen darüber.
+ * A cell's bars, blockages first — so that the actual bookings lie on top.
  */
 export function blocksFor(
   context: BlockContext,

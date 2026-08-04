@@ -14,7 +14,7 @@ table {
   border: 1px solid var(--line);
   border-radius: 0.4rem;
   font-size: 0.9rem;
-  // Rundung schneidet die Ecken der Zellen ab, sonst stünden sie über.
+  // Rounding clips the cells' corners, otherwise they would stick out.
   overflow: hidden;
 
   th,

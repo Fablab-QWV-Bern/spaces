@@ -3,19 +3,19 @@ import { Component, ElementRef, computed, input, model, signal, viewChild } from
 import { Icon } from '../shared/icon';
 
 /**
- * Eingabe einer Tag-Liste: bereits gesetzte Tags als Marken, dahinter ein Feld
- * für den nächsten.
+ * Entering a list of tags: tags already set as chips, followed by a field for the
+ * next one.
  *
- * Die Vorschlagsliste ist selbst gebaut, obwohl `<datalist>` genau dafür da wäre.
- * Der Grund ist eine Anforderung, die das Element nicht erfüllt: die Liste soll
- * schon offen sein, bevor etwas getippt ist, damit man sieht, welche Tags es in
- * der Werkstatt überhaupt gibt. Aufklappen lässt sich ein `<datalist>` nur mit
- * `showPicker()`, und das können nur die Chromium-Browser — in Firefox erschiene
- * die Liste erst ab dem ersten Zeichen.
+ * The suggestion list is hand-built even though `<datalist>` exists for exactly
+ * this. The reason is a requirement the element does not meet: the list should
+ * already be open before anything is typed, so that one can see which tags exist
+ * in the workshop at all. A `<datalist>` can only be opened with `showPicker()`,
+ * and only the Chromium browsers support that — in Firefox the list would appear
+ * only from the first character.
  *
- * Der erste passende Vorschlag wird ausserdem in die Eingabe geschrieben und der
- * ergänzte Teil markiert. Damit reicht Enter, um ihn zu übernehmen, und
- * Weitertippen überschreibt ihn — wie in der Adresszeile des Browsers.
+ * The first matching suggestion is also written into the input and the completed
+ * part selected. That way Enter is enough to accept it, and typing on overwrites
+ * it — as in the browser's address bar.
  */
 @Component({
   selector: 'app-tag-input',
@@ -48,14 +48,14 @@ import { Icon } from '../shared/icon';
         <div class="suggestions">
           @for (tag of matches(); track tag) {
             <!--
-              mousedown statt click zum Verhindern: sonst verlöre das Feld den
-              Fokus, bevor der Klick ankommt — und der Blur setzte den halb
-              getippten Tag.
+              mousedown rather than click to prevent: otherwise the field would
+              lose focus before the click arrives — and the blur would commit the
+              half-typed tag.
             -->
             <!--
-              Nicht in der Tab-Reihenfolge: von hier aus führt Tab zum nächsten
-              Formularfeld, nicht durch die Vorschläge. Wer tippt, kommt über
-              die Vervollständigung schneller ans Ziel.
+              Not in the tab order: from here Tab leads to the next form field,
+              not through the suggestions. Whoever is typing gets there faster via
+              the completion.
             -->
             <button
               type="button"
@@ -126,8 +126,8 @@ import { Icon } from '../shared/icon';
       }
     }
 
-    // Die Vorschläge stehen im Fluss, nicht darüber: sie sind wenige und kurz,
-    // und ein schwebendes Feld verdeckte hier nur das nächste Formularfeld.
+    // The suggestions sit in the flow rather than above it: they are few and
+    // short, and a floating panel would only cover the next form field here.
     .suggestions {
       display: flex;
       flex-wrap: wrap;
@@ -156,24 +156,24 @@ import { Icon } from '../shared/icon';
 })
 export class TagInput {
   readonly value = model.required<string[]>();
-  /** Alle bisher irgendwo vergebenen Tags. */
+  /** All tags assigned anywhere so far. */
   readonly suggestions = input<string[]>([]);
   readonly placeholder = input('');
 
   protected readonly open = signal(false);
 
   /**
-   * Was im Feld angefangen ist. Steht doppelt da — im Feld selbst und hier —,
-   * weil eine `[value]`-Bindung bei jedem Tastendruck den Wert neu setzte und
-   * damit die Markierung der Vervollständigung ans Ende schöbe. Das Signal
-   * trägt darum nur das *Getippte*, nicht das Ergänzte: sonst filterte sich die
-   * Liste nach einem Vorschlag sofort auf ihn allein zusammen.
+   * What has been started in the field. It exists twice — in the field itself and
+   * here — because a `[value]` binding would reset the value on every keystroke
+   * and thereby push the completion's selection to the end. The signal therefore
+   * carries only what was *typed*, not what was completed: otherwise the list
+   * would immediately narrow to a single suggestion once one appeared.
    */
   private readonly typed = signal('');
   private readonly field = viewChild.required<ElementRef<HTMLInputElement>>('field');
   private readonly root = viewChild.required<ElementRef<HTMLElement>>('root');
 
-  /** Was schon gesetzt ist, muss nicht mehr vorgeschlagen werden. */
+  /** What is already set need not be suggested again. */
   private readonly unused = computed(() => {
     const taken = new Set(this.value().map((tag) => tag.toLowerCase()));
 
@@ -189,8 +189,8 @@ export class TagInput {
   protected onInput(event: Event): void {
     const input = this.field().nativeElement;
 
-    // Ein Komma trennt, statt im Tag zu landen — so kann man eine Liste am
-    // Stück tippen, wie man es von solchen Feldern kennt.
+    // A comma separates rather than ending up in the tag — so a list can be typed
+    // in one go, as one expects from such fields.
     if (input.value.includes(',')) {
       const parts = input.value.split(',');
       input.value = parts.pop() ?? '';
@@ -202,8 +202,8 @@ export class TagInput {
 
     this.typed.set(input.value);
 
-    // Nur beim Schreiben ergänzen: beim Löschen wüchse das Feld sonst sofort
-    // wieder auf den Vorschlag zurück.
+    // Complete only while writing: when deleting, the field would otherwise
+    // immediately grow back to the suggestion.
     if ((event as InputEvent).inputType?.startsWith('insert')) {
       this.suggest(input);
     }
@@ -211,22 +211,22 @@ export class TagInput {
 
   protected onKeydown(event: KeyboardEvent): void {
     if (event.key === 'Enter') {
-      // Sonst schickte Enter das ganze Formular ab.
+      // Otherwise Enter would submit the whole form.
       event.preventDefault();
       this.commit();
     }
 
-    // Tab nimmt den angefangenen Tag an, statt weiterzuspringen: wer gerade
-    // tippt, will den nächsten Tag setzen und nicht das nächste Feld. Ist das
-    // Feld leer, gibt es nichts anzunehmen und Tab führt wie überall weiter.
+    // Tab accepts the tag being typed rather than moving on: whoever is typing
+    // wants to set the next tag and not the next field. If the field is empty
+    // there is nothing to accept and Tab moves on as it does everywhere.
     if (event.key === 'Tab' && !event.shiftKey && this.field().nativeElement.value !== '') {
       event.preventDefault();
       this.commit();
     }
 
     if (event.key === 'Escape' && this.open()) {
-      // Solange die Liste offen ist, schliesst Escape nur sie — erst danach
-      // darf es weiterreichen, etwa an einen Dialog darum herum.
+      // While the list is open, Escape only closes it — only afterwards may it
+      // propagate, for instance to a dialog around it.
       event.stopPropagation();
       this.open.set(false);
     }
@@ -236,7 +236,7 @@ export class TagInput {
     }
   }
 
-  /** Schliesst die Liste, sobald der Fokus die ganze Komponente verlässt. */
+  /** Closes the list as soon as focus leaves the whole component. */
   protected onFocusOut(event: FocusEvent): void {
     if (!this.root().nativeElement.contains(event.relatedTarget as Node | null)) {
       this.open.set(false);
@@ -259,9 +259,9 @@ export class TagInput {
   }
 
   /**
-   * Schreibt den Rest des ersten passenden Vorschlags hinter das Getippte und
-   * markiert ihn. Die getippte Schreibweise bleibt stehen — wer "Laut" tippt,
-   * soll nicht plötzlich "laut" vor sich haben.
+   * Writes the remainder of the first matching suggestion after what was typed and
+   * selects it. The typed spelling stays — someone who types "Laut" should not
+   * suddenly be looking at "laut".
    */
   private suggest(input: HTMLInputElement): void {
     const typed = input.value;
@@ -292,8 +292,8 @@ export class TagInput {
       return;
     }
 
-    // Gross- und Kleinschreibung unterscheidet die Datenbank nicht; ein zweites
-    // "Laut" neben "laut" wäre derselbe Tag.
+    // The database does not distinguish case; a second "Laut" next to "laut"
+    // would be the same tag.
     this.value.update((tags) =>
       tags.some((other) => other.toLowerCase() === tag.toLowerCase()) ? tags : [...tags, tag],
     );

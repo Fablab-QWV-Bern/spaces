@@ -19,8 +19,8 @@
     font-weight: 600;
   }
 
-  // Wie der Weg in die Verwaltung im Kalender: ein zurückhaltender Textlink,
-  // keine zweite Überschrift neben der ersten.
+  // Like the route into the admin area in the calendar: a restrained text link,
+  // not a second heading next to the first.
   a {
     font-size: 0.85rem;
     color: var(--text-muted);
@@ -72,8 +72,8 @@
   flex-wrap: wrap;
   gap: 0.75rem;
 
-  // Nur nebeneinander sollen die Felder wachsen. Im Panel selbst (Spalte) würde
-  // flex-grow sie in die Höhe ziehen und Lücken reissen.
+  // The fields should only grow side by side. In the panel itself (a column)
+  // flex-grow would stretch them vertically and tear gaps.
   .field {
     flex: 1 1 12rem;
   }
@@ -195,13 +195,13 @@
   color: var(--text-strong);
 
   &.blockage {
-    // Wie im Kalender: Blockierungen tragen ein Muster, nicht nur eine Farbe.
+    // As in the calendar: blockages carry a pattern, not just a colour.
     background: var(--blockage-hatch);
   }
 
   &.own {
-    // Die geplante Buchung liegt oben und ist kräftig — sie ist der Gegenstand
-    // des Formulars.
+    // The planned booking lies on top and is strong — it is what the form is
+    // about.
     z-index: 1;
     background: var(--accent);
     top: 1.2rem;
@@ -231,8 +231,8 @@
   font-size: 0.85rem;
 }
 
-// Der Hinweis steht über dem Formular und nicht neben dem Speichern: er gilt
-// für alles, was man hier ändert, nicht erst für den Klick am Schluss.
+// The notice stands above the form rather than next to the save button: it
+// applies to everything changed here, not only to the final click.
 .series-note {
   display: flex;
   align-items: center;

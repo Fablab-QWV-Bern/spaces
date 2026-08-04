@@ -46,7 +46,7 @@ describe('TagInput', () => {
     fixture.detectChanges();
   });
 
-  it('zeigt bei Fokus alle Vorschläge und filtert sie beim Tippen', () => {
+  it('shows all suggestions on focus and filters them while typing', () => {
     expect(suggestions()).toEqual(['laut', 'leise', 'staubig']);
 
     type('la');
@@ -54,14 +54,14 @@ describe('TagInput', () => {
     expect(suggestions()).toEqual(['laut']);
   });
 
-  it('ergänzt den ersten Treffer und markiert den ergänzten Teil', () => {
+  it('completes to the first match and selects the completed part', () => {
     type('la');
 
     expect(field().value).toBe('laut');
     expect([field().selectionStart, field().selectionEnd]).toEqual([2, 4]);
   });
 
-  it('setzt den Tag mit Enter und behält den Fokus im Feld', () => {
+  it('commits the tag with Enter and keeps the focus in the field', () => {
     type('la');
     press('Enter');
 
@@ -71,7 +71,7 @@ describe('TagInput', () => {
     expect(suggestions()).toEqual(['leise', 'staubig']);
   });
 
-  it('nimmt den Tag mit Tab an, statt zum nächsten Feld zu springen', () => {
+  it('accepts the tag with Tab instead of jumping to the next field', () => {
     type('la');
 
     expect(press('Tab').defaultPrevented).toBe(true);
@@ -79,7 +79,7 @@ describe('TagInput', () => {
     expect(document.activeElement).toBe(field());
   });
 
-  it('lässt Tab aus dem leeren Feld heraus weiterführen', () => {
+  it('lets Tab move on out of the empty field', () => {
     expect(press('Tab').defaultPrevented).toBe(false);
     expect(fixture.componentInstance.tags()).toEqual([]);
   });

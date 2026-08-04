@@ -1,6 +1,6 @@
 /**
- * Name und Kontakt des Buchenden werden als Cookie gespeichert, damit
- * man sie nicht bei jeder Buchung neu tippen muss
+ * The booker's name and contact are stored as a cookie so that they do not have
+ * to be typed again for every booking.
  */
 const NAME_KEY = 'qwv_booker_name';
 const CONTACT_KEY = 'qwv_booker_contact';
@@ -30,7 +30,7 @@ function readCookie(key: string): string {
 }
 
 function writeCookie(key: string, value: string): void {
-  // Kein HttpOnly möglich (der Client schreibt selbst), aber SameSite=Lax und
-  // ein Jahr Haltbarkeit. Es sind ohnehin Daten, die der Nutzer selbst eingibt.
+  // HttpOnly is not possible (the client writes it itself), but SameSite=Lax and
+  // a year of shelf life. It is data the user enters themselves anyway.
   document.cookie = `${key}=${encodeURIComponent(value)}; path=/; max-age=${ONE_YEAR_SECONDS}; SameSite=Lax`;
 }

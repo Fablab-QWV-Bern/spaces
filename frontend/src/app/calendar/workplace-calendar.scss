@@ -1,15 +1,15 @@
 @use './calendar-chrome';
 
-// Eine Tageszeile ist der Bezug ihrer eigenen Jetzt-Linie. In Tag und Woche
-// liegt die Linie über dem ganzen Raster, weil dort jede Zeile denselben Tag
-// zeigt; hier zeigt jede Zeile einen anderen.
+// A day row is the frame of reference for its own now-line. In the day and week
+// views the line lies over the whole grid because every row there shows the same
+// day; here every row shows a different one.
 .row.day {
   position: relative;
 }
 
-// Wochenenden grau, heute hervorgehoben — wie in der Wochenansicht. Die
-// Beschriftung klebt links und bringt ihren eigenen weissen Hintergrund mit,
-// darum wird sie eigens getönt.
+// Weekends grey, today highlighted — as in the week view. The label sticks to
+// the left and brings its own white background, which is why it is tinted
+// separately.
 .weekend {
   background-color: var(--surface-muted);
 

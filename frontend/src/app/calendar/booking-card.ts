@@ -6,16 +6,16 @@ import { CardDetails } from './blocks';
 import { CalendarStore } from './calendar-store';
 
 /**
- * Die Detailkarte zu einem Balken. Sie ist selbst das Popover; wann sie
- * erscheint, entscheidet der Balken, in dem sie steht — siehe `CalendarBlock`.
+ * The detail card for a bar. It is the popover itself; when it appears is decided
+ * by the bar it belongs to — see `CalendarBlock`.
  *
- * Als natives Popover liegt sie im Top Layer. Das ist hier nicht Kosmetik: die
- * Zeitachse scrollt in einem `overflow-x: auto`-Container, ein normal
- * positioniertes Element würde am Rand beschnitten.
+ * As a native popover it lives in the top layer. That is not cosmetic here: the
+ * time axis scrolls inside an `overflow-x: auto` container, and a normally
+ * positioned element would be clipped at the edge.
  *
- * `role="dialog"` und nicht `tooltip`: die Karte wird angeklickt statt
- * überfahren und enthält eine Schaltfläche. Ein Tooltip ist ergänzender Text,
- * den man nicht bedient.
+ * `role="dialog"` rather than `tooltip`: the card is clicked rather than hovered
+ * and contains a button. A tooltip is supplementary text that one does not
+ * operate.
  */
 @Component({
   selector: 'app-booking-card',
@@ -32,9 +32,9 @@ import { CalendarStore } from './calendar-store';
 export class BookingCard {
   readonly details = input.required<CardDetails>();
 
-  /** Das Popover muss im DOM stehen, damit `popovertarget` es findet — sein
-   *  Inhalt nicht. `beforetoggle` statt `toggle`, damit er da ist, bevor das
-   *  Popover erstmals gezeichnet wird. */
+  /** The popover has to be in the DOM for `popovertarget` to find it — its
+   *  content does not. `beforetoggle` rather than `toggle`, so that the content
+   *  is there before the popover is first painted. */
   protected readonly visible = signal(false);
 
   protected readonly store = inject(CalendarStore);

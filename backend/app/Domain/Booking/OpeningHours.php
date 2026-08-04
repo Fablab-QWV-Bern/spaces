@@ -6,9 +6,9 @@ use App\Models\GlobalSetting;
 use Carbon\CarbonImmutable;
 
 /**
- * Die Öffnungszeiten als Wertobjekt. Rechnet konsequent in lokaler Zeit — die
- * Buchungen selbst sind UTC, aber "08:00 bis 21:00" ist eine Aussage über die
- * Wanduhr und muss über die Zeitumstellung hinweg gelten.
+ * The opening hours as a value object. Computes consistently in local time — the
+ * bookings themselves are UTC, but "08:00 to 21:00" is a statement about the wall
+ * clock and has to hold across a DST change.
  */
 final readonly class OpeningHours
 {
@@ -24,9 +24,9 @@ final readonly class OpeningHours
     }
 
     /**
-     * Die anrechenbare Dauer: nur die Zeit innerhalb der Öffnungszeiten. Die
-     * Nachtstunden einer Buchung über Nacht zählen nicht mit — eine Buchung von
-     * Freitag 20:00 bis Samstag 09:00 ergibt 120 Minuten.
+     * The chargeable duration: only the time within the opening hours. The night
+     * hours of an overnight booking do not count — a booking from Friday 20:00 to
+     * Saturday 09:00 comes to 120 minutes.
      */
     public function chargeableMinutes(CarbonImmutable $start, CarbonImmutable $end): int
     {
@@ -49,8 +49,8 @@ final readonly class OpeningHours
             $overlapEnd = $endLocal->lessThan($windowEnd) ? $endLocal : $windowEnd;
 
             if ($overlapEnd > $overlapStart) {
-                // diffInMinutes auf echten Zeitpunkten, damit eine Zeitumstellung
-                // innerhalb des Fensters korrekt eingerechnet würde.
+                // diffInMinutes on real instants, so that a DST change inside
+                // the window would be accounted for correctly.
                 $minutes += (int) $overlapStart->diffInMinutes($overlapEnd);
             }
 
@@ -60,7 +60,7 @@ final readonly class OpeningHours
         return $minutes;
     }
 
-    /** Liegt der Zeitpunkt als Buchungsbeginn im offenen Bereich? */
+    /** Does this instant, as a booking start, fall inside the open window? */
     public function isValidStart(CarbonImmutable $instant): bool
     {
         $local = $instant->setTimezone($this->timezone);
@@ -68,7 +68,7 @@ final readonly class OpeningHours
         return $local >= $this->opensOn($local) && $local < $this->closesOn($local);
     }
 
-    /** Ein Ende genau zur Schliesszeit ist erlaubt, ein Ende zur Öffnungszeit nicht. */
+    /** An end exactly at closing time is allowed, an end at opening time is not. */
     public function isValidEnd(CarbonImmutable $instant): bool
     {
         $local = $instant->setTimezone($this->timezone);
@@ -77,8 +77,8 @@ final readonly class OpeningHours
     }
 
     /**
-     * Überspannt die Buchung eine Nacht? Gemessen an den lokalen Kalendertagen,
-     * nicht an der verstrichenen Zeit.
+     * Does the booking span a night? Measured by the local calendar days, not by
+     * the elapsed time.
      */
     public function spansNight(CarbonImmutable $start, CarbonImmutable $end): bool
     {
@@ -105,9 +105,9 @@ final readonly class OpeningHours
     {
         [$hours, $minutes] = array_map(intval(...), explode(':', $time));
 
-        // setTime setzt die Wanduhrzeit. Ein addHours() ab Mitternacht wäre falsch:
-        // es addiert absolute Zeit und würde das Öffnungsfenster am Tag der
-        // Zeitumstellung um eine Stunde verschieben.
+        // setTime sets the wall-clock time. An addHours() from midnight would be
+        // wrong: it adds absolute time and would shift the opening window by an
+        // hour on the day of a DST change.
         return $localDay->setTime($hours, $minutes);
     }
 }

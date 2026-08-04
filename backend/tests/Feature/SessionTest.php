@@ -13,7 +13,7 @@ beforeEach(function () {
     RateLimiter::clear('login:127.0.0.1');
 });
 
-it('meldet mit richtigem Kennwort an', function () {
+it('logs in with the correct password', function () {
     $this->postJson('/api/session', [
         'roleName' => 'Mitglied',
         'password' => 'mitglied-kennwort',
@@ -27,7 +27,7 @@ it('meldet mit richtigem Kennwort an', function () {
     expect(auth()->check())->toBeTrue();
 });
 
-it('weist ein falsches Kennwort zurueck', function () {
+it('rejects a wrong password', function () {
     $this->postJson('/api/session', [
         'roleName' => 'Mitglied',
         'password' => 'falsch',
@@ -36,9 +36,9 @@ it('weist ein falsches Kennwort zurueck', function () {
     expect(auth()->check())->toBeFalse();
 });
 
-it('laesst die anonyme Rolle sich nicht anmelden', function () {
-    // Sie hat kein Kennwort — ohne die ausdrueckliche Sperre koennte ein leerer
-    // Hash-Vergleich zum Erfolg fuehren.
+it('does not let the anonymous role log in', function () {
+    // It has no password — without the explicit block, an empty hash comparison
+    // could succeed.
     $this->postJson('/api/session', [
         'roleName' => 'Anonym',
         'password' => '',
@@ -50,7 +50,7 @@ it('laesst die anonyme Rolle sich nicht anmelden', function () {
     ])->assertValidResponse(401);
 });
 
-it('bremst nach zu vielen Versuchen', function () {
+it('throttles after too many attempts', function () {
     foreach (range(1, 5) as $ignored) {
         $this->postJson('/api/session', ['roleName' => 'Mitglied', 'password' => 'falsch'])
             ->assertStatus(401);
@@ -60,7 +60,7 @@ it('bremst nach zu vielen Versuchen', function () {
         ->assertValidResponse(429);
 });
 
-it('meldet ab und faellt auf die anonyme Rolle zurueck', function () {
+it('logs out and falls back to the anonymous role', function () {
     $this->actingAs(Role::where('name', 'Admin')->firstOrFail());
 
     $this->deleteJson('/api/session')->assertStatus(204);
@@ -68,13 +68,13 @@ it('meldet ab und faellt auf die anonyme Rolle zurueck', function () {
     expect(auth()->check())->toBeFalse();
 });
 
-it('verlangt Rollenname und Kennwort', function () {
+it('requires role name and password', function () {
     $this->postJson('/api/session', [])
         ->assertStatus(422)
         ->assertJsonValidationErrors(['roleName', 'password']);
 });
 
-it('listet die anmeldbaren Rollen ohne die anonyme', function () {
+it('lists the loggable-in roles without the anonymous one', function () {
     $this->getJson('/api/session/roles')
         ->assertValidRequest()
         ->assertValidResponse(200)

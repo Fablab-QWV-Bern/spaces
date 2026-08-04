@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Die globale Konfiguration. Genau eine Zeile mit id = 1.
+ * The global configuration. Exactly one row with id = 1.
  */
 class GlobalSetting extends Model
 {
@@ -28,7 +28,7 @@ class GlobalSetting extends Model
     protected function casts(): array
     {
         return [
-            // Bewusst als String: das sind Tageszeiten ("08:00"), keine Zeitpunkte.
+            // Deliberately as strings: these are times of day ("08:00"), not instants.
             'opens_at' => 'string',
             'closes_at' => 'string',
             'max_booking_end_offset_days' => 'integer',

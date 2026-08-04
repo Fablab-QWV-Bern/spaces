@@ -4,7 +4,7 @@ namespace App\Domain\Booking;
 
 use Carbon\CarbonImmutable;
 
-/** Die zu prüfende Buchung, unabhängig davon ob sie neu ist oder eine Änderung. */
+/** The booking to be checked, regardless of whether it is new or a change. */
 final readonly class BookingCandidate
 {
     public function __construct(
@@ -14,13 +14,13 @@ final readonly class BookingCandidate
         /** UTC */
         public CarbonImmutable $endTime,
         public bool $usageRulesAcknowledged = false,
-        /** Beim Ändern gesetzt, damit die Buchung nicht mit sich selbst kollidiert. */
+        /** Set when changing, so that the booking does not collide with itself. */
         public ?string $excludeBookingId = null,
     ) {}
 
     /**
-     * Bezieht sich der Kandidat auf eine bestehende Buchung? Entscheidet unter
-     * anderem darüber, ob ein Beginn in der Vergangenheit zulässig ist.
+     * Does the candidate refer to an existing booking? Among other things this
+     * decides whether a start in the past is permissible.
      */
     public function isEdit(): bool
     {

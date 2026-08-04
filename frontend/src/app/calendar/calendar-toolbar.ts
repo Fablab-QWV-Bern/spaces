@@ -6,19 +6,18 @@ import { SessionBar } from '../shared/session-bar';
 import { SessionService } from '../shared/session-service';
 
 /**
- * Kopfzeile des Kalenders: Zeitraum, Blättern, Datumswahl, Zoomstufe,
- * Anmeldung.
+ * The calendar header: period, paging, date picker, zoom level, login.
  *
- * Was "ein Schritt" bedeutet, entscheidet die Ansicht — die Leiste meldet nur
- * Richtungen und beschriftet ihre Pfeile mit der Einheit, die sie bekommt.
+ * What "one step" means is decided by the view — the bar only reports directions
+ * and labels its arrows with the unit it is given.
  *
- * Der Umschalter der Zoomstufe sind Links und keine Schaltflächen: jede Stufe
- * ist eine eigene Route, damit sie verlinkbar bleibt und der Zurück-Knopf tut,
- * was man erwartet. Das Datum reist als Abfrageparameter mit.
+ * The zoom-level switch is made of links rather than buttons: every level is its
+ * own route, so that it stays linkable and the back button does what one expects.
+ * The date travels along as a query parameter.
  *
- * In die Einzelansicht führt der Name in der Arbeitsplatzzeile, nicht die
- * Kopfleiste — wer einen Arbeitsplatz meint, hat ihn dort vor sich. Zurück
- * führt hier ein Knopf, den nur die Einzelansicht zeigt.
+ * The way into the single-workplace view is the name in the workplace row, not
+ * the header — whoever means a workplace has it right in front of them there. The
+ * way back is a button that only the single-workplace view shows.
  */
 @Component({
   selector: 'app-calendar-toolbar',
@@ -42,11 +41,11 @@ import { SessionService } from '../shared/session-service';
           <app-icon name="forward" />
         </button>
 
-        <!-- Schmal schrumpft das Feld auf sein Symbol: das Datum steht als
-             Überschrift schon da, ein zweites Mal ausgeschrieben kostet nur
-             Breite. Das Feld selbst bleibt liegen und deckt das Symbol
-             durchsichtig zu — so öffnet der Griff weiterhin den Auswähler des
-             Geräts, statt dass wir einen nachbauen. -->
+        <!-- When narrow, the field shrinks to its icon: the date is already
+             there as a heading, and spelling it out a second time only costs
+             width. The field itself stays put and covers the icon transparently —
+             so the handle still opens the device's own picker rather than us
+             building one. -->
         <label class="date">
           <span #icon class="icon date-icon" aria-hidden="true">
             <app-icon name="calendar" />
@@ -83,10 +82,10 @@ import { SessionService } from '../shared/session-service';
           >
         </span>
 
-        <!-- Die Karte steht neben dem Umschalter, nicht in ihm: sie ist keine
-             dritte Zoomstufe, sondern eine andere Frage — nicht „wann", sondern
-             „wer ist jetzt da". Ein Symbol genügt; ausgeschrieben stünde sie
-             mit den Zeiträumen auf einer Stufe. -->
+        <!-- The map sits next to the switch, not in it: it is not a third zoom
+             level but a different question — not "when" but "who is here now". An
+             icon is enough; spelled out it would stand on a par with the
+             periods. -->
         <a
           class="map"
           routerLink="/karte"
@@ -100,8 +99,8 @@ import { SessionService } from '../shared/session-service';
         </a>
       }
 
-      <!-- Die anonyme Rolle kann Rechte tragen, ohne dass jemand angemeldet
-           wäre; der Zugang zur Verwaltung gehört trotzdem hinter die Anmeldung. -->
+      <!-- The anonymous role can carry permissions without anybody being logged
+           in; access to the admin area still belongs behind the login. -->
       @if (!session.isAnonymous() && session.canManageAnything()) {
         <a class="admin" routerLink="/verwaltung" title="Verwaltung" aria-label="Verwaltung">
           <app-icon class="icon" name="settings" />
@@ -230,8 +229,8 @@ import { SessionService } from '../shared/session-service';
       }
     }
 
-    // Dieselbe Schwelle wie im Kalendergerüst: unterhalb der Mindestbreite des
-    // Rasters wird gescrollt, und die Leiste gibt her, was sie entbehren kann.
+    // The same threshold as in the calendar chrome: below the grid's minimum
+    // width it scrolls, and the bar gives up whatever it can spare.
     @media (width < 48rem) {
       :host {
         padding: 0.75rem 0.75rem 0.5rem;
@@ -246,8 +245,8 @@ import { SessionService } from '../shared/session-service';
         line-height: 1.2;
       }
 
-      // Schmal bleibt vom Weg in die Verwaltung nur das Zahnrad — ein
-      // unterstrichenes Symbol sähe nach Fehler aus.
+      // When narrow, only the cog remains of the route into the admin area — an
+      // underlined icon would look like an error.
       .admin {
         text-decoration: none;
         font-size: 1rem;
@@ -261,8 +260,8 @@ import { SessionService } from '../shared/session-service';
         position: relative;
         display: grid;
 
-        // Das durchsichtige Feld liegt über dem Symbol und bestimmt damit den
-        // Zeiger. Hier tippt man nicht, hier schlägt man auf.
+        // The transparent field lies over the icon and therefore determines the
+        // cursor. This is not for typing, this is for looking something up.
         input {
           position: absolute;
           inset: 0;
@@ -280,19 +279,19 @@ export class CalendarToolbar {
 
   readonly heading = input.required<string>();
   readonly date = input.required<string>();
-  /** Die Einheit eines Blätterschritts, für die Beschriftung der Pfeile. */
+  /** The unit of one paging step, for labelling the arrows. */
   readonly unit = input<'Tag' | 'Woche' | 'Monat'>('Tag');
-  /** Ob der Weg zurück zu allen Arbeitsplätzen angeboten wird. */
+  /** Whether the way back to all workplaces is offered. */
   readonly overview = input(false);
   /**
-   * Ob geblättert und ein Datum gewählt werden kann. Die Übersichtskarte zeigt
-   * den Augenblick — dort gäbe es kein Datum zu wählen und nichts, wohin ein
-   * Blätterschritt führte.
+   * Whether paging and date selection are possible. The overview map shows the
+   * present moment — there would be no date to pick there and nowhere for a
+   * paging step to lead.
    */
   readonly navigable = input(true);
   /**
-   * Ob der Umschalter der Zoomstufe erscheint. Die Einzelansicht zeigt fix
-   * einen Monat — dort gäbe es nichts umzuschalten.
+   * Whether the zoom-level switch appears. The single-workplace view shows a
+   * fixed month — there would be nothing to switch there.
    */
   readonly zoomable = input(true);
 
@@ -315,11 +314,11 @@ export class CalendarToolbar {
   );
 
   /**
-   * Öffnet den Datumsauswähler von Hand — aber nur im schmalen Zustand, wo das
-   * durchsichtige Feld über dem Symbol liegt und ein Klick sonst ins Leere
-   * ginge. Ob dieser Zustand gilt, verrät das Symbol selbst: ausgeblendet hat
-   * es kein `offsetParent`. So steht die Schwelle nur im Stylesheet und nicht
-   * ein zweites Mal hier.
+   * Opens the date picker by hand — but only in the narrow state, where the
+   * transparent field lies over the icon and a click would otherwise go nowhere.
+   * Whether that state applies is revealed by the icon itself: when hidden it has
+   * no `offsetParent`. That way the threshold lives only in the stylesheet and
+   * not a second time here.
    */
   protected openPicker(icon: HTMLElement, picker: HTMLInputElement): void {
     if (icon.offsetParent) {

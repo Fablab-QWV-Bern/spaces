@@ -23,7 +23,7 @@ function configPayload(array $overrides = []): array
     ], $overrides);
 }
 
-it('aendert die globale Konfiguration', function () {
+it('changes the global configuration', function () {
     $this->actingAs($this->admin)
         ->putJson('/api/config', configPayload())
         ->assertValidRequest()
@@ -35,32 +35,32 @@ it('aendert die globale Konfiguration', function () {
     expect(GlobalSetting::current()->timezone)->toBe('Europe/Zurich');
 });
 
-// Das Zeitraster ist fix 15 Minuten; eine Öffnung um 07:10 hätte keine Spalte.
-it('verlangt Zeiten auf dem Viertelstundenraster', function () {
+// The time grid is fixed at 15 minutes; an opening at 07:10 would have no column.
+it('requires times on the quarter-hour grid', function () {
     $this->actingAs($this->admin)
         ->putJson('/api/config', configPayload(['opensAt' => '07:10']))
         ->assertValidResponse(422);
 });
 
-it('verlangt Schluss nach Oeffnung', function () {
+it('requires closing after opening', function () {
     $this->actingAs($this->admin)
         ->putJson('/api/config', configPayload(['opensAt' => '22:00', 'closesAt' => '07:00']))
         ->assertValidResponse(422);
 
-    // Nicht die Länge der Zeichenkette vergleichen: "09:00" und "10:00" sind
-    // gleich lang, und trotzdem liegt das eine vor dem anderen.
+    // Do not compare the string length: "09:00" and "10:00" are the same length
+    // and yet one comes before the other.
     $this->actingAs($this->admin)
         ->putJson('/api/config', configPayload(['opensAt' => '09:00', 'closesAt' => '09:00']))
         ->assertValidResponse(422);
 });
 
-it('weist eine unbekannte Zeitzone ab', function () {
+it('rejects an unknown timezone', function () {
     $this->actingAs($this->admin)
         ->putJson('/api/config', configPayload(['timezone' => 'Europe/Quartier']))
         ->assertValidResponse(422);
 });
 
-it('laesst nur manageRoles schreiben', function () {
+it('lets only manageRoles write', function () {
     $this->actingAs($this->member)
         ->putJson('/api/config', configPayload())
         ->assertValidResponse(403);
@@ -68,6 +68,6 @@ it('laesst nur manageRoles schreiben', function () {
     $this->putJson('/api/config', configPayload())->assertValidResponse(403);
 });
 
-it('bleibt fuer alle lesbar', function () {
+it('stays readable by everyone', function () {
     $this->getJson('/api/config')->assertValidResponse(200);
 });

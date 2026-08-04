@@ -11,8 +11,8 @@ use App\Http\Controllers\Api\WorkplaceController;
 use App\Http\Controllers\Api\WorkplacePhotoController;
 use Illuminate\Support\Facades\Route;
 
-// Die Berechtigungen entsprechen den `x-permissions` in spec/reservation-api.yml.
-// Was dort keine Angabe hat, ist ohne Anmeldung erreichbar.
+// The permissions match the `x-permissions` in spec/reservation-api.yml.
+// Whatever has no entry there is reachable without logging in.
 
 Route::get('session', [SessionController::class, 'show']);
 Route::post('session', [SessionController::class, 'login']);
@@ -24,8 +24,8 @@ Route::get('config', [ConfigController::class, 'show']);
 Route::middleware('permission:manageRoles')->group(function (): void {
     Route::put('config', [ConfigController::class, 'update']);
 
-    // Auch das Lesen der Rollen braucht das Recht: dort stehen die
-    // Berechtigungen aller Rollen, nicht nur die eigenen.
+    // Reading the roles needs the permission too: they hold the permissions of
+    // all roles, not only one's own.
     Route::get('roles', [RoleController::class, 'index']);
     Route::get('roles/{role}', [RoleController::class, 'show']);
     Route::post('roles', [RoleController::class, 'store']);
@@ -59,8 +59,8 @@ Route::middleware('permission:viewBookings')->group(function (): void {
     Route::get('bookings/{booking}', [BookingController::class, 'show']);
 });
 
-// Ohne `permission`-Middleware: der Feed prüft `viewBookings` selbst, und zwar
-// an der anonymen Rolle statt an der angemeldeten.
+// Without the `permission` middleware: the feed checks `viewBookings` itself,
+// and against the anonymous role rather than the logged-in one.
 Route::get('calendar.ics', [CalendarFeedController::class, 'show']);
 
 Route::middleware('permission:viewBookings')->group(function (): void {

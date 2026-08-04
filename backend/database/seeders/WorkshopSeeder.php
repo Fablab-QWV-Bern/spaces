@@ -7,9 +7,9 @@ use App\Models\Workplace;
 use Illuminate\Database\Seeder;
 
 /**
- * Bereiche und Arbeitsplätze, nachgebaut nach den Screenshots des bestehenden
- * Systems. Die Zuordnung zu Bereichen ist eine plausible Rekonstruktion — in den
- * Screenshots sind die Gruppenüberschriften nicht sichtbar.
+ * Areas and workplaces, reconstructed from the screenshots of the existing
+ * system. The assignment to areas is a plausible reconstruction — the group
+ * headings are not visible in the screenshots.
  */
 class WorkshopSeeder extends Seeder
 {
@@ -35,7 +35,7 @@ class WorkshopSeeder extends Seeder
                 'name' => 'Kurse',
                 'color' => 'oklch(0.8 0.1 70)',
                 'max_booking_duration_minutes' => 720,
-                // Kurse werden lange im Voraus geplant.
+                // Courses are planned far in advance.
                 'max_booking_end_offset_days' => 365,
                 'sort_order' => 20,
             ],
@@ -54,7 +54,7 @@ class WorkshopSeeder extends Seeder
             'fablab' => [
                 'name' => 'Fablab',
                 'color' => 'oklch(0.8 0.1 350)',
-                // Ein Druck läuft auch mal über Nacht.
+                // A print run sometimes goes on overnight.
                 'max_booking_duration_minutes' => 1440,
                 'allow_nightly_activities' => true,
                 'sort_order' => 50,
@@ -63,7 +63,7 @@ class WorkshopSeeder extends Seeder
                 'name' => 'Diverses',
                 'color' => 'oklch(0.8 0 0)',
                 'max_booking_duration_minutes' => 2880,
-                // Ein Fahrzeug darf über Nacht stehen bleiben.
+                // A vehicle may be left standing overnight.
                 'allow_nightly_activities' => true,
                 'sort_order' => 60,
             ],
@@ -84,7 +84,7 @@ class WorkshopSeeder extends Seeder
         $wiki = fn (string $slug): array => ['wiki_url' => "https://wiki.example.org/{$slug}"];
         $ug = ['location' => 'Untergeschoss'];
 
-        // [id, Name, Bereich, Reihenfolge, weitere Attribute]
+        // [id, name, area, sort order, further attributes]
         $workplaces = [
             ['spezial', 'spezial', 'spezial', 10],
             ['werkstattpflege', 'Werkstattpflege', 'spezial', 20],
@@ -162,8 +162,8 @@ class WorkshopSeeder extends Seeder
     }
 
     /**
-     * Tags sind die Grundlage der tag-basierten Blockierung. "werkstatt" tragen
-     * alle Plätze, die von einem Ruhetag betroffen sind.
+     * Tags are the basis of tag-based blocking. All workplaces affected by a
+     * closure day carry "werkstatt".
      */
     private function applyTags(): void
     {
@@ -188,12 +188,12 @@ class WorkshopSeeder extends Seeder
 
     private function applyBlocking(): void
     {
-        // Ein Ruhetag legt die ganze Werkstatt still — über einen Tag, damit neue
-        // Arbeitsplätze automatisch dazugehören, sobald sie den Tag tragen.
+        // A closure day shuts down the whole workshop — via a tag, so that new
+        // workplaces automatically join in as soon as they carry the tag.
         Workplace::findOrFail('ruhetag')->syncBlocksWorkplacesWithTag(['werkstatt']);
         Workplace::findOrFail('werkstattpflege')->syncBlocksWorkplacesWithTag(['werkstatt']);
 
-        // Ein Kurs belegt die Arbeitsplätze seines Bereichs, aber nichts sonst.
+        // A course occupies the workplaces of its area, but nothing else.
         Workplace::findOrFail('kurse-holz')->blocksWorkplaces()->sync([
             'holz-1', 'holz-2', 'holz-3', 'holz-4', 'holz-5',
         ]);
@@ -206,11 +206,11 @@ class WorkshopSeeder extends Seeder
             'lasercutter-akj', 'prusa-mini-links', 'prusa-mini-mitte', 'prusa-mk3s', 'prusa-xl',
         ]);
 
-        // Die Drechselbank steht neben Holz 6 und macht dort das Arbeiten
-        // unmöglich — eine gerichtete Blockierung, die nur in diese Richtung gilt.
+        // The lathe stands next to Holz 6 and makes working there impossible — a
+        // directed block that applies in this direction only.
         Workplace::findOrFail('drechselbank')->blocksWorkplaces()->sync(['holz-6']);
 
-        // Die Spritzkabine verträgt sich nicht mit Schleifarbeiten nebenan.
+        // The spray booth does not get along with sanding work next door.
         Workplace::findOrFail('spritzkabine')->blocksWorkplaces()->sync(['metall-hinten']);
     }
 }

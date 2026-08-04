@@ -11,11 +11,11 @@ return new class extends Migration
         Schema::create('bookings', function (Blueprint $table) {
             $table->string('id', 26)->primary();
 
-            // Bewusst ohne Fremdschlüssel: wird die Rolle gelöscht, bleibt die
-            // Referenz als historischer Vermerk stehen.
+            // Deliberately without a foreign key: if the role is deleted, the
+            // reference stays as a historical note.
             $table->string('creator_role_id', 26)->nullable()->index();
 
-            // Wird nach 90 Tagen geleert, sichtbar nur mit manageRoles.
+            // Cleared after 90 days, visible only with manageRoles.
             $table->string('ip_address', 45)->nullable();
 
             $table->string('workplace_id', 64);
@@ -25,12 +25,12 @@ return new class extends Migration
             $table->string('contact', 150);
             $table->boolean('usage_rules_acknowledged')->default(false);
 
-            // UTC. Auf dem 15-Minuten-Raster, Sekunden sind immer 0.
+            // UTC. On the 15-minute grid; seconds are always 0.
             $table->dateTime('start_time');
             $table->dateTime('end_time');
 
-            // Abgeleitet aus Start und Ende: nur die Zeit innerhalb der
-            // Öffnungszeiten. Gespeichert, weil jede Anzeige sie braucht.
+            // Derived from start and end: only the time within the opening hours.
+            // Stored because every view needs it.
             $table->unsignedInteger('chargeable_duration_minutes');
 
             $table->string('booking_series_id', 26)->nullable();
@@ -38,28 +38,28 @@ return new class extends Migration
 
             $table->timestamps();
 
-            // Trägt die Kollisionsabfrage: erst der Arbeitsplatz, dann der Zeitraum.
+            // Carries the collision query: workplace first, then the time range.
             $table->index(['workplace_id', 'start_time', 'end_time']);
 
-            // Trägt die Kalenderabfrage über ein Zeitfenster.
+            // Carries the calendar query over a time window.
             $table->index(['start_time', 'end_time']);
 
             $table->index('booking_series_id');
         });
 
-        // Der Snapshot der blockierten Arbeitsplätze, festgehalten beim Erstellen
-        // bzw. Ändern der Buchung: Vereinigung aus blocksWorkplaceIds und den zu
-        // diesem Zeitpunkt per Tag getroffenen Arbeitsplätzen.
+        // The snapshot of blocked workplaces, recorded when the booking is created
+        // or changed: the union of blocksWorkplaceIds and the workplaces matched by
+        // tag at that moment.
         //
-        // Bewusst ohne Fremdschlüssel auf workplaces: der Snapshot ist Historie und
-        // soll das Löschen eines Arbeitsplatzes überleben.
+        // Deliberately without a foreign key onto workplaces: the snapshot is
+        // history and should survive the deletion of a workplace.
         Schema::create('booking_blocked_workplaces', function (Blueprint $table) {
             $table->string('booking_id', 26);
             $table->string('workplace_id', 64);
 
             $table->primary(['booking_id', 'workplace_id'], 'bbw_primary');
 
-            // Für die Gegenrichtung: welche Buchungen blockieren Arbeitsplatz X?
+            // For the reverse direction: which bookings block workplace X?
             $table->index('workplace_id');
 
             $table->foreign('booking_id')->references('id')->on('bookings')->cascadeOnDelete();

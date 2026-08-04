@@ -5,20 +5,19 @@ import { ICON_PATHS, IconName } from './icon-paths';
 export type { IconName };
 
 /**
- * Ein Symbol als eingebettetes SVG.
+ * An icon as inline SVG.
  *
- * Keine Icon-Font: die brauchte entweder einen Request zu Google oder mehrere
- * Megabyte im Auslieferungsgepäck, und bis sie da ist, steht der Ligaturname im
- * Klartext in der Leiste. Auch nicht `lucide-angular` — dessen Peer-Bereich
- * endet bei Angular 21. Die Pfade kommen stattdessen beim Bauen aus
- * `lucide-static`, siehe `scripts/generate-icons.mjs`.
+ * No icon font: that would need either a request to Google or several megabytes
+ * of payload, and until it arrives the ligature name stands in plain text in the
+ * bar. Nor `lucide-angular` — its peer range ends at Angular 21. The paths come
+ * from `lucide-static` at build time instead, see `scripts/generate-icons.mjs`.
  *
- * Gezeichnet wird in `currentColor` — damit gilt für Symbole dieselbe Regel wie
- * für alles andere: die Farbe kommt aus der Palette und steht nirgends als Wert
- * im Code. Ein farbiges Emoji konnte das nicht.
+ * Drawing happens in `currentColor` — so the same rule applies to icons as to
+ * everything else: the colour comes from the palette and appears nowhere as a
+ * value in the code. A coloured emoji could not do that.
  *
- * Die Grösse hängt an der Schrift (`1em`), nicht an einer Eingabe. Ein Symbol
- * steht immer neben oder anstelle von Text und soll mit ihm wachsen.
+ * The size hangs off the font (`1em`), not off an input. An icon always stands
+ * beside or in place of text and should grow with it.
  */
 @Component({
   selector: 'app-icon',
@@ -45,8 +44,8 @@ export type { IconName };
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      // Rückt das Symbol auf die optische Mitte der Zeile statt auf die
-      // Grundlinie, auf der ein inline-Kasten sonst sässe.
+      // Moves the icon to the optical middle of the line rather than the
+      // baseline an inline box would otherwise sit on.
       vertical-align: -0.125em;
     }
 
@@ -61,9 +60,8 @@ export class Icon {
   readonly name = input.required<IconName>();
 
   /**
-   * Leer, wenn das Symbol nur wiederholt, was daneben steht — dann bleibt es
-   * für Vorlesegeräte unsichtbar. Steht es allein, gehört seine Bedeutung
-   * hierher.
+   * Empty when the icon merely repeats what stands next to it — then it stays
+   * invisible to screen readers. When it stands alone, its meaning belongs here.
    */
   readonly label = input('');
 

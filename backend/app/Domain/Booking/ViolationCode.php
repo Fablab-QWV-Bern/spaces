@@ -3,8 +3,8 @@
 namespace App\Domain\Booking;
 
 /**
- * Die Regelverstösse, die die Buchungsprüfung melden kann. Die Werte sind
- * zugleich die Codes, die `POST /bookings/validate` ausliefert.
+ * The rule violations the booking check can report. The values are at the same
+ * time the codes that `POST /bookings/validate` delivers.
  */
 enum ViolationCode: string
 {

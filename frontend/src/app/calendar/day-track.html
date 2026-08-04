@@ -2,7 +2,7 @@
   <p class="notice">{{ notice }}</p>
 }
 
-<!-- Vor den Balken, damit eine bestehende Buchung die Vorschau überdeckt. -->
+<!-- Before the bars, so that an existing booking covers the preview. -->
 @if (preview(); as preview) {
   <div class="preview" [style.grid-column]="preview.gridColumn" aria-hidden="true">
     <span class="text">{{ preview.label }}</span>

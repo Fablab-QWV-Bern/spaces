@@ -9,10 +9,10 @@ use Illuminate\Http\Request;
 
 class ConfigController extends Controller
 {
-    /** Öffnungszeiten liegen auf dem Zeitraster, das fix 15 Minuten beträgt. */
+    /** Opening hours sit on the time grid, which is fixed at 15 minutes. */
     private const TIME_OF_DAY = '/^([01][0-9]|2[0-3]):(00|15|30|45)$/';
 
-    /** Für alle lesbar — das Frontend braucht die Öffnungszeiten zum Rendern. */
+    /** Readable by everyone — the frontend needs the opening hours for rendering. */
     public function show(): ConfigResource
     {
         return new ConfigResource(GlobalSetting::current());
@@ -24,15 +24,15 @@ class ConfigController extends Controller
             'opensAt' => ['required', 'string', 'regex:'.self::TIME_OF_DAY],
             'closesAt' => [
                 'required', 'string', 'regex:'.self::TIME_OF_DAY,
-                // `gt:opensAt` ginge nicht: bei Zeichenketten vergleicht Laravel
-                // die Länge. "HH:MM" lässt sich dagegen direkt vergleichen.
+                // `gt:opensAt` would not work: for strings Laravel compares the
+                // length. "HH:MM", by contrast, can be compared directly.
                 function (string $attribute, mixed $value, callable $fail) use ($request): void {
                     if ($value <= $request->string('opensAt')->value()) {
                         $fail('Der Schluss muss nach der Öffnung liegen.');
                     }
                 },
             ],
-            // Deckelt die Spalte (unsignedSmallInteger), nicht die Fachlichkeit.
+            // Caps the column (unsignedSmallInteger), not the domain rule.
             'maxBookingEndOffsetDays' => ['required', 'integer', 'min:0', 'max:65535'],
             'timezone' => ['required', 'string', 'max:64', 'timezone'],
         ]);

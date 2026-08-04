@@ -7,26 +7,26 @@ use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Findet Buchungen, die mit einer neuen oder geänderten Buchung kollidieren.
+ * Finds bookings that collide with a new or changed booking.
  *
- * Eine Kollision liegt vor, wenn sich die Zeiträume überschneiden UND mindestens
- * eine der drei Bedingungen gilt:
+ * A collision exists if the time ranges overlap AND at least one of the three
+ * conditions holds:
  *
- *   1. gleicher Arbeitsplatz
- *   2. der Arbeitsplatz der neuen Buchung steht im Snapshot der bestehenden
- *   3. der Arbeitsplatz der bestehenden Buchung steht im Snapshot der neuen
+ *   1. same workplace
+ *   2. the new booking's workplace appears in the existing one's snapshot
+ *   3. the existing booking's workplace appears in the new one's snapshot
  *
- * Zwei Buchungen, die denselben dritten Arbeitsplatz blockieren, kollidieren
- * damit bewusst NICHT miteinander — blockiert ist nur der dritte.
+ * Two bookings that block the same third workplace therefore deliberately do NOT
+ * collide with each other — only the third one is blocked.
  */
 final class CollisionChecker
 {
     public function __construct(private readonly BlockedWorkplaceResolver $resolver) {}
 
     /**
-     * @param  list<string>|null  $blockedWorkplaceIds  Snapshot der neuen Buchung;
-     *                                                  wird sonst frisch aufgelöst.
-     * @return list<string> IDs der kollidierenden Buchungen
+     * @param  list<string>|null  $blockedWorkplaceIds  Snapshot of the new booking;
+     *                                                  resolved afresh otherwise.
+     * @return list<string> IDs of the colliding bookings
      */
     public function conflictingBookingIds(
         string $workplaceId,
@@ -43,12 +43,12 @@ final class CollisionChecker
     }
 
     /**
-     * Wie conflictingBookingIds, sperrt die geprüften Zeilen aber bis zum Ende der
-     * Transaktion. InnoDB setzt dabei auch Gap-Locks auf den durchsuchten Bereich,
-     * sodass parallel keine kollidierende Buchung dazwischengeschoben werden kann.
+     * Like conflictingBookingIds, but locks the examined rows until the end of the
+     * transaction. InnoDB also sets gap locks on the searched range, so that no
+     * colliding booking can be slipped in concurrently.
      *
-     * Muss innerhalb einer Transaktion aufgerufen werden — sonst ist die Sperre
-     * sofort wieder weg.
+     * Must be called inside a transaction — otherwise the lock is gone again
+     * immediately.
      *
      * @param  list<string>|null  $blockedWorkplaceIds
      * @return list<string>
@@ -62,7 +62,7 @@ final class CollisionChecker
     ): array {
         if (DB::transactionLevel() === 0) {
             throw new \LogicException(
-                'conflictingBookingIdsForUpdate muss innerhalb einer Transaktion laufen.',
+                'conflictingBookingIdsForUpdate must run inside a transaction.',
             );
         }
 
@@ -85,7 +85,7 @@ final class CollisionChecker
         $blocked = $blockedWorkplaceIds ?? $this->resolver->resolve($workplaceId);
 
         $query = DB::table('bookings')
-            // Halboffener Vergleich: 10:00–11:00 kollidiert nicht mit 11:00–12:00.
+            // Half-open comparison: 10:00–11:00 does not collide with 11:00–12:00.
             ->where('start_time', '<', $endTime)
             ->where('end_time', '>', $startTime)
             ->where(function (Builder $query) use ($workplaceId, $blocked): void {
@@ -104,7 +104,7 @@ final class CollisionChecker
             });
 
         if ($excludeBookingId !== null) {
-            // Beim Ändern kollidiert die Buchung nicht mit sich selbst.
+            // When changing, the booking does not collide with itself.
             $query->where('id', '!=', $excludeBookingId);
         }
 

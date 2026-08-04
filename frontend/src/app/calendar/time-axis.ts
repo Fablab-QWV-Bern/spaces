@@ -1,16 +1,16 @@
 /**
- * Die Geometrie der Zeitachse. Bewusst frei von Angular, damit sie testbar
- * bleibt — sie ist der Kern der Kalenderdarstellung.
+ * The geometry of the time axis. Deliberately free of Angular so that it stays
+ * testable — it is the core of the calendar rendering.
  *
- * Alles rechnet in Minuten seit Öffnung des dargestellten Tages. Zeiten
- * ausserhalb der Öffnungszeiten kommen nicht vor: sie werden übersprungen, eine
- * Buchung über Nacht liegt deshalb als durchgehender Block an der Nahtstelle.
+ * Everything is computed in minutes since the opening of the day being shown.
+ * Times outside the opening hours do not occur: they are skipped, which is why an
+ * overnight booking sits as a continuous block at the seam.
  */
 export interface TimeAxis {
-  /** Minuten seit Mitternacht, lokal. */
+  /** Minutes since midnight, local. */
   opensAt: number;
   closesAt: number;
-  /** Beschriftete Spalten, jeweils zur vollen Stunde. */
+  /** Labelled columns, one per full hour. */
   hours: number[];
 }
 
@@ -33,15 +33,14 @@ export function minutesOfDay(time: string): number {
 }
 
 /**
- * Der auf das dargestellte Fenster beschnittene Zeitraum eines Blocks, in
- * Minuten seit Mitternacht. Grundlage für beide Darstellungsarten: das
- * Spaltenraster der Tagesansicht und die prozentualen Balken der komprimierten
- * Ansichten.
+ * A block's time range clipped to the window being shown, in minutes since
+ * midnight. The basis for both kinds of rendering: the column grid of the day
+ * view and the percentage bars of the compressed views.
  */
 export interface VisibleRange {
   startMinutes: number;
   endMinutes: number;
-  /** Der Block beginnt vor dem dargestellten Fenster. */
+  /** The block begins before the window being shown. */
   clippedStart: boolean;
   clippedEnd: boolean;
 }
@@ -71,8 +70,8 @@ export function visibleRange(
 }
 
 /**
- * Die Lage eines Zeitpunkts auf der Achse, in Prozent der Gesamtbreite. Null,
- * wenn er ausserhalb der Öffnungszeiten liegt und darum nicht dargestellt wird.
+ * An instant's position on the axis, as a percentage of the total width. Null if
+ * it lies outside the opening hours and is therefore not rendered.
  */
 export function percentOfAxis(axis: TimeAxis, minutesSinceMidnight: number): number | null {
   if (minutesSinceMidnight < axis.opensAt || minutesSinceMidnight > axis.closesAt) {
@@ -82,11 +81,11 @@ export function percentOfAxis(axis: TimeAxis, minutesSinceMidnight: number): num
   return ((minutesSinceMidnight - axis.opensAt) / (axis.closesAt - axis.opensAt)) * 100;
 }
 
-/** Die Position eines Blocks auf der Achse, in Prozent der Gesamtbreite. */
+/** A block's position on the axis, as a percentage of the total width. */
 export interface BlockGeometry {
   leftPercent: number;
   widthPercent: number;
-  /** Der Block beginnt vor dem dargestellten Fenster. */
+  /** The block begins before the window being shown. */
   clippedStart: boolean;
   clippedEnd: boolean;
 }
@@ -114,10 +113,10 @@ export function blockGeometry(
 }
 
 /**
- * Der Name einer Rasterlinie zu einem Zeitpunkt, z.B. "t0915".
+ * The name of a grid line at a given time, e.g. "t0915".
  *
- * Benannte Linien machen die Platzierung im Stylesheet und in den Dev-Tools
- * lesbar: `grid-column: t0900 / t1300` statt zweier Prozentwerte.
+ * Named lines make the placement readable in the stylesheet and in the dev tools:
+ * `grid-column: t0900 / t1300` rather than two percentages.
  */
 export function lineName(minutesSinceMidnight: number): string {
   const hours = Math.floor(minutesSinceMidnight / 60);
@@ -127,9 +126,9 @@ export function lineName(minutesSinceMidnight: number): string {
 }
 
 /**
- * Das Spaltenraster der Tagesansicht: eine Spalte je Viertelstunde, dazwischen
- * benannte Linien. Muss zur Laufzeit entstehen, weil die Öffnungszeiten
- * konfigurierbar sind.
+ * The column grid of the day view: one column per quarter hour, with named lines
+ * in between. Has to be built at runtime because the opening hours are
+ * configurable.
  */
 export function gridTemplateColumns(axis: TimeAxis): string {
   const parts: string[] = [];
@@ -144,18 +143,18 @@ export function gridTemplateColumns(axis: TimeAxis): string {
 }
 
 /**
- * Die Platzierung eines Blocks im Spaltenraster. Weil beide Kanten auf dem
- * 15-Minuten-Raster liegen müssen, ist das Einrasten hier strukturell statt
- * gerechnet — eine Buchung kann gar nicht daneben landen.
+ * A block's placement in the column grid. Because both edges have to sit on the
+ * 15-minute grid, the snapping here is structural rather than computed — a
+ * booking cannot land off the grid at all.
  */
 export function gridColumn(range: VisibleRange): string {
   return `${lineName(range.startMinutes)} / ${lineName(range.endMinutes)}`;
 }
 
 /**
- * Minuten seit Mitternacht des dargestellten Tages. Liegt der Zeitpunkt an einem
- * früheren oder späteren Tag, ergibt das Werte ausserhalb von [0, 1440) — genau
- * so wird eine Buchung über Nacht korrekt beschnitten.
+ * Minutes since midnight of the day being shown. If the instant falls on an
+ * earlier or later day, this yields values outside [0, 1440) — which is exactly
+ * how an overnight booking gets clipped correctly.
  */
 function minutesSinceMidnight(instant: Date, day: Date): number {
   const midnight = new Date(day);
@@ -171,12 +170,12 @@ export function formatTime(instant: Date): string {
 export const GRID_MINUTES = 15;
 
 /**
- * Der Zeitschlitz unter einem Klick, abgerundet auf das 15-Minuten-Raster.
- * Liefert Minuten seit Mitternacht.
+ * The time slot under a click, rounded down to the 15-minute grid. Returns
+ * minutes since midnight.
  *
- * Der letzte Schlitz beginnt eine Viertelstunde vor Schliessung — ein Klick ganz
- * rechts soll nicht auf der Schliesszeit selbst landen, dort liesse sich nichts
- * mehr buchen.
+ * The last slot begins a quarter of an hour before closing — a click at the far
+ * right should not land on the closing time itself, where nothing could be booked
+ * any more.
  */
 export function slotAtOffset(axis: TimeAxis, offsetX: number, trackWidth: number): number {
   if (trackWidth <= 0) {
@@ -191,7 +190,7 @@ export function slotAtOffset(axis: TimeAxis, offsetX: number, trackWidth: number
   return Math.min(Math.max(snapped, axis.opensAt), axis.closesAt - GRID_MINUTES);
 }
 
-/** Kombiniert den dargestellten Tag mit Minuten seit Mitternacht. */
+/** Combines the day being shown with minutes since midnight. */
 export function instantAt(day: string, minutesSinceMidnight: number): Date {
   const instant = new Date(`${day}T00:00:00`);
   instant.setMinutes(instant.getMinutes() + minutesSinceMidnight);
@@ -200,10 +199,10 @@ export function instantAt(day: string, minutesSinceMidnight: number): Date {
 }
 
 /**
- * "2026-07-31T14:00" — lokale Wanduhrzeit, bewusst ohne Zonenangabe.
+ * "2026-07-31T14:00" — local wall-clock time, deliberately without a zone.
  *
- * So reicht der Kalender eine Startzeit ans Buchungsformular weiter: das
- * Formular arbeitet in Anzeige-Zeit, umgerechnet wird erst beim Speichern.
+ * This is how the calendar hands a start time to the booking form: the form works
+ * in display time, and conversion only happens on save.
  */
 export function toLocalIso(instant: Date): string {
   const offset = instant.getTimezoneOffset() * 60_000;
@@ -212,18 +211,18 @@ export function toLocalIso(instant: Date): string {
 }
 
 /**
- * Standarddauer einer neuen Buchung, sofern sie am Arbeitsplatz erlaubt ist.
+ * Default duration of a new booking, provided the workplace permits it.
  *
- * Steht hier und nicht im Formular, weil auch die Vorschau im Kalender sie
- * braucht: was dort unter dem Zeiger liegt, muss dasselbe sein, was der Klick
- * anlegt.
+ * Lives here rather than in the form because the preview in the calendar needs it
+ * too: what sits under the pointer there has to be the same thing the click
+ * creates.
  */
 export const DEFAULT_DURATION_MINUTES = 120;
 
 /**
- * Erlaubte Dauern bis zum Maximum: volle Stunden, über 24 Stunden hinaus in
- * Tagesschritten. Das Maximum selbst ist immer wählbar — auch wenn es auf keine
- * volle Stunde fällt.
+ * Permitted durations up to the maximum: full hours, and beyond 24 hours in
+ * whole-day steps. The maximum itself is always selectable — even when it does
+ * not fall on a full hour.
  */
 export function allowedDurations(maxMinutes: number): number[] {
   const durations: number[] = [];
@@ -263,7 +262,7 @@ export function formatDuration(minutes: number): string {
   return `${Number.isInteger(hours) ? hours : hours.toFixed(1).replace('.', ',')} Stunden`;
 }
 
-/** Alle Startzeitpunkte des Rasters innerhalb der Öffnungszeiten. */
+/** All grid start times within the opening hours. */
 export function slotsOfDay(axis: TimeAxis): number[] {
   const slots: number[] = [];
 

@@ -12,7 +12,7 @@ import { DayTrack, SIGN_IN_NOTICE } from './day-track';
 import { HourHeader } from './hour-header';
 import { DEFAULT_DURATION_MINUTES, instantAt, percentOfAxis, toLocalIso } from './time-axis';
 
-/** Eine Tageszeile des Monats, fertig beschriftet. */
+/** One day row of the month, fully labelled. */
 interface DayRow {
   date: IsoDate;
   /** "Mo., 27. Juli" */
@@ -22,18 +22,17 @@ interface DayRow {
 }
 
 /**
- * Der Kalender eines einzelnen Arbeitsplatzes: ein Monat, ein Tag je Zeile.
+ * The calendar of a single workplace: one month, one day per row.
  *
- * Gegenüber der Tagesansicht sind nur die Achsen vertauscht — dort steht ein
- * Tag über allen Arbeitsplätzen, hier ein Arbeitsplatz über allen Tagen des
- * Monats. Die Zellen sind dieselben `app-day-track` mit demselben Massstab,
- * darum wird hier auch gebucht wie im Tag.
+ * Compared with the day view only the axes are swapped — there one day spans all
+ * workplaces, here one workplace spans all days of the month. The cells are the
+ * same `app-day-track` at the same scale, which is why booking works here just as
+ * it does in the day view.
  *
- * Eine Zoomstufe gibt es nicht: die Ansicht *ist* der Monat. Hierher führt der
- * Name in einer Arbeitsplatzzeile, zurück der Knopf "Alle Arbeitsplätze" in der
- * Kopfleiste. Der Arbeitsplatz steht in der Adresszeile, von wo ihn diese
- * Ansicht liest — die Adresse ist die einzige Quelle, sonst gäbe es zwei, die
- * auseinanderlaufen könnten.
+ * There is no zoom level: the view *is* the month. The way in is the name in a
+ * workplace row, the way back the "Alle Arbeitsplätze" button in the header. The
+ * workplace lives in the address bar, from where this view reads it — the address
+ * is the single source, otherwise there would be two that could drift apart.
  */
 @Component({
   selector: 'app-workplace-calendar',
@@ -48,7 +47,7 @@ export class WorkplaceCalendar {
 
   protected readonly now = signal(new Date());
 
-  /** Länge der Vorschau unter dem Zeiger — wie in der Tagesansicht. */
+  /** Length of the preview under the pointer — as in the day view. */
   protected readonly previewMinutes = DEFAULT_DURATION_MINUTES;
 
   private readonly queryParams = toSignal(this.route.queryParamMap, {
@@ -62,18 +61,18 @@ export class WorkplaceCalendar {
     syncDateWithUrl();
     this.store.load();
 
-    // Ohne Arbeitsplatz bliebe vom Titel nur der Monat übrig — der sähe im
-    // Reiter aus wie eine Monatsansicht, die es nicht gibt. Dann lieber der
-    // Titel der Route.
+    // Without a workplace only the month would remain of the title — and in the
+    // tab that would look like a month view, which does not exist. Better the
+    // route's title then.
     refinePageTitle(() => (this.selection() ? this.heading() : null));
 
     setInterval(() => this.now.set(new Date()), 60_000);
   }
 
   /**
-   * "Werkbank / Juli 2026". Der Name steht in der Überschrift, weil ihn sonst
-   * nichts mehr nennt: hierher führt der Klick auf eine Arbeitsplatzzeile.
-   * Solange keiner feststeht, bleibt der Monat allein stehen.
+   * "Werkbank / Juli 2026". The name is in the heading because nothing else names
+   * it any more: the way here is a click on a workplace row. As long as none is
+   * determined, the month stands alone.
    */
   protected readonly heading = computed(() => {
     const month = new Date(`${this.store.date()}T12:00:00`).toLocaleDateString('de-CH', {
@@ -106,8 +105,8 @@ export class WorkplaceCalendar {
   });
 
   /**
-   * Der gewählte Arbeitsplatz samt seinem Bereich, oder null solange keiner
-   * gewählt ist bzw. die Kennung zu keinem passt.
+   * The selected workplace together with its area, or null while none is selected
+   * or the identifier matches none.
    */
   protected readonly selection = computed(() => {
     const workplaceId = this.workplaceId();
@@ -123,7 +122,7 @@ export class WorkplaceCalendar {
     return null;
   });
 
-  /** Die Balken je Tag, einmal berechnet — wie in den anderen Zoomstufen. */
+  /** The bars per day, computed once — as in the other zoom levels. */
   private readonly blocksByDay = computed(() => {
     const axis = this.store.axis();
     const selection = this.selection();
@@ -158,8 +157,8 @@ export class WorkplaceCalendar {
   }
 
   /**
-   * Die Lage der Jetzt-Linie auf der Achse. Gezeichnet wird sie nur in der
-   * Zeile des heutigen Tages — die anderen Zeilen sind andere Tage.
+   * The now-line's position on the axis. It is only drawn in today's row — the
+   * other rows are other days.
    */
   protected readonly nowPercent = computed<number | null>(() => {
     const axis = this.store.axis();
@@ -175,12 +174,13 @@ export class WorkplaceCalendar {
   });
 
   /**
-   * Der Hinweis je Tag, der noch jenseits des Vorlaufs liegt — sonst null.
+   * The notice per day that still lies beyond the booking horizon — otherwise
+   * null.
    *
-   * Anders als in der Tagesansicht steht hier ein Monat untereinander, der
-   * Hinweis nennt also je Zeile ein anderes Datum. Die Sätze entstehen einmal
-   * und nicht bei jedem Abgleich, sonst sähe die Bindung im Template über
-   * einunddreissig Zeilen hinweg immer neue Zeichenketten.
+   * Unlike in the day view, a whole month stands one row under the other here, so
+   * the notice names a different date in every row. The sentences are built once
+   * rather than on every change detection pass; otherwise the binding in the
+   * template would see new strings across thirty-one rows every time.
    */
   private readonly noticeByDay = computed(() => {
     const config = this.store.config();
@@ -201,12 +201,12 @@ export class WorkplaceCalendar {
   });
 
   /**
-   * Warum ein Klick in dieser Zeile nichts anlegt — wie in der Tagesansicht.
+   * Why a click in this row creates nothing — as in the day view.
    *
-   * Die anonyme Rolle sieht statt des Vorlaufs die Anmeldung: ab wann dieser
-   * Tag freigäbe, hilft niemandem, der zuerst ein Kennwort braucht. Genannt
-   * wird sie nur an einem Arbeitsplatz mit Status OK — sonst wäre sie ein
-   * Versprechen, das die Anmeldung nicht einlöst.
+   * The anonymous role sees the login instead of the horizon: when this day would
+   * be released helps nobody who needs a password first. It is only stated on a
+   * workplace with status OK — otherwise it would be a promise the login does not
+   * keep.
    */
   protected notice(date: IsoDate): string | null {
     if (this.selection()?.workplace.status !== 'OK') {

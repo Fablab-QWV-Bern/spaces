@@ -5,7 +5,7 @@ import { forkJoin, map } from 'rxjs';
 
 import { ApiConfiguration } from '../api/api-configuration';
 import { deleteWorkplace, listAreas, listWorkplaces } from '../api/functions';
-// Umbenannt, damit das generierte Modell das globale Error nicht verdeckt.
+// Renamed so that the generated model does not shadow the global Error.
 import { Area, Error as ApiError, Workplace } from '../api/models';
 import { Icon } from '../shared/icon';
 import { SessionService } from '../shared/session-service';
@@ -27,7 +27,7 @@ export class WorkplaceList {
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
 
-  /** Nach Bereich gruppiert wie im Kalender — so findet man einen Platz dort wieder. */
+  /** Grouped by area as in the calendar — that is how one finds a workplace again there. */
   protected readonly groups = computed(() => {
     const byArea = new Map<string, Workplace[]>();
 
@@ -76,8 +76,8 @@ export class WorkplaceList {
     forkJoin({
       session: this.session.load(),
       areas: listAreas(this.http, this.rootUrl).pipe(map((r) => r.body)),
-      // Hier gehören die ausgeblendeten dazu — nur hier lassen sie sich wieder
-      // in Betrieb nehmen.
+      // The hidden ones belong here — this is the only place they can be brought
+      // back into service.
       workplaces: listWorkplaces(this.http, this.rootUrl, { includeDisabled: true }).pipe(
         map((r) => r.body),
       ),

@@ -30,13 +30,13 @@ function booking(partial: Partial<Booking>): Booking {
   } as Booking;
 }
 
-/** Lokale Zeit als UTC-Instant, wie ihn die API liefert. */
+/** Local time as a UTC instant, the way the API delivers it. */
 function utc(local: string): string {
   return new Date(local).toISOString();
 }
 
 describe('blocksFor', () => {
-  it('legt Blockierungen unter die Buchungen', () => {
+  it('puts blockages beneath the bookings', () => {
     const blocks = blocksFor(
       context('2026-08-03'),
       [
@@ -59,7 +59,7 @@ describe('blocksFor', () => {
     expect(blocks.map((block) => block.isBlockage)).toEqual([true, false]);
   });
 
-  it('haelt Blockierungen unbeschriftet und benennt den blockierenden Platz', () => {
+  it('leaves blockages unlabelled and names the blocking workplace', () => {
     const [block] = blocksFor(
       context('2026-08-03'),
       [],
@@ -78,7 +78,7 @@ describe('blocksFor', () => {
     expect(block.card.bookedWorkplaceName).toBe('Metall vorne');
   });
 
-  it('platziert auf benannten Rasterlinien', () => {
+  it('places on named grid lines', () => {
     const [block] = blocksFor(
       context('2026-08-03'),
       [booking({ startTime: utc('2026-08-03T09:15'), endTime: utc('2026-08-03T13:00') })],
@@ -88,7 +88,7 @@ describe('blocksFor', () => {
     expect(block.gridColumn).toBe('t0915 / t1300');
   });
 
-  it('zerlegt eine Buchung ueber Nacht auf beide Tage', () => {
+  it('splits an overnight booking across both days', () => {
     const overnight = booking({
       startTime: utc('2026-08-03T20:00'),
       endTime: utc('2026-08-04T09:00'),
@@ -97,7 +97,7 @@ describe('blocksFor', () => {
     const [erster] = blocksFor(context('2026-08-03'), [overnight], []);
     const [zweiter] = blocksFor(context('2026-08-04'), [overnight], []);
 
-    // Der erste Tag endet an der Schliesszeit, der zweite beginnt an der Oeffnung.
+    // The first day ends at closing time, the second begins at opening time.
     expect(erster.gridColumn).toBe('t2000 / t2100');
     expect(erster.clippedEnd).toBe(true);
     expect(erster.clippedStart).toBe(false);
@@ -107,7 +107,7 @@ describe('blocksFor', () => {
     expect(zweiter.clippedEnd).toBe(false);
   });
 
-  it('laesst eine Buchung ausserhalb des Tages weg', () => {
+  it('leaves out a booking outside the day', () => {
     const blocks = blocksFor(
       context('2026-08-05'),
       [booking({ startTime: utc('2026-08-03T09:00'), endTime: utc('2026-08-03T11:00') })],

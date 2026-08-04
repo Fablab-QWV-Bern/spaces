@@ -12,12 +12,12 @@ return new class extends Migration
             $table->string('id', 26)->primary();
             $table->string('name', 100)->unique();
 
-            // Null bei der anonymen Rolle: die hat kein Kennwort.
+            // Null for the anonymous role: it has no password.
             $table->string('password')->nullable();
             $table->rememberToken();
 
-            // Genau eine Rolle trägt dieses Flag. MariaDB kennt keine partiellen
-            // Unique-Indexe, die Einzigkeit wird deshalb in der Anwendung erzwungen.
+            // Exactly one role carries this flag. MariaDB has no partial unique
+            // indexes, so uniqueness is enforced in the application.
             $table->boolean('is_anonymous')->default(false)->index();
 
             $table->boolean('view_bookings')->default(false);

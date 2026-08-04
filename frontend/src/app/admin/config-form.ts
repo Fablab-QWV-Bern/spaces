@@ -5,7 +5,7 @@ import { map, of, switchMap } from 'rxjs';
 
 import { ApiConfiguration } from '../api/api-configuration';
 import { getConfig, updateConfig } from '../api/functions';
-// Umbenannt, damit das generierte Modell das globale Error nicht verdeckt.
+// Renamed so that the generated model does not shadow the global Error.
 import { Config, Error as ApiError } from '../api/models';
 import { SessionService } from '../shared/session-service';
 import { AdminHeader } from './admin-header';
@@ -13,7 +13,7 @@ import { AdminHeader } from './admin-header';
 interface ConfigFormValue {
   opensAt: string;
   closesAt: string;
-  /** Wie überall im Formular als String — das liefert ein `<input>`. */
+  /** As a string, as everywhere in the form — that is what an `<input>` delivers. */
   maxBookingEndOffsetDays: string;
   timezone: string;
 }
@@ -34,7 +34,7 @@ export class ConfigForm {
   protected readonly loadError = signal<string | null>(null);
   protected readonly saveError = signal<string | null>(null);
 
-  /** Kurze Bestätigung: die Ansicht bleibt stehen, es gibt keine Liste zurück. */
+  /** A brief confirmation: the view stays put, there is no list to return to. */
   protected readonly saved = signal(false);
 
   protected readonly model = signal<ConfigFormValue>({
@@ -44,7 +44,7 @@ export class ConfigForm {
     timezone: 'Europe/Zurich',
   });
 
-  /** Wie im Buchungsformular: nur Pflichtfelder hier, alles Weitere im Backend. */
+  /** As in the booking form: only required fields here, everything else in the backend. */
   protected readonly configForm = form(this.model, (path) => {
     required(path.opensAt, { message: 'Bitte eine Öffnungszeit angeben.' });
     required(path.closesAt, { message: 'Bitte eine Schlusszeit angeben.' });
@@ -52,9 +52,9 @@ export class ConfigForm {
   });
 
   /**
-   * Die Zeitzonen kommen von der Plattform, nicht aus einer mitgeführten Liste —
-   * sie ändern sich, und der Browser weiss es besser als wir. Der gespeicherte
-   * Wert steht vorne, falls ihn diese Laufzeit nicht kennt.
+   * The timezones come from the platform, not from a list we carry along — they
+   * change, and the browser knows better than we do. The stored value goes first,
+   * in case this runtime does not know it.
    */
   protected readonly timezones = computed(() => {
     const current = this.model().timezone;
@@ -63,7 +63,7 @@ export class ConfigForm {
     return known.includes(current) ? [...known] : [current, ...known];
   });
 
-  /** Das Zeitraster ist fix 15 Minuten; dazwischen gäbe es keine Spalte. */
+  /** The time grid is fixed at 15 minutes; in between there would be no column. */
   protected readonly offGrid = computed(() => {
     const { opensAt, closesAt } = this.model();
 
@@ -73,7 +73,7 @@ export class ConfigForm {
   protected readonly wrongOrder = computed(() => {
     const { opensAt, closesAt } = this.model();
 
-    // "HH:MM" lässt sich als Zeichenkette vergleichen, beide sind zweistellig.
+    // "HH:MM" can be compared as a string, both parts being two digits.
     return opensAt !== '' && closesAt !== '' && closesAt <= opensAt;
   });
 
@@ -82,8 +82,8 @@ export class ConfigForm {
   );
 
   constructor() {
-    // Lesen darf die Konfiguration jeder; ob sie sich ändern lässt, entscheidet
-    // die Sitzung.
+    // Anyone may read the configuration; whether it can be changed is decided by
+    // the session.
     this.session
       .load()
       .pipe(switchMap(() => getConfig(this.http, this.rootUrl).pipe(map((r) => r.body))))
@@ -123,7 +123,7 @@ export class ConfigForm {
     });
   }
 
-  /** Jede Eingabe macht die Bestätigung des letzten Speicherns hinfällig. */
+  /** Any input makes the confirmation of the last save obsolete. */
   protected touched(): void {
     this.saved.set(false);
   }

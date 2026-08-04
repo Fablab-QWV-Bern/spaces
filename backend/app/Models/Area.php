@@ -34,7 +34,7 @@ class Area extends Model
         return $this->hasMany(Workplace::class)->orderBy('sort_order');
     }
 
-    /** Der Vorlauf dieses Bereichs, sonst der globale Wert. */
+    /** This area's booking horizon, otherwise the global value. */
     public function effectiveMaxBookingEndOffsetDays(GlobalSetting $settings): int
     {
         return $this->max_booking_end_offset_days ?? $settings->max_booking_end_offset_days;

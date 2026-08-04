@@ -4,23 +4,22 @@ import { Icon } from '../shared/icon';
 import { Block } from './blocks';
 import { BookingCard } from './booking-card';
 
-/** Verknüpft Auslöser und Karte. Aus einem Zähler und nicht aus der Buchung,
- *  weil dieselbe Blockierung in mehreren Zeilen liegen kann — die Kennung des
- *  Blocks wäre im Dokument nicht eindeutig. */
+/** Links trigger and card. From a counter rather than from the booking, because
+ *  the same blockage can sit in several rows — the block's identifier would not
+ *  be unique within the document. */
 let nextId = 0;
 
 /**
- * Ein Balken im Kalender samt seiner Detailkarte. Ein Klick klappt sie auf, ein
- * zweiter wieder zu.
+ * A bar in the calendar together with its detail card. One click opens it, a
+ * second closes it again.
  *
- * Auf- und Zuklappen macht der Browser: der Balken ist ein `<button>` mit
- * `popovertarget`, die Karte das benannte Popover. Damit kommen Umschalten,
- * Escape, Klick daneben und die Tastaturbedienung von der Plattform.
+ * Opening and closing is the browser's job: the bar is a `<button>` with
+ * `popovertarget`, the card the named popover. Toggling, Escape, clicking outside
+ * and keyboard handling therefore come from the platform.
  *
- * Deshalb steht die Karte *neben* dem Balken und nicht in ihm: ein `<button>`
- * darf keine Schaltfläche enthalten, und die Karte hat eine. Der Host selbst
- * erzeugt keine Box (`display: contents`), damit der Balken das Rasterelement
- * bleibt.
+ * That is why the card sits *next to* the bar and not inside it: a `<button>` may
+ * not contain a button, and the card has one. The host itself creates no box
+ * (`display: contents`) so that the bar remains the grid item.
  */
 @Component({
   selector: 'app-calendar-block',
@@ -28,7 +27,7 @@ let nextId = 0;
   templateUrl: './calendar-block.html',
   styleUrl: './calendar-block.scss',
   host: {
-    // Ein Klick auf den Balken ist kein Klick auf freie Fläche.
+    // A click on the bar is not a click on empty space.
     '(click)': '$event.stopPropagation()',
   },
 })

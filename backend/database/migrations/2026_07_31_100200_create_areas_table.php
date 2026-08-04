@@ -15,11 +15,11 @@ return new class extends Migration
 
             $table->unsignedInteger('max_booking_duration_minutes');
 
-            // Null: es gilt der globale Wert.
+            // Null: the global value applies.
             $table->unsignedSmallInteger('max_booking_end_offset_days')->nullable();
 
-            // Buchungen dürfen die Nacht überspannen. Start und Ende liegen
-            // trotzdem innerhalb der Öffnungszeiten.
+            // Bookings may span the night. Start and end still lie within the
+            // opening hours.
             $table->boolean('allow_nightly_activities')->default(false);
 
             $table->integer('sort_order')->default(0)->index();

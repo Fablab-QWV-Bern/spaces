@@ -3,17 +3,17 @@
 :host {
   --columns: repeat(7, 1fr);
 
-  // Sieben Tageszellen brauchen mehr Grundbreite als eine; darunter wird
-  // gescrollt statt gequetscht.
+  // Seven day cells need more base width than one; below that it scrolls rather
+  // than squeezes.
   --grid-min-width: 60rem;
 
-  // Balken sind hier wenige Pixel breit — Polsterung und Rundung des
-  // Tagesmassstabs würden sie zu Punkten machen.
+  // Bars are a few pixels wide here — the day scale's padding and rounding would
+  // turn them into dots.
   --bar-padding: 0.15rem;
   --bar-radius: 0.2rem;
 
-  // Nur noch Stundenlinien: viertelstündlich wäre hier jede zweite Pixelspalte
-  // eine Linie, und die Tönung der Wochenenden ginge darin unter.
+  // Hour lines only: at quarter-hour resolution every second pixel column would
+  // be a line here, and the weekend tint would be lost in it.
   --quarter-line: transparent;
 }
 
@@ -37,8 +37,8 @@ app-day-track {
   border-left: 1px solid var(--line);
 }
 
-// Wochenenden liegen grau hinterlegt, heute hebt sich ab. Beides hinter dem
-// Stundenraster der Zelle, das durchscheinend gezeichnet ist.
+// Weekends have a grey background, today stands out. Both behind the cell's hour
+// grid, which is drawn translucently.
 .weekend {
   background-color: var(--surface-muted);
 }
@@ -52,16 +52,16 @@ app-day-track {
   }
 }
 
-// Der Zeiger hebt die ganze Spalte hervor, nicht nur die Zelle unter ihm: der
-// Klick öffnet den Tag mit sämtlichen Arbeitsplätzen. Die Farbe ist dieselbe,
-// die `DayTrack` für die Zelle unter dem Zeiger setzt — die Spalte wirkt
-// dadurch aus einem Stück. Nach den Tönungen oben, damit sie gewinnt.
+// The pointer highlights the whole column, not just the cell beneath it: the
+// click opens the day with all workplaces. The colour is the same one `DayTrack`
+// sets for the cell under the pointer — which makes the column look of a piece.
+// After the tints above, so that it wins.
 .hovered {
   background-color: var(--accent-wash-strong);
 }
 
-// Ausser auf heute: dessen Kopfzelle bleibt blau, sonst verlöre man beim
-// Überfahren die einzige Marke, die die Woche hat.
+// Except on today: its header cell stays blue, otherwise hovering would lose the
+// only marker the week has.
 .header .hovered:not(.today) {
   color: var(--ink);
 
@@ -70,7 +70,7 @@ app-day-track {
   }
 }
 
-// Ein Klick bucht hier nicht, er öffnet den Tag — der Zeiger sagt das.
+// A click does not book here, it opens the day — the cursor says so.
 app-day-track.clickable {
   cursor: zoom-in;
 }

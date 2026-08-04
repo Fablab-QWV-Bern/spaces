@@ -11,7 +11,7 @@ import { DayTrack } from './day-track';
 import { percentOfAxis } from './time-axis';
 import { WorkplaceLabel } from './workplace-label';
 
-/** Eine Tagesspalte der Woche, fertig beschriftet. */
+/** One day column of the week, fully labelled. */
 interface WeekDay {
   date: IsoDate;
   /** "Mo" */
@@ -23,20 +23,20 @@ interface WeekDay {
 }
 
 /**
- * Der Kalender in Wochenauflösung: sieben Tageszellen je Arbeitsplatz.
+ * The calendar at week resolution: seven day cells per workplace.
  *
- * Jede Zelle ist dieselbe `app-day-track` wie in der Tagesansicht, nur schmal —
- * die Balken liegen darin massstabsgetreu über den Öffnungszeiten *dieses*
- * Tages. Eine Buchung über Nacht erscheint dadurch in beiden Tageszellen.
+ * Every cell is the same `app-day-track` as in the day view, only narrow — the
+ * bars sit in it to scale across the opening hours of *that* day. An overnight
+ * booking therefore appears in both day cells.
  *
- * Gebucht wird hier nicht: bei rund hundert Pixeln für dreizehn Stunden wäre
- * eine Viertelstunde keine zwei Pixel breit, ein Klick träfe nie das Gemeinte.
- * Er öffnet darum den Tag in der Tagesansicht.
+ * Booking does not happen here: at roughly a hundred pixels for thirteen hours a
+ * quarter hour would not be two pixels wide, and a click would never hit what was
+ * meant. It therefore opens the day in the day view.
  *
- * Daraus folgt, dass jede Zelle anklickbar ist: Blättern ist keine Buchung. Wer
- * nicht angemeldet ist, kommt hier genauso in den Tag wie ein Mitglied, und ein
- * defekter Arbeitsplatz ist kein Grund, seinen Tag nicht zeigen zu wollen. Ob
- * dort etwas anzulegen ist, sagt die Tagesansicht.
+ * It follows that every cell is clickable: paging is not booking. Someone who is
+ * not logged in reaches the day here just as a member does, and a broken
+ * workplace is no reason to refuse to show its day. Whether anything can be
+ * created there is the day view's business.
  */
 @Component({
   selector: 'app-week-calendar',
@@ -55,17 +55,17 @@ export class WeekCalendar {
     syncDateWithUrl();
     this.store.load();
 
-    // "Woche" davor, weil eine Spanne allein im Reiter nicht sagt, welche
-    // Zoomstufe offen ist — auf der Seite tut das die Ansicht selbst.
+    // "Woche" in front, because a range alone in the tab does not say which zoom
+    // level is open — on the page the view itself does that.
     refinePageTitle(() => `Woche ${this.heading()}`);
 
     setInterval(() => this.now.set(new Date()), 60_000);
   }
 
   protected readonly days = computed<WeekDay[]>(() => {
-    // Hervorgehoben wird der heutige Tag, nicht das dargestellte Datum: beim
-    // Blättern wäre sonst in jeder Woche derselbe Wochentag blau, ohne dass
-    // daran etwas besonders wäre.
+    // Today is highlighted, not the date being shown: when paging, the same
+    // weekday would otherwise be blue in every week without anything being
+    // special about it.
     const today = isoDate(this.now());
 
     return this.store.days().map((date) => {
@@ -82,13 +82,13 @@ export class WeekCalendar {
   });
 
   /**
-   * Der Tag unter dem Zeiger. Hervorgehoben wird die ganze Spalte und nicht nur
-   * die Zelle darunter — der Klick öffnet den Tag mit allen Arbeitsplätzen, und
-   * genau das zeigt die Spalte an.
+   * The day under the pointer. The whole column is highlighted rather than just
+   * the cell beneath it — the click opens the day with all workplaces, and that is
+   * exactly what the column indicates.
    */
   protected readonly hoveredDay = signal<IsoDate | null>(null);
 
-  /** "27. – 31. Juli 2026", über einen Monatswechsel hinweg ausgeschrieben. */
+  /** "27. – 31. Juli 2026", spelled out across a change of month. */
   protected readonly heading = computed(() => {
     const days = this.store.days();
     const first = new Date(`${days[0]}T12:00:00`);
@@ -107,9 +107,8 @@ export class WeekCalendar {
   });
 
   /**
-   * Die Balken je Arbeitsplatz und Tag, einmal berechnet. Ein Block entsteht
-   * genau wie in der Tagesansicht — nur eben siebenmal, je auf seinen Tag
-   * beschnitten.
+   * The bars per workplace and day, computed once. A block is built exactly as in
+   * the day view — only seven times over, each clipped to its own day.
    */
   private readonly blocksByCell = computed(() => {
     const axis = this.store.axis();
@@ -149,7 +148,7 @@ export class WeekCalendar {
     return this.blocksByCell().get(cellKey(workplace.id, date)) ?? [];
   }
 
-  /** Die Jetzt-Linie steht in der Spalte des heutigen Tages — sonst nirgends. */
+  /** The now-line stands in today's column — nowhere else. */
   protected readonly nowMark = computed<{ column: number; percent: number } | null>(() => {
     const axis = this.store.axis();
     const now = this.now();

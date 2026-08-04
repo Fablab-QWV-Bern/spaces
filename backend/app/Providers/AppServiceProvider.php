@@ -14,8 +14,8 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // Ohne "data"-Umhüllung: spec/reservation-api.yml beschreibt nackte Arrays
-        // und Objekte. Die Spec ist der Vertrag, die Antwort richtet sich danach.
+        // Without the "data" wrapper: spec/reservation-api.yml describes bare
+        // arrays and objects. The spec is the contract; the response follows it.
         JsonResource::withoutWrapping();
     }
 }

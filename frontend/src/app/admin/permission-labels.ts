@@ -4,17 +4,17 @@ export type PermissionKey = keyof Permissions;
 
 export interface PermissionLabel {
   key: PermissionKey;
-  /** Für das Formular: ein Satz, der die Berechtigung erklärt. */
+  /** For the form: a sentence explaining the permission. */
   label: string;
   note?: string;
-  /** Für die Übersicht: ein Wort, das in eine Tabellenzelle passt. */
+  /** For the overview: a single word that fits into a table cell. */
   short: string;
 }
 
 /**
- * Die Berechtigungen in der Reihenfolge, in der sie aufeinander aufbauen: erst
- * sehen, dann buchen, dann verwalten. Die Reihenfolge ist die der Spec, nicht
- * die des generierten Modells — dort stehen sie alphabetisch.
+ * The permissions in the order in which they build on one another: first seeing,
+ * then booking, then managing. The order is the spec's, not the generated model's
+ * — there they are alphabetical.
  */
 export const PERMISSION_LABELS: readonly PermissionLabel[] = [
   {

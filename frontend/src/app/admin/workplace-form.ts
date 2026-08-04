@@ -14,7 +14,7 @@ import {
   updateWorkplace,
   uploadWorkplacePhoto,
 } from '../api/functions';
-// Umbenannt, damit das generierte Modell das globale Error nicht verdeckt.
+// Renamed so that the generated model does not shadow the global Error.
 import { Area, Error as ApiError, Workplace, WorkplaceCreate } from '../api/models';
 import { formatDuration } from '../calendar/time-axis';
 import { refinePageTitle } from '../shared/page-title';
@@ -22,7 +22,7 @@ import { SessionService } from '../shared/session-service';
 import { AdminHeader } from './admin-header';
 import { TagInput } from './tag-input';
 
-/** Die Grenze steht auch in der Spec — hier nur, um früh und deutlich zu warnen. */
+/** The limit is in the spec too — here only to warn early and clearly. */
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
 interface WorkplaceFormValue {
@@ -34,7 +34,7 @@ interface WorkplaceFormValue {
   description: string;
   usageRules: string;
   wikiUrl: string;
-  /** Getrennt vom Wert, damit "es gilt der Wert des Bereichs" ankreuzbar ist. */
+  /** Separate from the value so that "the area's value applies" is checkable. */
   useAreaDuration: boolean;
   maxBookingDurationMinutes: string;
   sortOrder: string;
@@ -53,7 +53,7 @@ export class WorkplaceForm {
   private readonly router = inject(Router);
   protected readonly session = inject(SessionService);
 
-  /** Gesetzt, wenn ein bestehender Arbeitsplatz bearbeitet wird. */
+  /** Set when an existing workplace is being edited. */
   protected readonly editing = signal<Workplace | null>(null);
 
   protected readonly areas = signal<Area[]>([]);
@@ -65,18 +65,18 @@ export class WorkplaceForm {
   protected readonly saveError = signal<string | null>(null);
 
   /**
-   * Die blockierten Arbeitsplätze stehen neben dem Formularmodell: eine Liste
-   * von Ankreuzfeldern lässt sich als Menge einfacher führen als als Feld.
+   * The blocked workplaces live beside the form model: a list of checkboxes is
+   * easier to carry as a set than as a field.
    */
   protected readonly blockedIds = signal<string[]>([]);
 
-  /** Ebenso die beiden Tag-Listen — `app-tag-input` führt sie als Feld. */
+  /** Likewise the two tag lists — `app-tag-input` carries them as a field. */
   protected readonly tags = signal<string[]>([]);
   protected readonly blocksWithTag = signal<string[]>([]);
 
   /**
-   * Alle bisher irgendwo vergebenen Tags, für die Vervollständigung. Aus beiden
-   * Listen: was ein Platz trägt, blockiert ein anderer, und umgekehrt.
+   * All tags assigned anywhere so far, for the completion. From both lists: what
+   * one workplace carries, another blocks, and vice versa.
    */
   protected readonly knownTags = computed(() => {
     const seen = new Map<string, string>();
@@ -84,7 +84,7 @@ export class WorkplaceForm {
 
     for (const workplace of workplaces) {
       for (const tag of [...workplace.tags, ...workplace.blocksWorkplacesWithTag]) {
-        // Erste Schreibweise gewinnt, wie beim Speichern im Backend.
+        // The first spelling wins, as it does when saving in the backend.
         seen.set(tag.toLowerCase(), seen.get(tag.toLowerCase()) ?? tag);
       }
     }
@@ -92,13 +92,13 @@ export class WorkplaceForm {
     return [...seen.values()].sort((a, b) => a.localeCompare(b, 'de-CH'));
   });
 
-  // --- Foto ----------------------------------------------------------------
+  // --- Photo ----------------------------------------------------------------
 
-  /** Die gewählte, noch nicht hochgeladene Datei. */
+  /** The selected file, not yet uploaded. */
   protected readonly pickedFile = signal<File | null>(null);
   protected readonly photoError = signal<string | null>(null);
 
-  /** Vorschau der gewählten Datei, sonst das gespeicherte Foto. */
+  /** Preview of the selected file, otherwise the stored photo. */
   protected readonly photoPreview = computed(() => {
     const file = this.pickedFile();
 
@@ -119,7 +119,7 @@ export class WorkplaceForm {
     sortOrder: '0',
   });
 
-  /** Wie im Buchungsformular: nur Pflichtfelder hier, alles Weitere im Backend. */
+  /** As in the booking form: only required fields here, everything else in the backend. */
   protected readonly workplaceForm = form(this.model, (path) => {
     required(path.name, { message: 'Bitte einen Namen angeben.' });
     required(path.areaId, { message: 'Bitte einen Bereich wählen.' });
@@ -133,10 +133,10 @@ export class WorkplaceForm {
     () => !this.saving() && this.workplaceForm().valid() && this.idValue() !== '',
   );
 
-  /** Beim Anlegen die getippte Kennung, beim Bearbeiten die bestehende. */
+  /** The typed identifier when creating, the existing one when editing. */
   protected readonly idValue = computed(() => this.editing()?.id ?? this.model().id.trim());
 
-  /** Die Kennung muss in eine URL und in ein SVG passen. */
+  /** The identifier has to fit into a URL and into an SVG. */
   protected readonly idLooksWrong = computed(() => {
     const id = this.model().id.trim();
 
@@ -149,7 +149,7 @@ export class WorkplaceForm {
     return Number.isFinite(minutes) && minutes >= 15 ? formatDuration(minutes) : '';
   });
 
-  /** Was der gewählte Bereich vorgibt — sonst wäre das Kreuz eine Blackbox. */
+  /** What the selected area dictates — otherwise the checkbox would be a black box. */
   protected readonly areaDurationLabel = computed(() => {
     const area = this.areas().find((candidate) => candidate.id === this.model().areaId);
 
@@ -157,9 +157,8 @@ export class WorkplaceForm {
   });
 
   constructor() {
-    // Der Name zuerst: welcher Arbeitsplatz bearbeitet wird, ist im Reiter die
-    // eigentliche Auskunft. Beim Anlegen gibt es keinen, dann bleibt der
-    // Titel der Route stehen.
+    // The name first: which workplace is being edited is the real information in
+    // the tab. When creating there is none, and then the route's title stays.
     refinePageTitle(() => {
       const editing = this.editing();
 
@@ -201,7 +200,7 @@ export class WorkplaceForm {
     });
   }
 
-  /** Die Arbeitsplätze zur Auswahl, nach Bereich gruppiert wie im Kalender. */
+  /** The workplaces to choose from, grouped by area as in the calendar. */
   protected readonly blockChoices = computed(() => {
     const byArea = new Map<string, Workplace[]>();
 
@@ -227,8 +226,8 @@ export class WorkplaceForm {
   }
 
   /**
-   * Schlägt beim Tippen des Namens eine Kennung vor — aber nur, solange man sie
-   * nicht selbst angefasst hat.
+   * Suggests an identifier while the name is typed — but only for as long as it
+   * has not been touched by hand.
    */
   protected onNameInput(): void {
     if (this.editing() || this.idTouched) {
@@ -244,7 +243,7 @@ export class WorkplaceForm {
 
   private idTouched = false;
 
-  // --- Foto ----------------------------------------------------------------
+  // --- Photo ----------------------------------------------------------------
 
   protected onFilePicked(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -283,7 +282,7 @@ export class WorkplaceForm {
     });
   }
 
-  // --- Speichern -----------------------------------------------------------
+  // --- Saving ---------------------------------------------------------------
 
   protected submit(): void {
     if (!this.canSubmit()) {
@@ -306,8 +305,8 @@ export class WorkplaceForm {
         )
       : createWorkplace(this.http, this.rootUrl, { body }).pipe(map((r) => r.body));
 
-    // Das Foto geht als eigene Anfrage hinterher — beim Anlegen gibt es erst
-    // nach dem Speichern eine Kennung, an die es sich hängen kann.
+    // The photo follows as a separate request — when creating, there is only an
+    // identifier to attach it to after the save.
     saved.pipe(switchMap((stored) => this.uploadPicked(stored))).subscribe({
       next: () => this.router.navigate(['/verwaltung/arbeitsplaetze']),
       error: (response: HttpErrorResponse) => {
@@ -351,7 +350,7 @@ function toFormValue(workplace: Workplace): WorkplaceFormValue {
   };
 }
 
-/** @param lists Die Listenfelder, die neben dem Formularmodell geführt werden. */
+/** @param lists The list fields carried beside the form model. */
 function toWrite(
   value: WorkplaceFormValue,
   id: string,
@@ -384,7 +383,7 @@ function slug(name: string): string {
       .replace(/ü/g, 'ue')
       .replace(/ß/g, 'ss')
       .normalize('NFD')
-      // Die von NFD abgetrennten Akzente.
+      // The accents separated out by NFD.
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '')

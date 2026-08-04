@@ -1,18 +1,18 @@
 :host {
-  // Der Host erzeugt keine eigene Box: Rasterelement der Zelle ist der Balken
-  // selbst, die Karte daneben nimmt im Raster nie Platz ein (zugeklappt
-  // `display: none`, aufgeklappt im Top Layer).
+  // The host creates no box of its own: the cell's grid item is the bar itself,
+  // and the card next to it never takes up space in the grid (`display: none`
+  // when closed, in the top layer when open).
   display: contents;
 
-  // Beschränkt den Ankernamen auf dieses Paar aus Balken und Karte. Auch ohne
-  // diese Zeile träfe es zu — bei mehreren gleichnamigen Ankern gewinnt der
-  // letzte vor dem positionierten Element, und das ist der eigene Balken.
+  // Scopes the anchor name to this pair of bar and card. It would hold even
+  // without this line — among several anchors of the same name the last one
+  // before the positioned element wins, and that is the bar's own.
   anchor-scope: --block;
 }
 
 .bar {
-  // Alle Balken einer Zelle teilen sich dieselbe Rasterzeile und überlagern
-  // sich damit; die Reihenfolge macht z-index.
+  // All bars of a cell share the same grid row and therefore overlap; z-index
+  // decides the order.
   grid-row: 1;
   margin: 3px 0;
   margin-left: 1px;
@@ -21,9 +21,8 @@
   display: flex;
   align-items: center;
   gap: 0.2rem;
-  // Über Variablen, damit die dichten Zoomstufen die Balken schmaler fassen
-  // können — in einer Wochenzelle wäre die Polsterung der Tagesansicht breiter
-  // als mancher Balken.
+  // Via variables so that the dense zoom levels can set the bars tighter — in a
+  // week cell the day view's padding would be wider than some of the bars.
   padding: 0 var(--bar-padding, 0.35rem);
   border: none;
   border-radius: var(--bar-radius, 0.4rem);
@@ -33,8 +32,8 @@
   overflow: hidden;
   white-space: nowrap;
 
-  // Der Anker für die eigene Karte — sie hängt sich in booking-card.scss über
-  // `position-anchor: --block` daran.
+  // The anchor for its own card — booking-card.scss attaches to it via
+  // `position-anchor: --block`.
   anchor-name: --block;
 
   &.clipped-start {
@@ -56,8 +55,8 @@
 .booking {
   z-index: 1;
   color: var(--ink);
-  // Ein zusätzliches Muster wäre hier falsch — die Buchung ist der Normalfall.
-  // Unterscheidbar bleibt sie durch die Beschriftung.
+  // An additional pattern would be wrong here — a booking is the normal case. It
+  // stays distinguishable through its label.
 
   .text {
     overflow: hidden;
@@ -71,7 +70,7 @@
 }
 
 .blockage {
-  // Blockierungen tragen ein Schraffurmuster, damit sie sich nicht allein über
-  // die Farbe von freien Flächen unterscheiden.
+  // Blockages carry a hatching pattern so that they are not distinguished from
+  // empty space by colour alone.
   background: var(--blockage-hatch);
 }
