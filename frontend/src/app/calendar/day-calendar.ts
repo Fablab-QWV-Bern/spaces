@@ -137,8 +137,8 @@ export class DayCalendar {
   }
 
   /**
-   * Why a click here creates nothing — shown on hover where the preview would
-   * otherwise be.
+   * Why a click here creates nothing — shown where the preview would otherwise
+   * be.
    *
    * For the anonymous role the answer is always the same and it comes before the
    * horizon: someone who has to log in first can do nothing with the information

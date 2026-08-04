@@ -28,9 +28,11 @@ export const SIGN_IN_NOTICE = 'Melde dich an, um eine Buchung zu erstellen';
     '[style.grid-template-columns]': 'template()',
     '[style.--quarter]': 'quarterPercent()',
     '[class.clickable]': 'clickable()',
+    '[class.notice-on-click]': 'noticeOnClick()',
+    '[class.notice-revealed]': 'noticeRevealed()',
     '(click)': 'onClick($event)',
     '(mousemove)': 'onMove($event)',
-    '(mouseleave)': 'hoveredSlot.set(null)',
+    '(mouseleave)': 'onLeave()',
   },
 })
 export class DayTrack {
@@ -48,16 +50,28 @@ export class DayTrack {
   /**
    * Why nothing can be created here even though the workplace would allow it —
    * for instance because the day lies beyond the booking horizon. The sentence
-   * appears on hover where the preview would otherwise be; across all rows it
-   * would otherwise stand there dozens of times.
+   * appears where the preview would otherwise be, and only for the row being
+   * addressed; across all rows it would stand there dozens of times.
    */
   readonly notice = input<string | null>(null);
+  /**
+   * Whether the notice waits for a click instead of appearing on hover.
+   *
+   * The horizon notice describes the row itself, so it belongs to the pointer
+   * being there. The sign-in notice answers an attempt: whoever moves across the
+   * calendar is not asking to be told in every row that they are not logged in —
+   * whoever clicks on empty space is.
+   */
+  readonly noticeOnClick = input(false);
 
   /** The clicked time slot, in minutes since midnight. */
   readonly slotClick = output<number>();
 
   /** The time slot under the pointer, or null outside empty space. */
   protected readonly hoveredSlot = signal<number | null>(null);
+
+  /** Whether the click that a `noticeOnClick` notice waits for has happened. */
+  protected readonly noticeRevealed = signal(false);
 
   protected readonly template = computed(() => gridTemplateColumns(this.axis()));
 
@@ -90,6 +104,12 @@ export class DayTrack {
   });
 
   protected onClick(event: MouseEvent): void {
+    // Only over empty space, as with the preview: a click on a bar opens its
+    // detail card and asks something else.
+    if (this.noticeOnClick() && event.target === event.currentTarget) {
+      this.noticeRevealed.set(true);
+    }
+
     if (!this.clickable()) {
       return;
     }
@@ -109,6 +129,12 @@ export class DayTrack {
     // As long as the pointer stays in the same quarter hour the signal does not
     // change — the preview is not redrawn at every pixel.
     this.hoveredSlot.set(this.slotUnder(event));
+  }
+
+  /** Leaving the row takes the answer with it — it belonged to that one click. */
+  protected onLeave(): void {
+    this.hoveredSlot.set(null);
+    this.noticeRevealed.set(false);
   }
 
   private slotUnder(event: MouseEvent): number {

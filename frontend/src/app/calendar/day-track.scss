@@ -32,8 +32,8 @@
   cursor: pointer;
 }
 
-// In place of the preview: why a click here creates nothing. Only visible on
-// hover — as standing text the same sentence would appear in every row.
+// In place of the preview: why a click here creates nothing. Never as standing
+// text — the same sentence would otherwise appear in every row.
 .notice {
   grid-row: 1;
   grid-column: 1 / -1;
@@ -47,7 +47,10 @@
   margin: 0;
 }
 
-:host(:hover) .notice {
+// Hover shows what the row is; only the notice that answers an attempt waits
+// for the click (`.notice-on-click`).
+:host(:hover:not(.notice-on-click)) .notice,
+:host(.notice-revealed) .notice {
   opacity: 1;
 }
 

@@ -37,6 +37,7 @@
               [blocks]="blocks(workplace)"
               [clickable]="isBookable(workplace, group.area)"
               [notice]="notice(workplace, group.area)"
+              [noticeOnClick]="store.isAnonymous()"
               [previewMinutes]="previewMinutes"
               (slotClick)="onSlotClick(workplace, $event)"
             />

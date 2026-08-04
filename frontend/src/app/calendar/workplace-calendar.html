@@ -37,6 +37,7 @@
             [blocks]="blocks(day.date)"
             [clickable]="clickable(day.date)"
             [notice]="notice(day.date)"
+            [noticeOnClick]="store.isAnonymous()"
             [previewMinutes]="previewMinutes"
             (slotClick)="onSlotClick(day.date, $event)"
           />
