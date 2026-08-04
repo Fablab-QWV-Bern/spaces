@@ -7,20 +7,17 @@ import { ApiConfiguration } from '../api/api-configuration';
 import { deleteBookingSeries, listBookingSeries, listWorkplaces } from '../api/functions';
 // Renamed so that the generated model does not shadow the global Error.
 import { BookingSeries, Error as ApiError } from '../api/models';
-import { SessionService } from '../shared/session-service';
-import { AdminHeader } from './admin-header';
 import { describeRhythm } from './series-rhythm';
 
 @Component({
   selector: 'app-series-list',
-  imports: [AdminHeader, RouterLink],
+  imports: [RouterLink],
   templateUrl: './series-list.html',
   styleUrl: './series-list.scss',
 })
 export class SeriesList {
   private readonly http = inject(HttpClient);
   private readonly rootUrl = inject(ApiConfiguration).rootUrl;
-  protected readonly session = inject(SessionService);
 
   protected readonly series = signal<BookingSeries[]>([]);
   protected readonly loading = signal(true);
@@ -52,7 +49,6 @@ export class SeriesList {
     this.error.set(null);
 
     forkJoin({
-      session: this.session.load(),
       series: listBookingSeries(this.http, this.rootUrl).pipe(map((r) => r.body)),
       // Including the hidden ones: a series can sit on a workplace that is no
       // longer bookable, and there it needs a name rather than an identifier all

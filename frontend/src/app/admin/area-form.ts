@@ -2,7 +2,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormField, form, required } from '@angular/forms/signals';
 import { ActivatedRoute, Router } from '@angular/router';
-import { forkJoin, map, of } from 'rxjs';
+import { Observable, map, of } from 'rxjs';
 
 import { ApiConfiguration } from '../api/api-configuration';
 import { createArea, getArea, updateArea } from '../api/functions';
@@ -10,8 +10,6 @@ import { createArea, getArea, updateArea } from '../api/functions';
 import { Area, AreaWrite, Error as ApiError } from '../api/models';
 import { formatDuration } from '../calendar/time-axis';
 import { refinePageTitle } from '../shared/page-title';
-import { SessionService } from '../shared/session-service';
-import { AdminHeader } from './admin-header';
 
 /**
  * The form state. Numbers are held as strings — that is what an `<input>`
@@ -39,7 +37,7 @@ const SWATCHES = [...HUES.map((hue) => `oklch(0.8 0.1 ${hue})`), 'oklch(0.8 0 0)
 
 @Component({
   selector: 'app-area-form',
-  imports: [AdminHeader, FormField],
+  imports: [FormField],
   templateUrl: './area-form.html',
   styleUrl: './area-form.scss',
 })
@@ -48,7 +46,6 @@ export class AreaForm {
   private readonly rootUrl = inject(ApiConfiguration).rootUrl;
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  protected readonly session = inject(SessionService);
 
   protected readonly swatches = SWATCHES;
 
@@ -76,10 +73,6 @@ export class AreaForm {
     required(path.color, { message: 'Bitte eine Farbe wählen.' });
   });
 
-  protected readonly heading = computed(() =>
-    this.editing() ? 'Bereich bearbeiten' : 'Neuer Bereich',
-  );
-
   /** The entered duration in plain words — 240 says less than "4 Stunden". */
   protected readonly durationLabel = computed(() => {
     const minutes = Number(this.model().maxBookingDurationMinutes);
@@ -98,11 +91,12 @@ export class AreaForm {
 
     const id = this.route.snapshot.paramMap.get('id');
 
-    forkJoin({
-      session: this.session.load(),
-      area: id ? getArea(this.http, this.rootUrl, { id }).pipe(map((r) => r.body)) : of(null),
-    }).subscribe({
-      next: ({ area }) => {
+    const loaded: Observable<Area | null> = id
+      ? getArea(this.http, this.rootUrl, { id }).pipe(map((r) => r.body))
+      : of(null);
+
+    loaded.subscribe({
+      next: (area) => {
         if (area) {
           this.editing.set(area);
           this.model.set(toFormValue(area));

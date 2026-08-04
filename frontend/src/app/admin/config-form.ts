@@ -1,14 +1,12 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormField, form, required } from '@angular/forms/signals';
-import { map, of, switchMap } from 'rxjs';
+import { map } from 'rxjs';
 
 import { ApiConfiguration } from '../api/api-configuration';
 import { getConfig, updateConfig } from '../api/functions';
 // Renamed so that the generated model does not shadow the global Error.
 import { Config, Error as ApiError } from '../api/models';
-import { SessionService } from '../shared/session-service';
-import { AdminHeader } from './admin-header';
 
 interface ConfigFormValue {
   opensAt: string;
@@ -20,14 +18,13 @@ interface ConfigFormValue {
 
 @Component({
   selector: 'app-config-form',
-  imports: [AdminHeader, FormField],
+  imports: [FormField],
   templateUrl: './config-form.html',
   styleUrl: './config-form.scss',
 })
 export class ConfigForm {
   private readonly http = inject(HttpClient);
   private readonly rootUrl = inject(ApiConfiguration).rootUrl;
-  protected readonly session = inject(SessionService);
 
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
@@ -82,11 +79,8 @@ export class ConfigForm {
   );
 
   constructor() {
-    // Anyone may read the configuration; whether it can be changed is decided by
-    // the session.
-    this.session
-      .load()
-      .pipe(switchMap(() => getConfig(this.http, this.rootUrl).pipe(map((r) => r.body))))
+    getConfig(this.http, this.rootUrl)
+      .pipe(map((r) => r.body))
       .subscribe({
         next: (config) => {
           this.model.set(toFormValue(config));

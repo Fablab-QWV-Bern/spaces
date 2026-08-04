@@ -2,15 +2,13 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormField, form, required } from '@angular/forms/signals';
 import { ActivatedRoute, Router } from '@angular/router';
-import { map, of, switchMap } from 'rxjs';
+import { map } from 'rxjs';
 
 import { ApiConfiguration } from '../api/api-configuration';
 import { createRole, listRoles, updateRole } from '../api/functions';
 // Renamed so that the generated model does not shadow the global Error.
 import { Error as ApiError, Permissions, Role, RoleWrite } from '../api/models';
 import { refinePageTitle } from '../shared/page-title';
-import { SessionService } from '../shared/session-service';
-import { AdminHeader } from './admin-header';
 import { PERMISSION_LABELS, PermissionKey } from './permission-labels';
 
 /** The backend will not accept anything shorter. */
@@ -35,7 +33,7 @@ const NO_PERMISSIONS: Permissions = {
 
 @Component({
   selector: 'app-role-form',
-  imports: [AdminHeader, FormField],
+  imports: [FormField],
   templateUrl: './role-form.html',
   styleUrl: './role-form.scss',
 })
@@ -44,7 +42,6 @@ export class RoleForm {
   private readonly rootUrl = inject(ApiConfiguration).rootUrl;
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  protected readonly session = inject(SessionService);
 
   protected readonly labels = PERMISSION_LABELS;
 
@@ -72,8 +69,6 @@ export class RoleForm {
   protected readonly roleForm = form(this.model, (path) => {
     required(path.name, { message: 'Bitte einen Namen angeben.' });
   });
-
-  protected readonly heading = computed(() => (this.editing() ? 'Rolle bearbeiten' : 'Neue Rolle'));
 
   /** The anonymous role has no password — it is the state before logging in. */
   protected readonly isAnonymous = computed(() => this.editing()?.isAnonymous ?? false);
@@ -118,15 +113,8 @@ export class RoleForm {
 
     // The whole list rather than just the one role: answering whether this is the
     // last managing role needs the others anyway.
-    this.session
-      .load()
-      .pipe(
-        switchMap((session) =>
-          session.permissions.manageRoles
-            ? listRoles(this.http, this.rootUrl).pipe(map((r) => r.body))
-            : of<Role[]>([]),
-        ),
-      )
+    listRoles(this.http, this.rootUrl)
+      .pipe(map((r) => r.body))
       .subscribe({
         next: (roles) => {
           this.others.set(roles.filter((role) => role.id !== id));

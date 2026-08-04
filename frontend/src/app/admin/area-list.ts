@@ -8,19 +8,16 @@ import { deleteArea, listAreas, listWorkplaces } from '../api/functions';
 // Renamed so that the generated model does not shadow the global Error.
 import { Area, Error as ApiError } from '../api/models';
 import { formatDuration } from '../calendar/time-axis';
-import { SessionService } from '../shared/session-service';
-import { AdminHeader } from './admin-header';
 
 @Component({
   selector: 'app-area-list',
-  imports: [AdminHeader, RouterLink],
+  imports: [RouterLink],
   templateUrl: './area-list.html',
   styleUrl: './area-list.scss',
 })
 export class AreaList {
   private readonly http = inject(HttpClient);
   private readonly rootUrl = inject(ApiConfiguration).rootUrl;
-  protected readonly session = inject(SessionService);
 
   protected readonly areas = signal<Area[]>([]);
   protected readonly loading = signal(true);
@@ -46,7 +43,6 @@ export class AreaList {
     this.error.set(null);
 
     forkJoin({
-      session: this.session.load(),
       areas: listAreas(this.http, this.rootUrl).pipe(map((r) => r.body)),
       // Including the hidden ones, otherwise an area would look empty even
       // though deletion fails because of them.

@@ -1,18 +1,5 @@
-<app-admin-header heading="Bereiche" />
-
 @if (loading()) {
   <p class="hint">Wird geladen …</p>
-} @else if (!session.canManageAreas()) {
-  <div class="notice">
-    <p>
-      Zum Verwalten der Bereiche braucht es eine Rolle mit dem Recht dazu. Aktuell bist du
-      @if (session.isAnonymous()) {
-        nicht angemeldet.
-      } @else {
-        als <strong>{{ session.roleName() }}</strong> angemeldet, diese Rolle darf das nicht.
-      }
-    </p>
-  </div>
 } @else {
   @if (error(); as message) {
     <p class="error" role="alert">{{ message }}</p>

@@ -8,19 +8,16 @@ import { deleteWorkplace, listAreas, listWorkplaces } from '../api/functions';
 // Renamed so that the generated model does not shadow the global Error.
 import { Area, Error as ApiError, Workplace } from '../api/models';
 import { Icon } from '../shared/icon';
-import { SessionService } from '../shared/session-service';
-import { AdminHeader } from './admin-header';
 
 @Component({
   selector: 'app-workplace-list',
-  imports: [AdminHeader, Icon, RouterLink],
+  imports: [Icon, RouterLink],
   templateUrl: './workplace-list.html',
   styleUrl: './workplace-list.scss',
 })
 export class WorkplaceList {
   private readonly http = inject(HttpClient);
   private readonly rootUrl = inject(ApiConfiguration).rootUrl;
-  protected readonly session = inject(SessionService);
 
   protected readonly areas = signal<Area[]>([]);
   protected readonly workplaces = signal<Workplace[]>([]);
@@ -74,7 +71,6 @@ export class WorkplaceList {
     this.error.set(null);
 
     forkJoin({
-      session: this.session.load(),
       areas: listAreas(this.http, this.rootUrl).pipe(map((r) => r.body)),
       // The hidden ones belong here — this is the only place they can be brought
       // back into service.

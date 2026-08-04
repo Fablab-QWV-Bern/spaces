@@ -1,6 +1,6 @@
 # Quartierwerkstatt Reservation System
 
-Booking system for the workstations of a neighbourhood workshop (*Quartierwerkstatt*).
+Booking system for the workstations of a neighbourhood workshop (_Quartierwerkstatt_).
 It replaces an existing system whose interface serves as the reference (screenshots
 in `spec/`).
 
@@ -40,9 +40,9 @@ changing the spec first.
   `frontend/src/app/calendar/booking-horizon.ts`. This is not a reimplementation
   but an anticipation: the date list in the form has to know how long it will be,
   and the calendar where to stop accepting clicks. Both are questions asked
-  *before* the check that `POST /bookings/validate` only answers for an actual
+  _before_ the check that `POST /bookings/validate` only answers for an actual
   booking. Anyone who does reach the edge still gets the violation from there — so
-  the limit is nowhere *enforced* twice, only computed twice. What is produced
+  the limit is nowhere _enforced_ twice, only computed twice. What is produced
   here is information rather than a verdict: not "not possible", but how many days
   ahead this area can be booked and from when this day becomes bookable.
 - **No field may sit empty while its value would be saved.** A `<select>` whose
@@ -128,10 +128,16 @@ changing the spec first.
   require this, but with that permission anyone could make themselves an
   administrator without logging in. The invariant "at least one role has
   `manageRoles`" therefore only counts roles you can actually log in as.
-- **The admin area has no route guard.** `frontend/src/app/admin/` loads the
-  session and shows a notice if the role is not permitted. A guard could only
-  repeat what the backend enforces anyway — and would have to guess while the
-  session is still loading.
+- **The admin area has no route guard, but it does have a frame.** A guard
+  prevents a navigation and would have to redirect somewhere — and then the
+  reason would be gone, which is the only thing worth showing to someone standing
+  in front of a locked page. What the router carries instead is the declaration:
+  every admin route names in its `data` the permission it needs, its heading and
+  how its notice reads. `admin-shell.ts` is the frame around all of them, reads
+  that, loads the session once for the whole area and only then activates the
+  page. So the check is written once instead of in nine templates, and no page
+  fetches data it may not see — the outlet does not exist until the permission
+  does. Enforcing remains the backend's business either way.
 - **Photo URLs are relative** (`/storage/…`). API, storage and SPA live on the
   same host; an absolute URL would come from `APP_URL`, and a misconfigured
   `APP_URL` on the hosting would make every photo unreachable at once.

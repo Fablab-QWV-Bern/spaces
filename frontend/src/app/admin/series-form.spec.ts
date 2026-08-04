@@ -55,22 +55,8 @@ describe('SeriesForm', () => {
     http = TestBed.inject(HttpTestingController);
     fixture.detectChanges();
 
-    http.expectOne('/api/session').flush({
-      roleId: 'r1',
-      roleName: 'Admin',
-      isAnonymous: false,
-      permissions: {
-        viewBookings: true,
-        viewBookingsDetails: true,
-        manageBookings: true,
-        noTimeRestrictions: false,
-        manageBookingSeries: true,
-        manageWorkplaces: true,
-        manageAreas: true,
-        manageRoles: true,
-      },
-    });
-
+    // No session: whoever gets to see this form has been let through by
+    // `AdminShell` — see `admin-shell.spec.ts`.
     http.expectOne('/api/config').flush({
       opensAt: '08:00',
       closesAt: '21:00',

@@ -1,20 +1,7 @@
-<app-admin-header [heading]="heading()" />
-
 @if (loadError(); as message) {
   <p class="error" role="alert">{{ message }}</p>
 } @else if (loading()) {
   <p class="hint">Wird geladen …</p>
-} @else if (!session.canManageBookingSeries()) {
-  <div class="notice">
-    <p>
-      Zum Verwalten der Serien braucht es eine Rolle mit dem Recht dazu. Aktuell bist du
-      @if (session.isAnonymous()) {
-        nicht angemeldet.
-      } @else {
-        als <strong>{{ session.roleName() }}</strong> angemeldet, diese Rolle darf das nicht.
-      }
-    </p>
-  </div>
 } @else if (result()) {
   <!-- The skipped occurrences appear only here: the API does not remember them.
        That is why there is no redirect after saving. -->

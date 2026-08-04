@@ -36,8 +36,6 @@ import {
   toLocalIso,
 } from '../calendar/time-axis';
 import { refinePageTitle } from '../shared/page-title';
-import { SessionService } from '../shared/session-service';
-import { AdminHeader } from './admin-header';
 import { RHYTHMS, RhythmKey, rhythmByKey, rhythmOf, skipsMonths } from './series-rhythm';
 
 /**
@@ -74,7 +72,7 @@ interface SeriesFormValue {
  */
 @Component({
   selector: 'app-series-form',
-  imports: [AdminHeader, FormField, RouterLink],
+  imports: [FormField, RouterLink],
   templateUrl: './series-form.html',
   styleUrl: './series-form.scss',
 })
@@ -83,7 +81,6 @@ export class SeriesForm {
   private readonly rootUrl = inject(ApiConfiguration).rootUrl;
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  protected readonly session = inject(SessionService);
 
   protected readonly rhythms = RHYTHMS;
 
@@ -125,8 +122,6 @@ export class SeriesForm {
     required(path.date, { message: 'Bitte ein Datum für den ersten Termin angeben.' });
   });
 
-  protected readonly heading = computed(() => (this.editing() ? 'Serie bearbeiten' : 'Neue Serie'));
-
   constructor() {
     // The name first: which series is being edited is the real information in the
     // tab. When creating there is none, and then the route's title stays.
@@ -139,7 +134,6 @@ export class SeriesForm {
     const id = this.route.snapshot.paramMap.get('id');
 
     forkJoin({
-      session: this.session.load(),
       config: getConfig(this.http, this.rootUrl).pipe(map((r) => r.body)),
       areas: listAreas(this.http, this.rootUrl).pipe(map((r) => r.body)),
       workplaces: listWorkplaces(this.http, this.rootUrl).pipe(map((r) => r.body)),

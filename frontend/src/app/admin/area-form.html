@@ -1,20 +1,7 @@
-<app-admin-header [heading]="heading()" />
-
 @if (loadError(); as message) {
   <p class="error" role="alert">{{ message }}</p>
 } @else if (loading()) {
   <p class="hint">Wird geladen …</p>
-} @else if (!session.canManageAreas()) {
-  <div class="notice">
-    <p>
-      Zum Verwalten der Bereiche braucht es eine Rolle mit dem Recht dazu. Aktuell bist du
-      @if (session.isAnonymous()) {
-        nicht angemeldet.
-      } @else {
-        als <strong>{{ session.roleName() }}</strong> angemeldet, diese Rolle darf das nicht.
-      }
-    </p>
-  </div>
 } @else {
   <!-- Native submit event: (ngSubmit) comes from FormsModule, which Signal
        Forms no longer needs. -->

@@ -1,26 +1,23 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { map, of, switchMap } from 'rxjs';
+import { map } from 'rxjs';
 
 import { ApiConfiguration } from '../api/api-configuration';
 import { deleteRole, listRoles } from '../api/functions';
 // Renamed so that the generated model does not shadow the global Error.
 import { Error as ApiError, Role } from '../api/models';
-import { SessionService } from '../shared/session-service';
-import { AdminHeader } from './admin-header';
 import { PERMISSION_LABELS } from './permission-labels';
 
 @Component({
   selector: 'app-role-list',
-  imports: [AdminHeader, RouterLink],
+  imports: [RouterLink],
   templateUrl: './role-list.html',
   styleUrl: './role-list.scss',
 })
 export class RoleList {
   private readonly http = inject(HttpClient);
   private readonly rootUrl = inject(ApiConfiguration).rootUrl;
-  protected readonly session = inject(SessionService);
 
   protected readonly roles = signal<Role[]>([]);
   protected readonly loading = signal(true);
@@ -66,24 +63,12 @@ export class RoleList {
     return 'Rolle löschen';
   }
 
-  /**
-   * Unlike areas and workplaces, the list itself is protected — it holds the
-   * permissions of all roles. Hence the session first, then the list: without the
-   * permission there would only be a 403 instead of the notice.
-   */
   private load(): void {
     this.loading.set(true);
     this.error.set(null);
 
-    this.session
-      .load()
-      .pipe(
-        switchMap((session) =>
-          session.permissions.manageRoles
-            ? listRoles(this.http, this.rootUrl).pipe(map((r) => r.body))
-            : of<Role[]>([]),
-        ),
-      )
+    listRoles(this.http, this.rootUrl)
+      .pipe(map((r) => r.body))
       .subscribe({
         next: (roles) => {
           this.roles.set(roles);

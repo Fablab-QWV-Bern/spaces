@@ -18,8 +18,6 @@ import {
 import { Area, Error as ApiError, Workplace, WorkplaceCreate } from '../api/models';
 import { formatDuration } from '../calendar/time-axis';
 import { refinePageTitle } from '../shared/page-title';
-import { SessionService } from '../shared/session-service';
-import { AdminHeader } from './admin-header';
 import { TagInput } from './tag-input';
 
 /** The limit is in the spec too — here only to warn early and clearly. */
@@ -42,7 +40,7 @@ interface WorkplaceFormValue {
 
 @Component({
   selector: 'app-workplace-form',
-  imports: [AdminHeader, FormField, TagInput],
+  imports: [FormField, TagInput],
   templateUrl: './workplace-form.html',
   styleUrl: './workplace-form.scss',
 })
@@ -51,7 +49,6 @@ export class WorkplaceForm {
   private readonly rootUrl = inject(ApiConfiguration).rootUrl;
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  protected readonly session = inject(SessionService);
 
   /** Set when an existing workplace is being edited. */
   protected readonly editing = signal<Workplace | null>(null);
@@ -125,10 +122,6 @@ export class WorkplaceForm {
     required(path.areaId, { message: 'Bitte einen Bereich wählen.' });
   });
 
-  protected readonly heading = computed(() =>
-    this.editing() ? 'Arbeitsplatz bearbeiten' : 'Neuer Arbeitsplatz',
-  );
-
   protected readonly canSubmit = computed(
     () => !this.saving() && this.workplaceForm().valid() && this.idValue() !== '',
   );
@@ -168,7 +161,6 @@ export class WorkplaceForm {
     const id = this.route.snapshot.paramMap.get('id');
 
     forkJoin({
-      session: this.session.load(),
       areas: listAreas(this.http, this.rootUrl).pipe(map((r) => r.body)),
       workplaces: listWorkplaces(this.http, this.rootUrl, { includeDisabled: true }).pipe(
         map((r) => r.body),
