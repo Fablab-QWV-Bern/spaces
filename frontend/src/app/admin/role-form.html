@@ -30,11 +30,11 @@
             [attr.placeholder]="passwordRequired() ? '' : 'unverändert lassen'"
           />
           @if (passwordTooShort()) {
-            <span class="warn">Mindestens 8 Zeichen.</span>
+            <span class="warn">Mindestens 7 Zeichen.</span>
           } @else if (!passwordRequired()) {
             <span class="note">Leer lassen, um das bisherige Kennwort zu behalten.</span>
           } @else {
-            <span class="note">Mindestens 8 Zeichen. Alle teilen sich dieses eine Kennwort.</span>
+            <span class="note">Mindestens 7 Zeichen. Alle teilen sich dieses eine Kennwort.</span>
           }
         </label>
       }

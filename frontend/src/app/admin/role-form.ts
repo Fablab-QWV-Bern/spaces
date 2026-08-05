@@ -12,7 +12,7 @@ import { refinePageTitle } from '../shared/page-title';
 import { PERMISSION_LABELS, PermissionKey } from './permission-labels';
 
 /** The backend will not accept anything shorter. */
-const MIN_PASSWORD_LENGTH = 8;
+const MIN_PASSWORD_LENGTH = 7;
 
 interface RoleFormValue {
   name: string;
