@@ -14,7 +14,7 @@ export interface BookingValidation {
       | 'OUTSIDE_OPENING_HOURS'
       | 'EXCEEDS_MAX_DURATION'
       | 'EXCEEDS_MAX_END_OFFSET'
-      | 'STARTS_IN_PAST'
+      | 'ENDS_IN_PAST'
       | 'NOT_ON_GRID'
       | 'SPANS_NIGHT_NOT_ALLOWED'
       | 'WORKPLACE_NOT_BOOKABLE'

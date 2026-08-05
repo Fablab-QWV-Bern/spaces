@@ -254,9 +254,9 @@ final class SeriesWriter
      *
      * Three violations are exempt: a collision makes the individual instance drop
      * out rather than the series fail, the booking horizon does not apply to
-     * series (otherwise nothing could be generated a year ahead), and a start in
-     * the past is normal for a series — it describes a rhythm, not an
-     * appointment.
+     * series (otherwise nothing could be generated a year ahead), and a first
+     * occurrence that is already over is normal for a series — it describes a
+     * rhythm, not an appointment, and generation begins from now anyway.
      *
      * @param  array<string, mixed>  $data
      *
@@ -292,7 +292,7 @@ final class SeriesWriter
             fn (ViolationCode $code): bool => ! in_array($code, [
                 ViolationCode::Collision,
                 ViolationCode::ExceedsMaxEndOffset,
-                ViolationCode::StartsInPast,
+                ViolationCode::EndsInPast,
             ], strict: true),
         ));
 

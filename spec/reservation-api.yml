@@ -590,9 +590,10 @@ components:
                   - OUTSIDE_OPENING_HOURS
                   - EXCEEDS_MAX_DURATION
                   - EXCEEDS_MAX_END_OFFSET
-                  # Only when creating. When changing, the start may lie in the
-                  # past — otherwise a running booking could no longer be adjusted.
-                  - STARTS_IN_PAST
+                  # Only when creating. The start may lie in the past — someone
+                  # who books afterwards enters the time they began; only a
+                  # booking already over is refused.
+                  - ENDS_IN_PAST
                   - NOT_ON_GRID
                   - SPANS_NIGHT_NOT_ALLOWED
                   - WORKPLACE_NOT_BOOKABLE

@@ -135,16 +135,25 @@ it('lifts the horizon with noTimeRestrictions', function () {
     expect(check('2026-12-01 09:00', '2026-12-01 11:00', $this->admin)->isValid())->toBeTrue();
 });
 
-it('forbids new bookings in the past even with noTimeRestrictions', function () {
-    expect(check('2026-08-02 09:00', '2026-08-02 11:00', $this->admin)->has(ViolationCode::StartsInPast))
+it('forbids new bookings that are already over, even with noTimeRestrictions', function () {
+    expect(check('2026-08-02 09:00', '2026-08-02 11:00', $this->admin)->has(ViolationCode::EndsInPast))
         ->toBeTrue();
 });
 
-it('permits a start in the past when changing', function () {
-    // A running booking should still be adjustable — its start then necessarily
-    // lies behind us.
+it('permits a start in the past as long as the end lies ahead', function () {
+    // Someone who sat down first and books afterwards enters the time they
+    // actually began.
+    $this->travelTo(CarbonImmutable::parse('2026-08-03 10:00', 'Europe/Zurich'));
+
+    expect(check('2026-08-03 09:00', '2026-08-03 11:00')->isValid())->toBeTrue();
+});
+
+it('permits a booking that is over when changing', function () {
+    // A running booking should still be adjustable, and shortening it can move
+    // its end behind us. Whether the booking is over as a whole is decided by the
+    // HTTP layer, not here.
     expect(check('2026-08-02 09:00', '2026-08-02 11:00', excludeBookingId: 'irgendeine-id')
-        ->has(ViolationCode::StartsInPast))->toBeFalse();
+        ->has(ViolationCode::EndsInPast))->toBeFalse();
 });
 
 it('refuses broken and disabled workplaces', function () {

@@ -306,11 +306,12 @@ Furthermore:
   `allowNightlyActivities`.
 - The end may lie at most `maxBookingEndOffsetDays` days in the future (area, otherwise the global
   value).
-- When creating, the start time must not lie in the past. When changing it may: a booking already
-  under way should still be adjustable, and its start naturally lies behind us.
+- When creating, the end time must lie in the future; the start may lie in the past. Someone who sat
+  down first and books afterwards enters the time they actually began. Only a booking that is over
+  by the time it is entered is refused — it would occupy nothing any more.
 - Bookings whose end time lies in the past can no longer be changed or deleted.
 - `noTimeRestrictions` lifts the maximum booking duration and `maxBookingEndOffsetDays` — but not the
-  opening hours, not the 15-minute grid and not the ban on newly booking in the past.
+  opening hours, not the 15-minute grid and not the ban on newly booking a past period.
 
 Times are stored as UTC and displayed in Swiss time (a global configuration option). All date and
 time values in the API are UTC with an explicit `Z`.

@@ -12,7 +12,7 @@ enum ViolationCode: string
     case OutsideOpeningHours = 'OUTSIDE_OPENING_HOURS';
     case ExceedsMaxDuration = 'EXCEEDS_MAX_DURATION';
     case ExceedsMaxEndOffset = 'EXCEEDS_MAX_END_OFFSET';
-    case StartsInPast = 'STARTS_IN_PAST';
+    case EndsInPast = 'ENDS_IN_PAST';
     case NotOnGrid = 'NOT_ON_GRID';
     case SpansNightNotAllowed = 'SPANS_NIGHT_NOT_ALLOWED';
     case WorkplaceNotBookable = 'WORKPLACE_NOT_BOOKABLE';
