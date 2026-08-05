@@ -107,7 +107,7 @@ export class BookingForm {
    * `POST /bookings/validate` — that way they exist only once.
    */
   protected readonly bookingForm = form(this.model, (path) => {
-    required(path.name, { message: 'Bitte einen Namen angeben.' });
+    required(path.name, { message: 'Bitte Vor- und Nachname angeben.' });
     required(path.contact, {
       message: 'Bitte eine Kontaktangabe machen, z.B. E-Mail oder Telefon.',
     });
