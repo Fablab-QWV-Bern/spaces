@@ -22,94 +22,128 @@ import { SessionService } from '../shared/session-service';
 @Component({
   selector: 'app-calendar-toolbar',
   imports: [Icon, RouterLink, RouterLinkActive, SessionBar],
+  // Whoever cannot page needs no row of their own for it — on the map that is
+  // the whole of the controls, and the narrow layout then keeps a single row.
+  host: { '[class.no-paging]': '!navigable()' },
   template: `
     <h1>{{ heading() }}</h1>
 
-    <nav class="controls">
-      @if (overview()) {
-        <a class="overview" routerLink="/tag" [queryParams]="{ datum: date() }"
-          >Zurück zur Übersicht</a
-        >
-      }
+    <!-- Two groups, so that the narrow layout can pull the second one up next to
+         the heading: what is about this date belongs together with the paging,
+         everything that leads elsewhere does not. Wide, the wrapper puts them
+         back into one row. -->
+    <div class="right">
+      <nav class="controls">
+        @if (overview()) {
+          <a class="overview" routerLink="/tag" [queryParams]="{ datum: date() }"
+            >Zurück zur Übersicht</a
+          >
+        }
 
-      @if (navigable()) {
-        <button type="button" (click)="shift.emit(-1)" [attr.aria-label]="backLabel()">
-          <app-icon name="back" />
-        </button>
-        <button type="button" (click)="today.emit()">Heute</button>
-        <button type="button" (click)="shift.emit(1)" [attr.aria-label]="forwardLabel()">
-          <app-icon name="forward" />
-        </button>
+        @if (navigable()) {
+          <button type="button" (click)="shift.emit(-1)" [attr.aria-label]="backLabel()">
+            <app-icon name="back" />
+          </button>
+          <button type="button" (click)="today.emit()">Heute</button>
+          <button type="button" (click)="shift.emit(1)" [attr.aria-label]="forwardLabel()">
+            <app-icon name="forward" />
+          </button>
 
-        <!-- When narrow, the field shrinks to its icon: the date is already
-             there as a heading, and spelling it out a second time only costs
-             width. The field itself stays put and covers the icon transparently —
-             so the handle still opens the device's own picker rather than us
-             building one. -->
-        <label class="date">
-          <span #icon class="icon date-icon" aria-hidden="true">
-            <app-icon name="calendar" />
+          <!-- When narrow, the field shrinks to its icon: the date is already
+               there as a heading, and spelling it out a second time only costs
+               width. The field stays where it is, transparent behind the icon —
+               it remains the control, only its display disappears.
+
+               What the icon is, is a button, and the field beneath it takes no
+               clicks at all. Otherwise the browsers argue about who opens the
+               picker: Chrome opens it only from its own handle, which is not
+               visible here, Firefox from a click anywhere in the field — and
+               there our showPicker() and the browser's own cancelled each other
+               out within the same click. This way exactly one place opens it.
+
+               No label around the two: it would have nothing to say that the
+               field's aria-label does not already say, and a click on a button
+               inside a label is a case one has to look up. -->
+          <span class="date">
+            <input
+              #picker
+              type="date"
+              [value]="date()"
+              (change)="dateSelected.emit($any($event.target).value)"
+              aria-label="Datum wählen"
+            />
+
+            <button
+              type="button"
+              class="date-icon"
+              (click)="picker.showPicker()"
+              tabindex="-1"
+              aria-hidden="true"
+            >
+              <app-icon name="calendar" />
+            </button>
           </span>
+        }
 
-          <input
-            #picker
-            type="date"
-            [value]="date()"
-            (change)="dateSelected.emit($any($event.target).value)"
-            (click)="openPicker(icon, picker)"
-            aria-label="Datum wählen"
-          />
-        </label>
-      }
+        @if (zoomable()) {
+          <span class="spans">
+            <a
+              routerLink="/tag"
+              [queryParams]="{ datum: date() }"
+              routerLinkActive="active"
+              #tag="routerLinkActive"
+              [attr.aria-current]="tag.isActive ? 'page' : null"
+              >Tag</a
+            >
+            <a
+              routerLink="/woche"
+              [queryParams]="{ datum: date() }"
+              routerLinkActive="active"
+              #woche="routerLinkActive"
+              [attr.aria-current]="woche.isActive ? 'page' : null"
+              >Woche</a
+            >
+          </span>
+        }
+      </nav>
 
-      @if (zoomable()) {
-        <span class="spans">
+      <div class="extras">
+        @if (zoomable()) {
+          <!-- The map sits next to the switch, not in it: it is not a third zoom
+               level but a different question — not "when" but "who is here now".
+               An icon is enough; spelled out it would stand on a par with the
+               periods.
+
+               It behaves like a switch and therefore leads back too: pressed
+               again it returns to the day. Which is why it does not ask
+               routerLinkActive where it is — its target depends on the answer,
+               and the directive would then keep measuring against the target it
+               has just changed. -->
           <a
-            routerLink="/tag"
-            [queryParams]="{ datum: date() }"
-            routerLinkActive="active"
-            #tag="routerLinkActive"
-            [attr.aria-current]="tag.isActive ? 'page' : null"
-            >Tag</a
+            class="map"
+            [routerLink]="onMap() ? '/tag' : '/karte'"
+            [queryParams]="onMap() ? { datum: date() } : null"
+            [class.active]="onMap()"
+            [attr.aria-current]="onMap() ? 'page' : null"
+            [title]="onMap() ? 'Zurück zum Kalender' : 'Übersichtskarte'"
+            [attr.aria-label]="onMap() ? 'Zurück zum Kalender' : 'Übersichtskarte'"
           >
-          <a
-            routerLink="/woche"
-            [queryParams]="{ datum: date() }"
-            routerLinkActive="active"
-            #woche="routerLinkActive"
-            [attr.aria-current]="woche.isActive ? 'page' : null"
-            >Woche</a
-          >
-        </span>
+            <app-icon name="map" />
+          </a>
+        }
 
-        <!-- The map sits next to the switch, not in it: it is not a third zoom
-             level but a different question — not "when" but "who is here now". An
-             icon is enough; spelled out it would stand on a par with the
-             periods. -->
-        <a
-          class="map"
-          routerLink="/karte"
-          routerLinkActive="active"
-          #karte="routerLinkActive"
-          [attr.aria-current]="karte.isActive ? 'page' : null"
-          title="Übersichtskarte"
-          aria-label="Übersichtskarte"
-        >
-          <app-icon name="map" />
-        </a>
-      }
+        <!-- The anonymous role can carry permissions without anybody being logged
+             in; access to the admin area still belongs behind the login. -->
+        @if (!session.isAnonymous() && session.canManageAnything()) {
+          <a class="admin" routerLink="/verwaltung" title="Verwaltung" aria-label="Verwaltung">
+            <app-icon class="icon" name="settings" />
+            <span class="text">Verwaltung</span>
+          </a>
+        }
 
-      <!-- The anonymous role can carry permissions without anybody being logged
-           in; access to the admin area still belongs behind the login. -->
-      @if (!session.isAnonymous() && session.canManageAnything()) {
-        <a class="admin" routerLink="/verwaltung" title="Verwaltung" aria-label="Verwaltung">
-          <app-icon class="icon" name="settings" />
-          <span class="text">Verwaltung</span>
-        </a>
-      }
-
-      <app-session-bar />
-    </nav>
+        <app-session-bar />
+      </div>
+    </div>
   `,
   styles: `
     :host {
@@ -127,10 +161,14 @@ import { SessionService } from '../shared/session-service';
       font-weight: 600;
     }
 
-    .controls {
+    .right,
+    .controls,
+    .extras {
       display: flex;
       gap: 0.25rem;
+    }
 
+    .controls {
       button,
       input,
       .date-icon,
@@ -152,7 +190,7 @@ import { SessionService } from '../shared/session-service';
         cursor: text;
       }
 
-      .icon {
+      .date-icon {
         display: none;
       }
 
@@ -172,6 +210,10 @@ import { SessionService } from '../shared/session-service';
 
       &:hover {
         color: var(--ink);
+      }
+
+      .icon {
+        display: none;
       }
     }
 
@@ -232,15 +274,47 @@ import { SessionService } from '../shared/session-service';
     // The same threshold as in the calendar chrome: below the grid's minimum
     // width it scrolls, and the bar gives up whatever it can spare.
     @media (width < 48rem) {
+      // Two rows instead of one: the heading gets what leads out of the calendar
+      // as its company, the paging keeps the row below to itself. Nothing here
+      // needs to know its neighbours' widths, so nothing has to be cut off.
       :host {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 0.5rem;
         padding: 0.75rem 0.75rem 0.5rem;
       }
 
+      // Dissolved, so that its two halves can go into different rows.
+      .right {
+        display: contents;
+      }
+
       h1 {
+        grid-area: 1 / 1;
         font-size: 1.25rem;
       }
 
-      .controls .icon {
+      .extras {
+        grid-area: 1 / 2;
+      }
+
+      // Wrapping instead of overflowing: with the way back to the overview the
+      // row can become longer than the screen, and a button that lies outside is
+      // worse than one a line further down.
+      .controls {
+        grid-area: 2 / 1 / auto / -1;
+        flex-wrap: wrap;
+      }
+
+      // Without paging, the controls are only the zoom switch — that fits next to
+      // the heading, and the wrapper stays whole for it.
+      :host(.no-paging) .right {
+        display: flex;
+        grid-area: 1 / 2;
+      }
+
+      .controls .date-icon {
         display: block;
         line-height: 1.2;
       }
@@ -251,6 +325,10 @@ import { SessionService } from '../shared/session-service';
         text-decoration: none;
         font-size: 1rem;
 
+        .icon {
+          display: block;
+        }
+
         .text {
           display: none;
         }
@@ -260,15 +338,16 @@ import { SessionService } from '../shared/session-service';
         position: relative;
         display: grid;
 
-        // The transparent field lies over the icon and therefore determines the
-        // cursor. This is not for typing, this is for looking something up.
+        // The field lies over the button, invisible and unclickable — the button
+        // opens the picker, the field only holds the value and stays reachable by
+        // keyboard. This is not for typing, this is for looking something up.
         input {
           position: absolute;
           inset: 0;
           width: 100%;
           padding: 0;
           opacity: 0;
-          cursor: pointer;
+          pointer-events: none;
         }
       }
     }
@@ -294,6 +373,11 @@ export class CalendarToolbar {
    * fixed month — there would be nothing to switch there.
    */
   readonly zoomable = input(true);
+  /**
+   * Whether the map itself is what is on screen. Then its button is marked and
+   * leads back to the day — a switch that has been pressed can be released again.
+   */
+  readonly onMap = input(false);
 
   readonly shift = output<number>();
   readonly today = output<void>();
@@ -312,17 +396,4 @@ export class CalendarToolbar {
         this.unit()
       ],
   );
-
-  /**
-   * Opens the date picker by hand — but only in the narrow state, where the
-   * transparent field lies over the icon and a click would otherwise go nowhere.
-   * Whether that state applies is revealed by the icon itself: when hidden it has
-   * no `offsetParent`. That way the threshold lives only in the stylesheet and
-   * not a second time here.
-   */
-  protected openPicker(icon: HTMLElement, picker: HTMLInputElement): void {
-    if (icon.offsetParent) {
-      picker.showPicker?.();
-    }
-  }
 }

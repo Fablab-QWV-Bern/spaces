@@ -1,4 +1,9 @@
-<app-calendar-toolbar [heading]="heading()" [date]="store.date()" [navigable]="false" />
+<app-calendar-toolbar
+  [heading]="heading()"
+  [date]="store.date()"
+  [navigable]="false"
+  [onMap]="true"
+/>
 
 @if (planError() ?? store.error(); as error) {
   <p class="error" role="alert">{{ error }}</p>
