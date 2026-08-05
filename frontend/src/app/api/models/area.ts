@@ -22,5 +22,9 @@ export interface Area {
    */
   maxBookingEndOffsetDays: number | null;
   name: string;
+
+  /**
+   * Set through PUT /areas/order, not here.
+   */
   sortOrder: number;
 }

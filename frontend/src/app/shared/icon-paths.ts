@@ -14,7 +14,8 @@ export type IconName =
   | 'edit'
   | 'external'
   | 'remove'
-  | 'photo';
+  | 'photo'
+  | 'drag';
 
 export const ICON_PATHS: Record<IconName, readonly string[]> = {
   // log-in
@@ -64,5 +65,14 @@ export const ICON_PATHS: Record<IconName, readonly string[]> = {
     'M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2z',
     'M7 9a2 2 0 1 0 4 0a2 2 0 1 0 -4 0',
     'm21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21',
+  ],
+  // grip-vertical
+  drag: [
+    'M8 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0',
+    'M8 5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0',
+    'M8 19a1 1 0 1 0 2 0a1 1 0 1 0 -2 0',
+    'M14 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0',
+    'M14 5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0',
+    'M14 19a1 1 0 1 0 2 0a1 1 0 1 0 -2 0',
   ],
 };

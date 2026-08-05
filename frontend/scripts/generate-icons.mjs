@@ -38,6 +38,7 @@ const ICONS = {
   external: 'arrow-up-right',
   remove: 'x',
   photo: 'image',
+  drag: 'grip-vertical',
 };
 
 /** A number from an attribute, defaulting to 0 — Lucide omits `x`/`y` when they are 0. */

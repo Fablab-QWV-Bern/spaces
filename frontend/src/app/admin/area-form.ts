@@ -23,7 +23,6 @@ interface AreaFormValue {
   useGlobalOffset: boolean;
   maxBookingEndOffsetDays: string;
   allowNightlyActivities: boolean;
-  sortOrder: string;
 }
 
 /**
@@ -64,7 +63,6 @@ export class AreaForm {
     useGlobalOffset: true,
     maxBookingEndOffsetDays: '30',
     allowNightlyActivities: false,
-    sortOrder: '0',
   });
 
   /** As in the booking form: only required fields here, everything else in the backend. */
@@ -156,7 +154,6 @@ function toFormValue(area: Area): AreaFormValue {
     useGlobalOffset: area.maxBookingEndOffsetDays === null,
     maxBookingEndOffsetDays: String(area.maxBookingEndOffsetDays ?? 30),
     allowNightlyActivities: area.allowNightlyActivities,
-    sortOrder: String(area.sortOrder),
   };
 }
 
@@ -167,6 +164,5 @@ function toWrite(value: AreaFormValue): AreaWrite {
     maxBookingDurationMinutes: Number(value.maxBookingDurationMinutes),
     maxBookingEndOffsetDays: value.useGlobalOffset ? null : Number(value.maxBookingEndOffsetDays),
     allowNightlyActivities: value.allowNightlyActivities,
-    sortOrder: Number(value.sortOrder),
   };
 }

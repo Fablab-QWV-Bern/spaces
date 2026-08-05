@@ -35,7 +35,6 @@ interface WorkplaceFormValue {
   /** Separate from the value so that "the area's value applies" is checkable. */
   useAreaDuration: boolean;
   maxBookingDurationMinutes: string;
-  sortOrder: string;
 }
 
 @Component({
@@ -113,7 +112,6 @@ export class WorkplaceForm {
     wikiUrl: '',
     useAreaDuration: true,
     maxBookingDurationMinutes: '240',
-    sortOrder: '0',
   });
 
   /** As in the booking form: only required fields here, everything else in the backend. */
@@ -338,7 +336,6 @@ function toFormValue(workplace: Workplace): WorkplaceFormValue {
     wikiUrl: workplace.wikiUrl ?? '',
     useAreaDuration: workplace.maxBookingDurationMinutes == null,
     maxBookingDurationMinutes: String(workplace.maxBookingDurationMinutes ?? 240),
-    sortOrder: String(workplace.sortOrder),
   };
 }
 
@@ -361,7 +358,6 @@ function toWrite(
     maxBookingDurationMinutes: value.useAreaDuration
       ? null
       : Number(value.maxBookingDurationMinutes),
-    sortOrder: Number(value.sortOrder),
   };
 }
 

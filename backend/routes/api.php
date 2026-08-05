@@ -37,6 +37,9 @@ Route::get('areas', [AreaController::class, 'index']);
 Route::get('areas/{area}', [AreaController::class, 'show']);
 
 Route::middleware('permission:manageAreas')->group(function (): void {
+    // Before areas/{area}: otherwise "order" would be looked up as an id.
+    Route::put('areas/order', [AreaController::class, 'reorder']);
+
     Route::post('areas', [AreaController::class, 'store']);
     Route::put('areas/{area}', [AreaController::class, 'update']);
     Route::delete('areas/{area}', [AreaController::class, 'destroy']);
@@ -46,6 +49,8 @@ Route::get('workplaces', [WorkplaceController::class, 'index']);
 Route::get('workplaces/{workplace}', [WorkplaceController::class, 'show']);
 
 Route::middleware('permission:manageWorkplaces')->group(function (): void {
+    Route::put('workplaces/order', [WorkplaceController::class, 'reorder']);
+
     Route::post('workplaces', [WorkplaceController::class, 'store']);
     Route::put('workplaces/{workplace}', [WorkplaceController::class, 'update']);
     Route::delete('workplaces/{workplace}', [WorkplaceController::class, 'destroy']);

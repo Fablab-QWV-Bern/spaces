@@ -52,6 +52,15 @@
   }
 }
 
+.handle {
+  flex: none;
+  display: flex;
+  align-items: center;
+  // Against the thumbnail next to it the icon would otherwise look like a
+  // caption; it stands for the row, not for the picture.
+  margin-right: -0.25rem;
+}
+
 .thumb {
   flex: none;
   width: 4rem;

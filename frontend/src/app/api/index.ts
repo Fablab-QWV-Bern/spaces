@@ -22,6 +22,7 @@ export type { Permissions } from './models/permissions';
 export type { Role } from './models/role';
 export type { RoleWrite } from './models/role-write';
 export type { Session } from './models/session';
+export type { SortOrderWrite } from './models/sort-order-write';
 export type { Workplace } from './models/workplace';
 export type { WorkplaceCreate } from './models/workplace-create';
 export type { WorkplaceUpdate } from './models/workplace-update';
@@ -52,6 +53,8 @@ export type { ListAreas$Params as ListAreas$Params } from './fn/areas/list-areas
 export { listAreas as listAreas } from './fn/areas/list-areas';
 export type { CreateArea$Params as CreateArea$Params } from './fn/areas/create-area';
 export { createArea as createArea } from './fn/areas/create-area';
+export type { ReorderAreas$Params as ReorderAreas$Params } from './fn/areas/reorder-areas';
+export { reorderAreas as reorderAreas } from './fn/areas/reorder-areas';
 export type { GetArea$Params as GetArea$Params } from './fn/areas/get-area';
 export { getArea as getArea } from './fn/areas/get-area';
 export type { UpdateArea$Params as UpdateArea$Params } from './fn/areas/update-area';
@@ -62,6 +65,8 @@ export type { ListWorkplaces$Params as ListWorkplaces$Params } from './fn/workpl
 export { listWorkplaces as listWorkplaces } from './fn/workplaces/list-workplaces';
 export type { CreateWorkplace$Params as CreateWorkplace$Params } from './fn/workplaces/create-workplace';
 export { createWorkplace as createWorkplace } from './fn/workplaces/create-workplace';
+export type { ReorderWorkplaces$Params as ReorderWorkplaces$Params } from './fn/workplaces/reorder-workplaces';
+export { reorderWorkplaces as reorderWorkplaces } from './fn/workplaces/reorder-workplaces';
 export type { GetWorkplace$Params as GetWorkplace$Params } from './fn/workplaces/get-workplace';
 export { getWorkplace as getWorkplace } from './fn/workplaces/get-workplace';
 export type { UpdateWorkplace$Params as UpdateWorkplace$Params } from './fn/workplaces/update-workplace';

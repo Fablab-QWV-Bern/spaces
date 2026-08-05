@@ -170,3 +170,42 @@ button,
 .spacer {
   margin-left: auto;
 }
+
+// What can be dragged into another order. The whole row is draggable, not just
+// the handle: whoever grabs at the name means the same thing, and a target of a
+// few pixels would only be a test of aim. The handle says where the grabbing
+// starts.
+[data-drag-id] {
+  cursor: grab;
+  // The rows slide into their new place instead of appearing there. What is
+  // dragged is one row; that the others give way is something one has to be
+  // able to follow, otherwise the list looks different after every crossing
+  // without anyone having seen it change.
+  transition: transform 150ms ease-out;
+
+  // The moment in which a row is put back to where it came from: that is the
+  // starting position of the slide, not a movement of its own.
+  &.settling {
+    transition: none;
+  }
+
+  &.dragging {
+    opacity: 0.4;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-drag-id] {
+    transition: none;
+  }
+}
+
+.handle {
+  color: var(--text-soft);
+}
+
+// Stands next to the save button while the shown order and the saved one differ.
+.pending {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}

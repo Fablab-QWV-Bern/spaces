@@ -37,7 +37,6 @@ it('creates a workplace', function () {
             'tags' => ['#Laut', 'laut', 'Staubig'],
             'blocksWorkplaceIds' => ['holz-2'],
             'blocksWorkplacesWithTag' => ['leise'],
-            'sortOrder' => 5,
         ]))
         ->assertValidRequest()
         ->assertValidResponse(201)
@@ -96,6 +95,43 @@ it('does not block itself', function () {
         ->assertJsonPath('blocksWorkplaceIds', ['holz-2']);
 });
 
+it('numbers the order anew within each area', function () {
+    $areaId = Workplace::findOrFail('holz-1')->area_id;
+
+    $inArea = Workplace::where('area_id', $areaId)
+        ->orderBy('sort_order')->orderBy('name')->pluck('id')->all();
+    $elsewhere = Workplace::where('area_id', '!=', $areaId)->pluck('id')->all();
+
+    $reversed = array_reverse($inArea);
+
+    $this->actingAs($this->admin)
+        ->putJson('/api/workplaces/order', ['ids' => [...$elsewhere, ...$reversed]])
+        ->assertValidRequest()
+        ->assertValidResponse(200);
+
+    expect(Workplace::where('area_id', $areaId)->orderBy('sort_order')->pluck('id')->all())
+        ->toBe($reversed)
+        // The position counts within the area, so every area starts at 0.
+        ->and(Workplace::where('area_id', $areaId)->min('sort_order'))->toBe(0);
+});
+
+it('refuses an incomplete order', function () {
+    $this->actingAs($this->admin)
+        ->putJson('/api/workplaces/order', ['ids' => ['holz-1']])
+        ->assertValidResponse(422);
+});
+
+// The list comes from the admin view, and there the hidden ones are visible too.
+it('expects the disabled workplaces in the order as well', function () {
+    Workplace::findOrFail('holz-2')->update(['status' => Workplace::STATUS_DISABLED]);
+
+    $ids = Workplace::where('status', '!=', Workplace::STATUS_DISABLED)->pluck('id')->all();
+
+    $this->actingAs($this->admin)
+        ->putJson('/api/workplaces/order', ['ids' => $ids])
+        ->assertValidResponse(422);
+});
+
 it('deletes a workplace and clears it from other blocking lists', function () {
     $this->actingAs($this->admin)
         ->putJson('/api/workplaces/holz-2', workplacePayload([
@@ -136,6 +172,10 @@ it('lets only manageWorkplaces write', function () {
         ->assertValidResponse(403);
 
     $this->deleteJson('/api/workplaces/holz-1')->assertValidResponse(403);
+
+    $this->actingAs($this->member)
+        ->putJson('/api/workplaces/order', ['ids' => Workplace::pluck('id')->all()])
+        ->assertValidResponse(403);
 });
 
 // Only the response is checked against the spec: Spectator compares the

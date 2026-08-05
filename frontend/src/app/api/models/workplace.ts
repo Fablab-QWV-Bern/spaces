@@ -31,6 +31,10 @@ export interface Workplace {
    * built from a misconfigured APP_URL would break every photo at once.
    */
   photoUrl?: string | null;
+
+  /**
+   * Within the area. Set through PUT /workplaces/order, not here.
+   */
   sortOrder: number;
   status: 'OK' | 'DEFECT' | 'DISABLED';
 

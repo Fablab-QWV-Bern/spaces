@@ -8,6 +8,14 @@
   <div class="content">
     <div class="actions">
       <a class="button primary" routerLink="/verwaltung/arbeitsplaetze/neu">Neuer Arbeitsplatz</a>
+
+      @if (orderChanged()) {
+        <span class="pending spacer">Reihenfolge geändert</span>
+        <button type="button" (click)="discardOrder()" [disabled]="savingOrder()">Verwerfen</button>
+        <button type="button" class="primary" (click)="saveOrder()" [disabled]="savingOrder()">
+          Sortierung speichern
+        </button>
+      }
     </div>
 
     @if (empty()) {
@@ -21,9 +29,22 @@
           {{ group.area.name }}
         </h2>
 
-        <ul class="places">
+        <ul
+          class="places"
+          [appDragOrder]="group.ids"
+          (reordered)="rearrange(group.area.id, $event)"
+        >
           @for (workplace of group.workplaces; track workplace.id) {
-            <li class="place" [class.inactive]="workplace.status === 'DISABLED'">
+            <li
+              class="place"
+              [class.inactive]="workplace.status === 'DISABLED'"
+              draggable="true"
+              [attr.data-drag-id]="workplace.id"
+            >
+              <div class="handle">
+                <app-icon name="drag" label="Ziehen, um den Arbeitsplatz zu verschieben" />
+              </div>
+
               <div class="thumb">
                 @if (workplace.photoThumbnailUrl; as url) {
                   <img [src]="url" [alt]="'Foto von ' + workplace.name" loading="lazy" />

@@ -138,6 +138,18 @@ changing the spec first.
   page. So the check is written once instead of in nine templates, and no page
   fetches data it may not see — the outlet does not exist until the permission
   does. Enforcing remains the backend's business either way.
+- **The order is dragged, not typed.** Areas and workplaces have a `sortOrder`,
+  but no field for it — it is set in the list by dragging and then saved for all
+  of them at once (`PUT /areas/order`, `PUT /workplaces/order`, a list of ids
+  whose positions become the numbers). Hence no `sortOrder` in `AreaWrite` and
+  `WorkplaceCreate` either: with a second way to the same value, editing a
+  workplace would overwrite an order nobody touched. Three things follow from
+  it. The call replaces the whole list rather than the rows that moved — half a
+  saved order is one nobody arranged, and the backend rejects an incomplete
+  list. For workplaces the position counts within the area, and every group in
+  the list is its own drag area (`drag-order.ts`), so dragging can never change
+  the area — that stays a matter for the form. And whatever arrives new lands at
+  the end, because that is where you look for it.
 - **Photo URLs are relative** (`/storage/…`). API, storage and SPA live on the
   same host; an absolute URL would come from `APP_URL`, and a misconfigured
   `APP_URL` on the hosting would make every photo unreachable at once.

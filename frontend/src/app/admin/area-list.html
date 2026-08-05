@@ -8,6 +8,14 @@
   <div class="content">
     <div class="actions">
       <a class="button primary" routerLink="/verwaltung/bereiche/neu">Neuer Bereich</a>
+
+      @if (orderChanged()) {
+        <span class="pending spacer">Reihenfolge geändert</span>
+        <button type="button" (click)="discardOrder()" [disabled]="savingOrder()">Verwerfen</button>
+        <button type="button" class="primary" (click)="saveOrder()" [disabled]="savingOrder()">
+          Sortierung speichern
+        </button>
+      }
     </div>
 
     @if (empty()) {
@@ -16,19 +24,22 @@
       <table>
         <thead>
           <tr>
+            <th class="handle-head"><span class="sr-only">Reihenfolge</span></th>
             <th class="swatch-head"><span class="sr-only">Farbe</span></th>
             <th>Name</th>
             <th class="numeric">Arbeitsplätze</th>
             <th>Maximale Dauer</th>
             <th>Vorlauf</th>
             <th>Über Nacht</th>
-            <th class="numeric">Reihenfolge</th>
             <th><span class="sr-only">Aktionen</span></th>
           </tr>
         </thead>
-        <tbody>
+        <tbody [appDragOrder]="order()" (reordered)="rearrange($event)">
           @for (area of areas(); track area.id) {
-            <tr>
+            <tr draggable="true" [attr.data-drag-id]="area.id">
+              <td class="handle">
+                <app-icon name="drag" label="Ziehen, um den Bereich zu verschieben" />
+              </td>
               <td><span class="swatch" [style.background]="area.color"></span></td>
               <td class="name">{{ area.name }}</td>
               <td class="numeric">{{ count(area) }}</td>
@@ -41,7 +52,6 @@
                 }
               </td>
               <td>{{ area.allowNightlyActivities ? 'ja' : 'nein' }}</td>
-              <td class="numeric">{{ area.sortOrder }}</td>
               <td class="row-actions">
                 <a class="button" [routerLink]="['/verwaltung/bereiche', area.id]">Bearbeiten</a>
                 <button

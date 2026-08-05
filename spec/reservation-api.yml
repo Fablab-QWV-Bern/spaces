@@ -290,6 +290,7 @@ components:
             opening hours; only the hours in between may lie outside.
         sortOrder:
           type: integer
+          description: Set through PUT /areas/order, not here.
       required:
         - id
         - name
@@ -301,6 +302,9 @@ components:
 
     AreaWrite:
       type: object
+      description: |
+        Without sortOrder: the order is set for all areas at once through PUT /areas/order.
+        A new area lands at the end.
       properties:
         name:
           type: string
@@ -319,13 +323,25 @@ components:
           nullable: true
         allowNightlyActivities:
           type: boolean
-        sortOrder:
-          type: integer
       required:
         - name
         - color
         - maxBookingDurationMinutes
         - allowNightlyActivities
+
+    SortOrderWrite:
+      type: object
+      description: |
+        The ids in the order they are to have. Position 0 comes first. The list has to name every
+        entry exactly once — a partial one would leave the omitted rows at numbers that mean
+        nothing next to the new ones.
+      properties:
+        ids:
+          type: array
+          items:
+            type: string
+      required:
+        - ids
 
     Workplace:
       type: object
@@ -393,6 +409,7 @@ components:
             type: string
         sortOrder:
           type: integer
+          description: Within the area. Set through PUT /workplaces/order, not here.
       required:
         - id
         - name
@@ -405,7 +422,9 @@ components:
 
     WorkplaceCreate:
       type: object
-      description: The photo is uploaded separately via POST /workplaces/{id}/photo.
+      description: |
+        The photo is uploaded separately via POST /workplaces/{id}/photo, the order for all
+        workplaces at once via PUT /workplaces/order. A new workplace lands at the end of its area.
       properties:
         id:
           type: string
@@ -446,8 +465,6 @@ components:
           type: array
           items:
             type: string
-        sortOrder:
-          type: integer
       required:
         - id
         - name
@@ -992,6 +1009,35 @@ paths:
         '422':
           $ref: '#/components/responses/UnprocessableEntity'
 
+  /areas/order:
+    put:
+      tags: [Areas]
+      operationId: reorderAreas
+      summary: Set the order of the areas
+      description: |
+        Gives every area the sortOrder of its position in the list. One call for the whole list
+        rather than one PUT per area: half a saved order is worse than none.
+      x-permissions: ["manageAreas"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SortOrderWrite'
+      responses:
+        '200':
+          description: The areas in their new order
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Area'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
   /areas/{id}:
     parameters:
       - $ref: '#/components/parameters/IdInPath'
@@ -1111,6 +1157,36 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+  /workplaces/order:
+    put:
+      tags: [Workplaces]
+      operationId: reorderWorkplaces
+      summary: Set the order of the workplaces
+      description: |
+        One list across all areas, counted anew per area: every workplace gets the sortOrder of
+        its position among those of its own area. The area itself does not change here — for that
+        there is PUT /workplaces/{id}. Disabled workplaces belong in the list too.
+      x-permissions: ["manageWorkplaces"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SortOrderWrite'
+      responses:
+        '200':
+          description: The workplaces in their new order
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Workplace'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '422':
           $ref: '#/components/responses/UnprocessableEntity'
 

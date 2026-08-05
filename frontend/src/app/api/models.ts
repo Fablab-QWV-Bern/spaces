@@ -17,6 +17,7 @@ export type { Permissions } from './models/permissions';
 export type { Role } from './models/role';
 export type { RoleWrite } from './models/role-write';
 export type { Session } from './models/session';
+export type { SortOrderWrite } from './models/sort-order-write';
 export type { Workplace } from './models/workplace';
 export type { WorkplaceCreate } from './models/workplace-create';
 export type { WorkplaceUpdate } from './models/workplace-update';
