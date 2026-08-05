@@ -60,12 +60,13 @@ final class BookingValidator
 
         // --- Time rules ------------------------------------------------------
 
-        // Only when creating: a booking already under way should still be
-        // changeable, and its start naturally lies in the past. That a fully past
-        // booking is untouchable is handled by the end-time check in the HTTP
-        // layer.
-        if (! $candidate->isEdit() && $candidate->startTime->isPast()) {
-            $violations[] = ViolationCode::StartsInPast;
+        // The start may lie in the past — whoever sat down first and books
+        // afterwards enters the time they began. What must not lie behind us is
+        // the end: such a booking would occupy nothing any more. Only when
+        // creating; that an existing booking already over is untouchable is
+        // handled by the end-time check in the HTTP layer.
+        if (! $candidate->isEdit() && $candidate->endTime->isPast()) {
+            $violations[] = ViolationCode::EndsInPast;
         }
 
         if (! $hours->isValidStart($candidate->startTime) || ! $hours->isValidEnd($candidate->endTime)) {

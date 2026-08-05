@@ -43,13 +43,13 @@ it('changes an area', function () {
         ->putJson("/api/areas/{$area->id}", areaPayload([
             'name' => 'Holzwerkstatt',
             'maxBookingEndOffsetDays' => 90,
-            'sortOrder' => 35,
         ]))
         ->assertValidRequest()
         ->assertValidResponse(200)
         ->assertJsonPath('name', 'Holzwerkstatt')
         ->assertJsonPath('maxBookingEndOffsetDays', 90)
-        ->assertJsonPath('sortOrder', 35);
+        // The order has an endpoint of its own; editing leaves it alone.
+        ->assertJsonPath('sortOrder', $area->sort_order);
 });
 
 // PUT replaces the whole area — an omitted field does not keep its previous
@@ -62,6 +62,37 @@ it('resets omitted fields', function () {
         ->putJson("/api/areas/{$area->id}", areaPayload())
         ->assertValidResponse(200)
         ->assertJsonPath('maxBookingEndOffsetDays', null);
+});
+
+it('sets the order of all areas at once', function () {
+    $ids = Area::orderBy('sort_order')->orderBy('name')->pluck('id')->all();
+    $reversed = array_reverse($ids);
+
+    $this->actingAs($this->admin)
+        ->putJson('/api/areas/order', ['ids' => $reversed])
+        ->assertValidRequest()
+        ->assertValidResponse(200)
+        ->assertJsonPath('*.id', $reversed);
+
+    expect(Area::orderBy('sort_order')->pluck('id')->all())->toBe($reversed);
+});
+
+// Half an order is worse than none: the omitted areas would keep numbers that
+// mean nothing next to the new ones.
+it('refuses an incomplete order', function () {
+    $ids = Area::orderBy('sort_order')->pluck('id')->all();
+
+    $this->actingAs($this->admin)
+        ->putJson('/api/areas/order', ['ids' => [array_shift($ids)]])
+        ->assertValidResponse(422);
+});
+
+it('refuses an order naming an area twice', function () {
+    $id = Area::orderBy('sort_order')->value('id');
+
+    $this->actingAs($this->admin)
+        ->putJson('/api/areas/order', ['ids' => array_fill(0, Area::count(), $id)])
+        ->assertValidResponse(422);
 });
 
 it('deletes an empty area', function () {
@@ -105,4 +136,8 @@ it('lets only manageAreas write', function () {
         ->assertValidResponse(403);
 
     $this->postJson('/api/areas', areaPayload())->assertValidResponse(403);
+
+    $this->actingAs($this->member)
+        ->putJson('/api/areas/order', ['ids' => Area::pluck('id')->all()])
+        ->assertValidResponse(403);
 });

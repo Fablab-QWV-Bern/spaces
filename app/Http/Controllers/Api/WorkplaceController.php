@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\WorkplaceResource;
 use App\Models\Workplace;
 use App\Support\CurrentRole;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -30,19 +31,9 @@ class WorkplaceController extends Controller
         $includeDisabled = $request->boolean('includeDisabled')
             && $this->currentRole->can('manageWorkplaces');
 
-        $query = Workplace::query()
-            ->with(['blocksWorkplaces', 'area'])
+        $workplaces = $this->orderedQuery()
             ->when(! $includeDisabled, fn ($query) => $query->where('status', '!=', Workplace::STATUS_DISABLED))
-            ->when($filters['areaId'] ?? null, fn ($query, $areaId) => $query->where('area_id', $areaId));
-
-        // The ordering follows the calendar view's grouping: area first, then
-        // workplace.
-        $workplaces = $query
-            ->join('areas', 'areas.id', '=', 'workplaces.area_id')
-            ->orderBy('areas.sort_order')
-            ->orderBy('workplaces.sort_order')
-            ->orderBy('workplaces.name')
-            ->select('workplaces.*')
+            ->when($filters['areaId'] ?? null, fn ($query, $areaId) => $query->where('workplaces.area_id', $areaId))
             ->get();
 
         Workplace::primeTagLists($workplaces);
@@ -74,7 +65,12 @@ class WorkplaceController extends Controller
         }
 
         $workplace = DB::transaction(function () use ($data): Workplace {
-            $workplace = Workplace::create($this->attributes($data) + ['id' => $data['id']]);
+            // A new workplace lands at the end of its area; where it belongs is
+            // decided by dragging in the list afterwards.
+            $workplace = Workplace::create($this->attributes($data) + [
+                'id' => $data['id'],
+                'sort_order' => $this->nextSortOrder($data['areaId']),
+            ]);
             $this->syncLists($workplace, $data);
 
             return $workplace;
@@ -90,12 +86,60 @@ class WorkplaceController extends Controller
     {
         $data = $this->validatePayload($request, creating: false);
 
-        DB::transaction(function () use ($workplace, $data): void {
-            $workplace->update($this->attributes($data));
+        $attributes = $this->attributes($data);
+
+        // Moved into another area, the old position would say something about
+        // neighbours it no longer has — so it goes to the end there.
+        if ($data['areaId'] !== $workplace->area_id) {
+            $attributes['sort_order'] = $this->nextSortOrder($data['areaId']);
+        }
+
+        DB::transaction(function () use ($workplace, $attributes, $data): void {
+            $workplace->update($attributes);
             $this->syncLists($workplace, $data);
         });
 
         return new WorkplaceResource($workplace->load('blocksWorkplaces'));
+    }
+
+    /**
+     * The order of all workplaces at once, counted anew per area: the list
+     * arrives as the admin view shows it — grouped by area, one after another —
+     * and each workplace gets its position among those of its own area. Which
+     * area it belongs to is not decided here; dragging never leaves the group.
+     */
+    public function reorder(Request $request): JsonResponse
+    {
+        $ids = $request->validate([
+            'ids' => ['required', 'array'],
+            'ids.*' => ['string', 'distinct', 'exists:workplaces,id'],
+        ])['ids'];
+
+        if (count($ids) !== Workplace::count()) {
+            return response()->json([
+                'message' => 'Die Reihenfolge muss alle Arbeitsplätze nennen.',
+            ], 422);
+        }
+
+        $workplaces = Workplace::whereKey($ids)->get()->keyBy('id');
+
+        DB::transaction(function () use ($ids, $workplaces): void {
+            $next = [];
+
+            foreach ($ids as $id) {
+                $areaId = $workplaces[$id]->area_id;
+                $position = $next[$areaId] ?? 0;
+                $next[$areaId] = $position + 1;
+
+                Workplace::whereKey($id)->update(['sort_order' => $position]);
+            }
+        });
+
+        $ordered = $this->orderedQuery()->get();
+
+        Workplace::primeTagLists($ordered);
+
+        return WorkplaceResource::collection($ordered)->response();
     }
 
     public function destroy(Workplace $workplace): JsonResponse
@@ -113,6 +157,23 @@ class WorkplaceController extends Controller
         $workplace->delete();
 
         return response()->json(status: 204);
+    }
+
+    /**
+     * The ordering follows the calendar view's grouping: area first, then
+     * workplace.
+     *
+     * @return Builder<Workplace>
+     */
+    private function orderedQuery(): Builder
+    {
+        return Workplace::query()
+            ->with(['blocksWorkplaces', 'area'])
+            ->join('areas', 'areas.id', '=', 'workplaces.area_id')
+            ->orderBy('areas.sort_order')
+            ->orderBy('workplaces.sort_order')
+            ->orderBy('workplaces.name')
+            ->select('workplaces.*');
     }
 
     /** @return array<string, mixed> */
@@ -142,14 +203,13 @@ class WorkplaceController extends Controller
             'blocksWorkplacesWithTag.*' => ['string', 'max:64'],
             'tags' => ['sometimes', 'array'],
             'tags.*' => ['string', 'max:64'],
-            'sortOrder' => ['sometimes', 'integer'],
         ]);
     }
 
     /**
      * PUT replaces the whole workplace: whatever the call omits falls back to its
-     * default rather than keeping the previous value. The photo is exempt from
-     * this — it has an endpoint of its own.
+     * default rather than keeping the previous value. Photo and order are exempt
+     * from this — both have an endpoint of their own.
      *
      * @param  array<string, mixed>  $data
      * @return array<string, mixed>
@@ -171,8 +231,13 @@ class WorkplaceController extends Controller
             'area_id' => $data['areaId'],
             'wiki_url' => $text($data['wikiUrl'] ?? null),
             'max_booking_duration_minutes' => $data['maxBookingDurationMinutes'] ?? null,
-            'sort_order' => $data['sortOrder'] ?? 0,
         ];
+    }
+
+    /** The position after the last one of the area. */
+    private function nextSortOrder(string $areaId): int
+    {
+        return (int) Workplace::where('area_id', $areaId)->max('sort_order') + 1;
     }
 
     /** @param  array<string, mixed>  $data */

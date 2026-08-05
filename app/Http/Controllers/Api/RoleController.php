@@ -125,7 +125,7 @@ class RoleController extends Controller
             ],
             // Required when creating: a role without a password would appear in
             // the login list without being usable to log in.
-            'password' => [$role === null ? 'required' : 'sometimes', 'nullable', 'string', 'min:8'],
+            'password' => [$role === null ? 'required' : 'sometimes', 'nullable', 'string', 'min:7'],
             'permissions' => ['required', 'array'],
         ];
 
