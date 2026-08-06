@@ -85,6 +85,9 @@
               , Buchungen über Nacht möglich
             }
           </p>
+          @if (alsoBlocksNames(); as names) {
+            <p class="detail muted">Eine Buchung hier sperrt ebenfalls {{ names }}</p>
+          }
         </div>
       }
     </section>
@@ -174,7 +177,33 @@
         @if (result.violations.length) {
           <ul class="violations" role="alert">
             @for (violation of result.violations; track violation.code) {
-              <li>{{ violation.message }}</li>
+              <li>
+                {{ violation.message }}
+                <!-- Which booking is in the way: the message alone names no
+                     workplace, and the one it means often is not the one being
+                     chosen. -->
+                @if (violation.code === 'COLLISION' && conflicts().length) {
+                  <ul class="conflicts">
+                    @for (conflict of conflicts(); track conflict.id) {
+                      <li>
+                        <!-- In its own tab: this form is what one is in the
+                             middle of filling in, and a booking one only wants
+                             to look at should not clear it. -->
+                        <a
+                          [routerLink]="['/buchen']"
+                          [queryParams]="{ booking: conflict.id }"
+                          target="_blank"
+                          rel="noopener"
+                        >
+                          <strong>{{ conflict.workplaceName }}</strong>
+                          {{ conflict.timeRange }} — {{ conflict.name }}
+                          <app-icon name="external" />
+                        </a>
+                      </li>
+                    }
+                  </ul>
+                }
+              </li>
             }
           </ul>
         } @else {
@@ -209,7 +238,10 @@
         </label>
       </div>
 
-      <p class="hint small">Name und Kontakt werden für das nächste Mal im Browser gemerkt. Deine Kontaktangaben sehen nur angemeldete Mitglieder.</p>
+      <p class="hint small">
+        Name und Kontakt werden für das nächste Mal im Browser gemerkt. Deine Kontaktangaben sehen
+        nur angemeldete Mitglieder.
+      </p>
 
       @if (workplace()?.usageRules; as rules) {
         <div class="rules">

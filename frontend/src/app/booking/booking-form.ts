@@ -45,6 +45,7 @@ import { Icon } from '../shared/icon';
 import { refinePageTitle } from '../shared/page-title';
 import { SessionBar } from '../shared/session-bar';
 import { SessionService } from '../shared/session-service';
+import { blockedWorkplaces } from './blocked-workplaces';
 
 /**
  * The form state as a single value. The fields bound to a `<select>` are
@@ -79,6 +80,9 @@ interface PreviewBlock {
   imports: [FormField, Icon, RouterLink, SessionBar],
   templateUrl: './booking-form.html',
   styleUrl: './booking-form.scss',
+  // A colliding booking opens in its own tab; whoever cancels or moves it there
+  // comes back to a verdict that no longer holds.
+  host: { '(window:focus)': 'recheck()' },
 })
 export class BookingForm {
   private readonly http = inject(HttpClient);
@@ -232,6 +236,24 @@ export class BookingForm {
     withChosen(allowedDurations(this.maxDurationMinutes()), this.durationMinutes()),
   );
 
+  /**
+   * The workplaces a booking here also occupies. Shown next to the maximum
+   * duration, and always — not only once something collides. Whoever books a
+   * course place is taking half the workshop with them; that belongs to the
+   * choice, not to the error message afterwards.
+   */
+  protected readonly alsoBlocks = computed(() => {
+    const workplace = this.workplace();
+
+    return workplace ? blockedWorkplaces(workplace, this.workplaces()) : [];
+  });
+
+  protected readonly alsoBlocksNames = computed(() =>
+    this.alsoBlocks()
+      .map((workplace) => workplace.name)
+      .join(', '),
+  );
+
   protected readonly slots = computed(() => {
     const axis = this.axis();
 
@@ -378,6 +400,38 @@ export class BookingForm {
       this.validation()?.violations.some((violation) => violation.code === 'COLLISION') ?? false,
   );
 
+  /**
+   * The bookings in the way, spelled out. The IDs come from the check — which
+   * ones collide is the backend's answer; what is added here is only the reading:
+   * where they sit, when, and whose they are. Without it "already occupied" says
+   * nothing about a booking that stands on a completely different workplace.
+   *
+   * Empty as long as the neighbouring bookings have not arrived yet, or when the
+   * role may not see them — then the plain message remains.
+   */
+  protected readonly conflicts = computed(() => {
+    const ids = this.validation()?.conflictingBookingIds ?? [];
+    const day = this.date();
+    const nameOf = (id: string) =>
+      this.workplaces().find((workplace) => workplace.id === id)?.name ?? id;
+
+    // With the day, if it is not the one being booked: an overnight booking from
+    // the previous evening collides just as well.
+    const stamp = (instant: Date) =>
+      isoDate(instant) === day
+        ? formatTime(instant)
+        : `${formatDay(instant)} ${formatTime(instant)}`;
+
+    return this.dayBookings()
+      .filter((booking) => ids.includes(booking.id))
+      .map((booking) => ({
+        id: booking.id,
+        workplaceName: nameOf(booking.workplaceId),
+        timeRange: `${stamp(new Date(booking.startTime))}–${stamp(new Date(booking.endTime))}`,
+        name: booking.name,
+      }));
+  });
+
   // --- Preview on the timeline ----------------------------------------------
 
   protected readonly previewBlocks = computed<PreviewBlock[]>(() => {
@@ -393,14 +447,20 @@ export class BookingForm {
     const workplaceId = this.workplaceId();
     const nameOf = (id: string) =>
       this.workplaces().find((workplace) => workplace.id === id)?.name ?? id;
+    const alsoBlocks = new Set(this.alsoBlocks().map((workplace) => workplace.id));
 
     const existing = this.dayBookings()
       .filter((booking) => booking.id !== editingId)
       .flatMap((booking): PreviewBlock[] => {
         const onThisWorkplace = booking.workplaceId === workplaceId;
         const blocksThisWorkplace = booking.blockedWorkplaceIds.includes(workplaceId);
+        // The third direction, and the one that was missing: the new booking
+        // would block the workplace this one sits on. Without it the box for a
+        // course place stood alone on an empty track while the check underneath
+        // said "already occupied".
+        const wouldBeBlocked = alsoBlocks.has(booking.workplaceId);
 
-        if (!onThisWorkplace && !blocksThisWorkplace) {
+        if (!onThisWorkplace && !blocksThisWorkplace && !wouldBeBlocked) {
           return [];
         }
 
@@ -418,10 +478,14 @@ export class BookingForm {
         return [
           {
             // As on the detail card in the calendar: a blockage names the
-            // workplace it originates from, not who is booking there.
+            // workplace it originates from, not who is booking there. The
+            // other way round the workplace is named too — otherwise the bar
+            // would look like a booking on the one being chosen.
             label: onThisWorkplace
               ? booking.name
-              : `blockiert durch ${nameOf(booking.workplaceId)}`,
+              : blocksThisWorkplace
+                ? `blockiert durch ${nameOf(booking.workplaceId)}`
+                : `${nameOf(booking.workplaceId)}: ${booking.name}`,
             own: false,
             blockage: !onThisWorkplace,
             ...geometry,
@@ -561,6 +625,26 @@ export class BookingForm {
         next: (bookings) => this.dayBookings.set(bookings),
         error: () => this.dayBookings.set([]),
       });
+  }
+
+  /**
+   * Ask again what changed elsewhere. The check hangs off the form's own values
+   * and would not notice a booking cancelled in the other tab — the neighbouring
+   * bookings travel along, otherwise the preview would keep showing a bar that
+   * is gone.
+   */
+  protected recheck(): void {
+    const candidate = this.candidate();
+    const workplaceId = this.workplaceId();
+    const date = this.date();
+
+    if (candidate) {
+      this.check(candidate);
+    }
+
+    if (workplaceId && date) {
+      this.loadDayBookings(workplaceId, date);
+    }
   }
 
   private check(candidate: BookingWrite): void {
