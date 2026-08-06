@@ -54,12 +54,16 @@ import { SessionService } from '../shared/session-service';
                width. The field stays where it is, transparent behind the icon —
                it remains the control, only its display disappears.
 
-               What the icon is, is a button, and the field beneath it takes no
-               clicks at all. Otherwise the browsers argue about who opens the
-               picker: Chrome opens it only from its own handle, which is not
-               visible here, Firefox from a click anywhere in the field — and
-               there our showPicker() and the browser's own cancelled each other
-               out within the same click. This way exactly one place opens it.
+               Who opens the picker depends on what one points with, because the
+               browsers disagree: Chrome opens it only from its own handle, which
+               is not visible here, Firefox from a click anywhere in the field —
+               and there our showPicker() and the browser's own cancelled each
+               other out within the same click. With a mouse the icon is
+               therefore a button and the field beneath it takes no clicks at
+               all. Under a finger it is the other way round: the field takes the
+               tap and the browser opens its own picker, because iOS Safari
+               ignores showPicker() for dates — without an error, without
+               anything happening. Either way exactly one place opens it.
 
                No label around the two: it would have nothing to say that the
                field's aria-label does not already say, and a click on a button
@@ -348,6 +352,17 @@ import { SessionService } from '../shared/session-service';
           padding: 0;
           opacity: 0;
           pointer-events: none;
+        }
+
+        // Under a finger the invisible field takes the tap after all: on a touch
+        // device every browser opens its picker from the field itself, and iOS
+        // Safari opens it from nowhere else — showPicker() returns there without
+        // an error and without a picker. It lies over the icon anyway, so the tap
+        // target stays the one you can see.
+        @media (pointer: coarse) {
+          input {
+            pointer-events: auto;
+          }
         }
       }
     }
