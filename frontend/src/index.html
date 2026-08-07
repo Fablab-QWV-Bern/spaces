@@ -1,12 +1,35 @@
 <!doctype html>
-<html lang="en">
+<html lang="de-CH">
   <head>
     <meta charset="utf-8" />
     <!-- Only until the router sets the first route's title. -->
     <title>Quartierwerkstatt</title>
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <!-- Three forms of one mark. The SVG is the source and stays sharp at every
+         size; the .ico serves whoever cannot read it, and the PNG whoever wants
+         a full-bleed tile with corners of their own. `sizes` on the .ico is what
+         keeps it from being chosen over the SVG: a browser that understands
+         `image/svg+xml` sees the SVG as the one that fits any size.
+         `scripts/generate-favicon.sh` produces both rasters from the SVG. -->
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" sizes="16x16 32x32 48x48" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+
+    <!-- What is needed to sit on a home screen. The manifest carries name,
+         colours and icons for Android — and since iOS 16.4 for Safari too, which
+         is why there is no `apple-mobile-web-app-capable` next to it: `display`
+         from the manifest does that job. Two things the manifest cannot do:
+         `theme-color` colours the browser's own bar and applies before anyone
+         installs anything, and the title is one iOS otherwise takes from
+         `<title>` — which the router rewrites on every navigation, so whoever
+         adds the page in the week view would end up with a week on their home
+         screen. The colour is `--paper` from `_colors.scss`, the toolbar
+         underneath the status bar; written out here because JSON knows no
+         variables. -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="apple-mobile-web-app-title" content="Reservation QWV" />
   </head>
   <body>
     <app-root></app-root>
