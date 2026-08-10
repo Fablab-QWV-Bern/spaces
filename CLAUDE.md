@@ -224,18 +224,64 @@ changing the spec first.
   attributes, and those are exactly what carries the mapping to the workplaces.
   Rearranging the workshop means swapping the file and rebuilding nothing;
   incidentally its 300 kB stay out of the bundle of every other view.
+- **The state sits on the workplace's own shape** as a class — `.busy`,
+  `.soon-busy`, and nothing at all for free. So the map needs no geometry for it:
+  no `viewBox` arithmetic, no placement in percentages. It takes the full width
+  and gets its height from its own aspect ratio, so for the portrait floor plan it
+  scrolls — better large and scrolled than fully visible and illegible.
 - **The figure is not drawn but borrowed.** The plan brings one along under
-  `#figur`, at the map's scale and in its colour. After measuring, it moves into
-  the `defs` — where it is no longer drawn but stays reachable for `<use>`.
-  Measure first, then hide: what is not drawn has no bounding box either. A
-  hand-written path would be a second source of truth and would not travel along
-  the next time the file is swapped.
-- **The map gets exactly the aspect ratio of its `viewBox`**, rather than the SVG
-  fitting itself into an arbitrary box. The figures are positioned in percentages
-  of the map area; if a margin were left around it, those same percentages would
-  point somewhere else. The map therefore takes the full width and becomes as tall
-  as the ratio demands — for the portrait floor plan, taller than the window, so
-  it scrolls. Better large and scrolled than fully visible and illegible.
+  `#figur`, at the map's scale and in its colour; a hand-written path would be a
+  second source of truth and would not travel along the next time the file is
+  swapped. It is measured, moved into the `defs` — where it is no longer drawn but
+  stays reachable for `<use>` — and then hung in once per occupied workplace.
+  Measure first, then stow: what is not drawn has no bounding box either. The
+  `<use>` goes in as a *sibling of the shape*, not into a layer of its own: there
+  it is placed in exactly the user space the shape was measured in, whatever
+  transforms the plan puts around its groups, and one translation settles it for
+  good — nothing to recompute when the window changes size. A plan without a
+  figure is not an error; the outline then carries the state alone.
+- **A figure means presence, not occupancy.** It appears only where somebody is
+  actually standing — not for what is merely imminent, and not for a blockage,
+  where the bench is unusable because somebody is at *another* one. Both of those
+  keep their outline. Marking them with a figure would put a person where none is.
+- **The state shows in the outline, not in the fill.** The shapes carry their
+  area's colour as an inline `fill`, and inline beats any stylesheet. Overriding
+  it would cost an `!important` and, worse, the information about which area a
+  bench belongs to. `soon-busy` is additionally dashed, so the two do not depend
+  on colour alone. What counts as soon is half an hour — `SOON_MINUTES` in
+  `occupancy.ts`. The pointer does reach the fill, but through
+  `filter: brightness()` rather than a colour: a filter works on whatever it
+  finds, needs no `!important`, and brings no shade the palette would have to
+  know about.
+- **The plan takes no clicks, only the workplaces do.** `.drawing` is
+  `pointer-events: none` and `.workplace` switches it back on. Without that a
+  click on a workplace's own label would go nowhere: the names are drawn in a
+  layer of their own, above the shapes and outside them, so the event would never
+  pass a workplace on its way up. Both rules hang off the class `MapView` sets
+  itself, so the file is asked for nothing beyond the identifiers.
+- **The card is a popover, but nothing declares it.** `popovertarget` exists on
+  HTML buttons, and the trigger here is an SVG shape — so the card is opened with
+  `showPopover()` from a single delegated listener, while toggling, Escape and
+  light dismiss still come from the platform. Anchor positioning does not reach
+  into SVG either: `anchor-name` on a shape is parsed and ignored, because a shape
+  generates no CSS box. Hence one invisible div over the plan that takes the
+  clicked shape's measurements and carries the anchor. Shapes get `role="button"`
+  and `tabindex` so that the keyboard reaches them; the browser's own focus ring
+  is suppressed because it is amber and would read as a third state.
+- **A free workplace answers too.** The card then shows the name, "frei" and the
+  way into the booking form — projected into `BookingCard`, which itself knows
+  only bookings. A card of its own would have written the booking half a second
+  time, including its routes into the form.
+- **On a wide screen the map gets a column beside it** (`agenda.ts`): the day's
+  remaining bookings, grouped into "Aktuell" and one heading per hour in which
+  something begins. It answers what the plan cannot — not "is this bench taken"
+  but "what is still coming today"; the map has no date and no time axis. Grouped
+  by the hour and not by the exact minute, because on a quarter-hour grid the
+  latter would produce a heading per booking. One row per booking rather than per
+  occupied workplace: a booking that blocks three neighbours is one event, and
+  three lines would read as three. Below the threshold the column disappears
+  entirely instead of shrinking — everything in it is on the map as well, and the
+  plan needs the width more.
 - **The map is not a third zoom level.** It has no date but the present moment,
   and asks for it afresh every minute — which is why its button sits next to the
   view switcher rather than in it, and its header carries neither paging nor a
@@ -380,7 +426,9 @@ on every deployment.
   by side, the configuration knows only three besides the XL. Until that is
   decided they stay empty — not an error, but no information either. The rest of
   the renaming table in `spec/karte-kennungen.markdown` is done.
-- Colour-coding of the states on the map (free/occupied/broken/disabled)
+- Defective and disabled workplaces are not marked on the map. Free, occupied and
+  about to be occupied are; those two would need a third and fourth look, and it
+  is not settled whether the map is where one wants to read them.
 - Cron entry for `schedule:run` on the hosting (see "Hosting") — without it the
   series horizon stays wherever the last change left it.
 - Subscription link in the admin area with filters (area, workplace) — the feed

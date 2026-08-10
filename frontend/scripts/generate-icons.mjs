@@ -35,6 +35,7 @@ const ICONS = {
   map: 'map',
   series: 'repeat',
   edit: 'pencil',
+  add: 'plus',
   external: 'arrow-up-right',
   remove: 'x',
   photo: 'image',

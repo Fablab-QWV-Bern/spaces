@@ -11,17 +11,71 @@
 
 <!-- The stage always stands, including during the recurring reload: if it hung
      off `store.loading()`, every refresh would clear the grafted floor plan away
-     and it would have to be fetched and measured again. -->
+     and it would have to be fetched again. -->
 <div class="stage">
-  <div class="plan" [style.--aspect-number]="aspect()">
-    <div class="drawing" #drawing></div>
+  <!-- Its own scroll container, so that the column beside it keeps still while
+       the plan is scrolled. The plan itself stays a box that does not scroll —
+       the anchor is positioned within it, and a scrolled box would put its
+       coordinates half a screen out. -->
+  <div class="board">
+    <!-- One listener for the whole plan: the workplace shapes lie in the grafted
+         tree and belong to no template, so nothing can be bound to them
+         individually. Which one was hit is answered by the event itself. -->
+    <div class="plan" #plan (click)="onPick($event)" (keydown)="onKey($event)">
+      <div class="drawing" #drawing></div>
 
-    @if (figureBox(); as box) {
-      @for (figure of figures(); track figure.workplaceId) {
-        <app-map-figure [placement]="figure.placement" [details]="figure.details" [figure]="box" />
+      <!-- Stands in for the clicked shape, which cannot be an anchor itself.
+           Always present, so that the card finds it the moment it opens. -->
+      <div
+        class="anchor"
+        [style.left.px]="anchor().left"
+        [style.top.px]="anchor().top"
+        [style.width.px]="anchor().width"
+        [style.height.px]="anchor().height"
+      ></div>
+
+      <!-- Free workplaces have no booking to show. What they get instead is
+           projected in here: the card knows bookings, the map knows what one does
+           with an empty bench. -->
+      <app-booking-card #card [details]="details()" [heading]="freeHeading()">
+        <p class="card-free">frei</p>
+
+        @if (notice(); as notice) {
+          <p class="card-notice">{{ notice }}</p>
+        } @else {
+          <button type="button" class="card-create" (click)="createBooking()">
+            <app-icon name="add" /> Jetzt buchen
+          </button>
+        }
+      </app-booking-card>
+
+      @if (!ready() && !planError()) {
+        <p class="hint">Wird geladen …</p>
       }
-    } @else if (!planError()) {
-      <p class="hint">Wird geladen …</p>
-    }
+    </div>
   </div>
+
+  <!-- Only on a wide screen, where the plan leaves room beside it — the
+       stylesheet decides that, not the code. It is written out here in any case:
+       what is in the list is in the map too, so nothing is lost when it is
+       hidden. -->
+  <aside class="agenda">
+    <h2>Belegungen heute</h2>
+
+    @for (group of agenda(); track group.heading) {
+      <h3>{{ group.heading }}</h3>
+
+      <ul>
+        @for (entry of group.entries; track entry.id) {
+          <li>
+            <span class="where">{{ entry.workplaceName }}</span>
+            <span class="when">{{ entry.timeRange }}</span>
+            <span class="who">{{ entry.who }}</span>
+          </li>
+        }
+      </ul>
+    } @empty {
+      <p class="empty">Für heute ist nichts mehr eingetragen.</p>
+    }
+  </aside>
 </div>

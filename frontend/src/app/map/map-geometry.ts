@@ -1,15 +1,11 @@
 /**
- * The arithmetic of the overview map: boxes in the SVG's coordinate system become
- * percentages of its surface.
+ * The one piece of arithmetic the overview map still needs: where the figure
+ * stands.
  *
  * Like the time axis, deliberately free of Angular and free of the DOM — only
- * numbers are passed in. Measuring happens in one place, in `MapView`; the
+ * numbers go in. Measuring happens in one place, in `MapView`, on the grafted
+ * document where `getBBox()` knows about groups, transforms and curves; the
  * arithmetic happens here, where it can be tested.
- *
- * Percentages rather than pixels, because the map grows with the window. That
- * only works out as long as the rendered area has exactly the aspect ratio of the
- * `viewBox` — otherwise a margin would remain that the percentages know nothing
- * about. `map-view.scss` sees to that.
  */
 
 /** A box in the SVG's coordinate system — the shape of `getBBox()`. */
@@ -20,64 +16,44 @@ export interface Box {
   height: number;
 }
 
-/** Placement on the map, as a percentage of its width or height. */
-export interface Placement {
-  leftPercent: number;
-  topPercent: number;
-  widthPercent: number;
-  heightPercent: number;
-}
-
 /**
- * The figure's identifier in the SVG. It is part of the contract with the file,
- * just as the workplace identifiers are: the map brings one figure along, and we
- * place it as many times as somebody is present.
- */
-export const FIGURE_ID = 'figur';
-
-/** `viewBox="0 0 1184 2082"` as a box; null when the attribute is missing or unreadable. */
-export function parseViewBox(value: string | null | undefined): Box | null {
-  if (!value) {
-    return null;
-  }
-
-  const parts = value
-    .trim()
-    .split(/[\s,]+/)
-    .map(Number);
-
-  if (parts.length !== 4 || parts.some(Number.isNaN) || parts[2] <= 0 || parts[3] <= 0) {
-    return null;
-  }
-
-  return { x: parts[0], y: parts[1], width: parts[2], height: parts[3] };
-}
-
-/**
- * Places the figure centred on a workplace — at its natural size.
+ * How far the feet reach past the middle, in the plan's units.
  *
- * Not stretched to the size of the workplace: the figure is drawn at the map's
+ * Exactly on the line the figure looks as if it were floating in front of the
+ * bench; a few units in and it stands at it. Small enough that it makes no
+ * difference on the smallest workplace.
+ */
+const FOOT_OVERLAP = 5;
+
+/**
+ * The transform that stands the figure on a workplace, at its natural size.
+ *
+ * Centred across, but not down: the feet land on the middle of the bench rather
+ * than the waist. On a floor plan seen from above, a person drawn in elevation
+ * belongs at the front edge of what they are working at — centred vertically they
+ * would sit in the bench rather than stand at it.
+ *
+ * Not scaled to the size of the workplace: the figure is drawn at the map's
  * scale, and a workbench is wider than a person. Stretched, a giant would stand
  * at the planing bench and a dwarf at the soldering station.
+ *
+ * Both boxes have to be measured in the same user space. They are: the `<use>`
+ * is hung in as a sibling of the shape it belongs to, so it is placed in exactly
+ * the space that shape was measured in — and what `<use>` references brings its
+ * own coordinates along, untouched by wherever in the plan it was drawn.
  */
-export function placeCentered(viewBox: Box, target: Box, figure: Box): Placement {
-  return {
-    leftPercent: ((centerX(target) - figure.width / 2 - viewBox.x) / viewBox.width) * 100,
-    topPercent: ((centerY(target) - figure.height / 2 - viewBox.y) / viewBox.height) * 100,
-    widthPercent: (figure.width / viewBox.width) * 100,
-    heightPercent: (figure.height / viewBox.height) * 100,
-  };
+export function standingOn(target: Box, figure: Box): string {
+  const dx = middle(target.x, target.width) - middle(figure.x, figure.width);
+  const dy = middle(target.y, target.height) - (figure.y + figure.height - FOOT_OVERLAP);
+
+  return `translate(${round(dx)} ${round(dy)})`;
 }
 
-/** The excerpt the figure alone fills — the `viewBox` of its own SVG. */
-export function figureViewBox(figure: Box): string {
-  return `${figure.x} ${figure.y} ${figure.width} ${figure.height}`;
+function middle(start: number, length: number): number {
+  return start + length / 2;
 }
 
-function centerX(box: Box): number {
-  return box.x + box.width / 2;
-}
-
-function centerY(box: Box): number {
-  return box.y + box.height / 2;
+/** Three decimals are finer than any screen; the rest only lengthens the file. */
+function round(value: number): number {
+  return Number(value.toFixed(3));
 }

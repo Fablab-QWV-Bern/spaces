@@ -9,14 +9,18 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { Router } from '@angular/router';
 
 import { Workplace } from '../api/models';
+import { BookingCard } from '../calendar/booking-card';
 import { CalendarStore } from '../calendar/calendar-store';
 import { CalendarToolbar } from '../calendar/calendar-toolbar';
-import { formatTime } from '../calendar/time-axis';
-import { FIGURE_ID, Box, parseViewBox, placeCentered } from './map-geometry';
-import { MapFigure } from './map-figure';
-import { occupancyAt } from './occupancy';
+import { SIGN_IN_NOTICE } from '../calendar/day-track';
+import { GRID_MINUTES, formatTime, toLocalIso } from '../calendar/time-axis';
+import { Icon } from '../shared/icon';
+import { agendaFor } from './agenda';
+import { Box, standingOn } from './map-geometry';
+import { Occupancy, occupancyAt } from './occupancy';
 
 /** How often the map asks again who is here now. */
 const REFRESH_MS = 60_000;
@@ -25,9 +29,18 @@ const REFRESH_MS = 60_000;
 const PLAN_URL = '/karte.svg';
 
 /**
- * The overview map: the floor plan of the workshop, with a figure on every
- * occupied workplace. Clicking one shows the same detail card as a bar in the
- * calendar.
+ * The figure's identifier in the plan. Part of the contract with the file, just
+ * as the workplace identifiers are: the map brings one figure along, and we place
+ * it as often as somebody is present.
+ */
+const FIGURE_ID = 'figur';
+
+const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
+
+/**
+ * The overview map: the floor plan of the workshop, with every workplace marked
+ * according to whether somebody is at it. A click on one opens the same detail
+ * card as a bar in the calendar.
  *
  * Unlike the calendar views it knows no date — it shows the present moment and
  * asks for it afresh every minute. That is why its header carries no paging and
@@ -41,28 +54,56 @@ const PLAN_URL = '/karte.svg';
  * It is grafted in by hand rather than via `innerHTML`: Angular's sanitisation
  * strips `id` attributes, and those are the whole point here — the mapping to the
  * workplaces hangs off them.
+ *
+ * The state sits on the workplace's own shape as a class, so the marking is a
+ * matter for `map-view.scss` and not for the code. On top of that comes the
+ * figure, and it is the only thing here that needs arithmetic — one translation,
+ * within the plan's own coordinate system, so nothing has to be recomputed when
+ * the window changes size.
  */
 @Component({
   selector: 'app-map-view',
-  imports: [CalendarToolbar, MapFigure],
+  imports: [BookingCard, CalendarToolbar, Icon],
   templateUrl: './map-view.html',
   styleUrl: './map-view.scss',
 })
 export class MapView {
   protected readonly store = inject(CalendarStore);
   private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
 
-  private readonly drawing = viewChild<ElementRef<HTMLElement>>('drawing');
+  /** The surface the anchor's coordinates count from, and the box the floor plan
+   *  is grafted into — two elements, because grafting replaces the children. */
+  private readonly surface = viewChild.required<ElementRef<HTMLElement>>('plan');
+  private readonly drawing = viewChild.required<ElementRef<HTMLElement>>('drawing');
+
+  private readonly card = viewChild.required('card', { read: ElementRef<HTMLElement> });
 
   protected readonly now = signal(new Date());
   protected readonly planError = signal<string | null>(null);
 
-  private readonly plan = signal<string | null>(null);
-  private readonly geometry = signal<PlanGeometry | null>(null);
+  /** The plan as fetched, and the same thing once it hangs in the document. */
+  private readonly source = signal<string | null>(null);
+  private readonly plan = signal<SVGSVGElement | null>(null);
 
-  /** Not a signal: "already grafted in" is not a state of the view but the
-   *  effect's brake. As a signal it would read what it writes itself. */
-  private mounted = false;
+  /** The workplace whose card is open — as an identifier rather than as a card,
+   *  so that the open card follows the minutely refresh instead of freezing at
+   *  the moment of the click. */
+  private readonly selectedId = signal<string | null>(null);
+
+  /** Where the card docks: the clicked shape's box, relative to the plan. An
+   *  SVG shape cannot be an anchor itself — it generates no CSS box, so
+   *  `anchor-name` is parsed there and ignored. */
+  protected readonly anchor = signal<Anchor>({ left: 0, top: 0, width: 0, height: 0 });
+
+  /** The figure's box, measured once while it was still drawn; null when the
+   *  plan brings none along. */
+  private readonly figureBox = signal<Box | null>(null);
+
+  /** The figures currently standing, by workplace. Not a signal: they are not
+   *  rendered but hung into the grafted tree, and this is only the note of what
+   *  is already there. */
+  private readonly figures = new Map<string, SVGUseElement>();
 
   constructor() {
     // The calendar store loads one day — today. That makes available the bookings
@@ -71,7 +112,7 @@ export class MapView {
     this.store.goToToday();
 
     this.http.get(PLAN_URL, { responseType: 'text' }).subscribe({
-      next: (svg) => this.plan.set(svg),
+      next: (svg) => this.source.set(svg),
       error: () => this.planError.set('Der Grundriss konnte nicht geladen werden.'),
     });
 
@@ -84,78 +125,175 @@ export class MapView {
 
     inject(DestroyRef).onDestroy(() => clearInterval(timer));
 
-    // Graft it in as soon as all three are there: the plan, its container and the
-    // workplaces — without the last, the measuring would not know what to look
-    // for.
     effect(() => {
-      const plan = this.plan();
-      const drawing = this.drawing()?.nativeElement;
-      const workplaces = this.store.workplaces();
+      const source = this.source();
 
-      if (this.mounted || !plan || !drawing || workplaces.length === 0) {
-        return;
+      if (source && !this.plan()) {
+        this.graft(source);
       }
-
-      this.mounted = true;
-      this.mountPlan(plan, drawing, workplaces);
     });
+
+    // The marking, kept in step: it depends on the occupancy, and that changes
+    // with every refresh. Written into the grafted tree rather than rendered,
+    // because that tree does not belong to any template.
+    effect(() => this.mark(this.plan(), this.occupancy()));
   }
 
   protected readonly heading = computed(() => `Jetzt, ${formatTime(this.now())} Uhr`);
 
-  /** The plan's aspect ratio, as a bare number — `map-view.scss` computes with it. */
-  protected readonly aspect = computed(() => {
-    const geometry = this.geometry();
-
-    return geometry ? geometry.viewBox.width / geometry.viewBox.height : null;
-  });
-
-  protected readonly figureBox = computed(() => this.geometry()?.figure ?? null);
+  /** Whether the floor plan is hanging in the document. */
+  protected readonly ready = computed(() => this.plan() !== null);
 
   /**
-   * The figures: one for every occupied workplace that appears on the plan. A
-   * workplace with no element on the map does not appear, and an element with no
-   * workplace stays as it is drawn — neither is an error, but the expected state
-   * of a map that is produced by hand.
+   * The day's remaining occupancy for the column beside the plan. Built from the
+   * same bookings the map is coloured from, so the two cannot disagree.
    */
-  protected readonly figures = computed(() => {
-    const geometry = this.geometry();
+  protected readonly agenda = computed(() =>
+    agendaFor(this.store.bookings(), this.store.nameOf(), this.now()),
+  );
 
-    if (!geometry) {
-      return [];
-    }
-
-    const occupancy = occupancyAt(
+  /** Which workplaces are occupied or about to be, and by whom. */
+  private readonly occupancy = computed(() =>
+    occupancyAt(
       {
         bookings: this.store.bookingsByWorkplace(),
         blockages: this.store.blockagesByWorkplace(),
         nameOf: this.store.nameOf(),
       },
       this.now(),
-    );
+    ),
+  );
 
-    return [...occupancy]
-      .filter(([workplaceId]) => geometry.boxes.has(workplaceId))
-      .map(([workplaceId, details]) => ({
-        workplaceId,
-        details,
-        placement: placeCentered(
-          geometry.viewBox,
-          geometry.boxes.get(workplaceId)!,
-          geometry.figure,
-        ),
-      }));
+  private readonly selected = computed(() => {
+    const id = this.selectedId();
+
+    return id ? (this.store.workplaceById().get(id) ?? null) : null;
+  });
+
+  /** The card's content, or null while the selected workplace is free. */
+  protected readonly details = computed(() => {
+    const id = this.selectedId();
+
+    return id ? (this.occupancy().get(id)?.details ?? null) : null;
+  });
+
+  /** The heading for that free case — the card then has no booking to name. */
+  protected readonly freeHeading = computed(() => this.selected()?.name ?? null);
+
+  /**
+   * Why nothing can be created on the selected workplace — or null when the
+   * button may appear.
+   *
+   * The booking horizon does not come up here: the map only ever shows today, and
+   * today lies within every horizon. What remains is the state of the workplace
+   * and the question of who is asking.
+   */
+  protected readonly notice = computed(() => {
+    const workplace = this.selected();
+
+    if (!workplace) {
+      return null;
+    }
+
+    if (workplace.status !== 'OK') {
+      return {
+        DEFECT: 'Dieser Arbeitsplatz ist defekt.',
+        DISABLED: 'Dieser Arbeitsplatz ist ausgeblendet.',
+      }[workplace.status];
+    }
+
+    return null;
   });
 
   /**
-   * Grafts the plan in and measures it — once, as soon as both are there.
-   *
-   * Measuring happens on the grafted document rather than on the source text:
-   * `getBBox()` knows about groups, transforms and curves, whereas computing from
-   * the path data would mean reimplementing the renderer.
+   * A click anywhere on the plan. One listener for all workplaces rather than one
+   * per shape — the event finds its way up by itself, and `popovertarget` was
+   * never an option: that attribute exists on HTML buttons, not on SVG shapes.
    */
-  private mountPlan(svg: string, drawing: HTMLElement, workplaces: Workplace[]): void {
-    const root = new DOMParser().parseFromString(svg, 'image/svg+xml').documentElement;
+  protected onPick(event: Event): void {
+    const shape = this.shapeUnder(event.target);
+
+    if (shape) {
+      this.select(shape.workplace, shape.element);
+    }
+  }
+
+  /** SVG shapes are not buttons; Enter and Space have to be taken by hand. */
+  protected onKey(event: KeyboardEvent): void {
+    if (event.key !== 'Enter' && event.key !== ' ') {
+      return;
+    }
+
+    const shape = this.shapeUnder(event.target);
+
+    if (shape) {
+      // Otherwise Space scrolls the plan away underneath the card.
+      event.preventDefault();
+      this.select(shape.workplace, shape.element);
+    }
+  }
+
+  protected createBooking(): void {
+    const workplace = this.selected();
+
+    if (!workplace) {
+      return;
+    }
+
+    this.router.navigate(['/buchen'], {
+      queryParams: {
+        workplace: workplace.id,
+        start: toLocalIso(currentSlot(this.now())),
+        // Do not pass a duration: the form sets its own default.
+      },
+    });
+  }
+
+  private select(workplace: Workplace, element: SVGGraphicsElement): void {
+    const plan = this.surface().nativeElement.getBoundingClientRect();
+    const box = element.getBoundingClientRect();
+
+    // Both rectangles are relative to the viewport, so their difference holds
+    // however far the stage has been scrolled.
+    this.anchor.set({
+      left: box.left - plan.left,
+      top: box.top - plan.top,
+      width: box.width,
+      height: box.height,
+    });
+
+    this.selectedId.set(workplace.id);
+
+    const card = this.card().nativeElement;
+
+    // A click beside the card has already dismissed it by the time we get here —
+    // the guard is for the rare case where it has not, because showPopover()
+    // throws on an already open popover.
+    if (!card.matches(':popover-open')) {
+      card.showPopover();
+    }
+  }
+
+  /** The workplace the event started on — the shape itself or something drawn
+   *  inside it. Everything else on the plan is scenery and stays silent. */
+  private shapeUnder(
+    target: EventTarget | null,
+  ): { workplace: Workplace; element: SVGGraphicsElement } | null {
+    const byId = this.store.workplaceById();
+
+    for (let node = target as Element | null; node; node = node.parentElement) {
+      const workplace = byId.get(node.id);
+
+      if (workplace) {
+        return { workplace, element: node as SVGGraphicsElement };
+      }
+    }
+
+    return null;
+  }
+
+  private graft(source: string): void {
+    const root = new DOMParser().parseFromString(source, 'image/svg+xml').documentElement;
 
     if (root.nodeName !== 'svg') {
       this.planError.set('Der Grundriss ist kein lesbares SVG.');
@@ -164,51 +302,118 @@ export class MapView {
     }
 
     const plan = document.importNode(root, true) as unknown as SVGSVGElement;
-    const viewBox = parseViewBox(plan.getAttribute('viewBox'));
 
-    if (!viewBox) {
-      this.planError.set('Dem Grundriss fehlt eine viewBox.');
+    // The file carries width="100%" height="100%" — sensible for a document of
+    // its own, useless in a box whose height it is supposed to determine. Without
+    // them the viewBox alone decides the ratio and the stylesheet the width.
+    plan.removeAttribute('width');
+    plan.removeAttribute('height');
 
-      return;
-    }
+    this.drawing().nativeElement.replaceChildren(plan);
+    this.stow(plan);
+    this.plan.set(plan);
+  }
 
-    drawing.replaceChildren(plan);
-
+  /**
+   * Measures the figure the plan brings along and puts it away.
+   *
+   * Measure first, then stow: what is not drawn has no bounding box either. In
+   * the `defs` it is no longer drawn but stays reachable for `<use>` — without
+   * this it would go on standing at the one spot the designer parked it.
+   *
+   * A plan without a figure is not an error; then the marking on the shapes has
+   * to carry the state on its own. That is the same tolerance the ids get: what
+   * is on the plan is used, what is missing is missing.
+   */
+  private stow(plan: SVGSVGElement): void {
     const figure = plan.querySelector<SVGGraphicsElement>(`#${CSS.escape(FIGURE_ID)}`);
 
     if (!figure) {
-      this.planError.set('Der Grundriss enthält keine Figur.');
-
       return;
     }
 
-    const figureBox = boxOf(figure);
-    const boxes = new Map<string, Box>();
+    this.figureBox.set(boxOf(figure));
+    defsOf(plan).append(figure);
+  }
 
-    for (const workplace of workplaces) {
-      const element = plan.querySelector<SVGGraphicsElement>(`#${CSS.escape(workplace.id)}`);
-
-      if (element) {
-        boxes.set(workplace.id, boxOf(element));
-      }
+  /**
+   * Sets the state on the workplace shapes: a class for the marking, and the
+   * attributes that make a shape reachable by keyboard.
+   *
+   * A workplace with no shape on the plan is skipped, and a shape with no
+   * workplace stays as it is drawn — neither is an error, but the expected state
+   * of a map that is drawn by hand.
+   */
+  private mark(plan: SVGSVGElement | null, occupancy: Map<string, Occupancy>): void {
+    if (!plan) {
+      return;
     }
 
-    // After measuring, the template moves into the `defs`: there it is no longer
-    // drawn but stays reachable for `<use>`. Without this a figure with no
-    // workplace would stand around on the plan. Measure first, then hide — what is
-    // not drawn has no bounding box either.
-    defsOf(plan).append(figure);
+    for (const workplace of this.store.workplaces()) {
+      const element = plan.querySelector<SVGGraphicsElement>(`#${CSS.escape(workplace.id)}`);
 
-    this.geometry.set({ viewBox, figure: figureBox, boxes });
+      if (!element) {
+        continue;
+      }
+
+      const state = occupancy.get(workplace.id);
+
+      // The mark that this shape is one of ours — the stylesheet hangs the
+      // pointer and the outline off it, and so needs to know nothing about how
+      // the plan groups its layers.
+      element.classList.add('workplace');
+      element.classList.toggle('busy', state?.state === 'busy');
+      element.classList.toggle('soon-busy', state?.state === 'soon');
+
+      element.setAttribute('role', 'button');
+      element.setAttribute('tabindex', '0');
+      element.setAttribute('aria-label', describe(workplace, state));
+
+      this.stand(workplace.id, element, state);
+    }
+  }
+
+  /**
+   * Puts a figure on the workplace, or takes it away again.
+   *
+   * Only where somebody is actually standing: not for what is merely coming, and
+   * not for a blockage either — there the bench is unusable because somebody is
+   * at another one. A figure there would place a person where none is. Both cases
+   * keep their outline; only the figure is reserved for presence.
+   *
+   * The `<use>` is hung in beside the shape rather than in a layer of its own:
+   * there it is measured in the same user space it is placed in, whatever
+   * transforms the plan may put around its groups.
+   */
+  private stand(
+    workplaceId: string,
+    element: SVGGraphicsElement,
+    state: Occupancy | undefined,
+  ): void {
+    const figure = this.figureBox();
+    const wanted = figure !== null && state?.state === 'busy' && !state.details.isBlockage;
+    const standing = this.figures.get(workplaceId);
+
+    if (wanted && !standing) {
+      const use = document.createElementNS(SVG_NAMESPACE, 'use');
+
+      use.setAttribute('href', `#${FIGURE_ID}`);
+      use.setAttribute('transform', standingOn(boxOf(element), figure));
+      element.after(use);
+      this.figures.set(workplaceId, use);
+    } else if (!wanted && standing) {
+      standing.remove();
+      this.figures.delete(workplaceId);
+    }
   }
 }
 
-interface PlanGeometry {
-  viewBox: Box;
-  /** The box of the template every figure is made from. */
-  figure: Box;
-  /** The box for each workplace the plan shows. */
-  boxes: Map<string, Box>;
+/** Where the card docks, in pixels within the plan. */
+interface Anchor {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
 }
 
 function boxOf(element: SVGGraphicsElement): Box {
@@ -217,6 +422,7 @@ function boxOf(element: SVGGraphicsElement): Box {
   return { x, y, width, height };
 }
 
+/** The plan brings no `defs` along, so one is put in front of it. */
 function defsOf(plan: SVGSVGElement): SVGDefsElement {
   const existing = plan.querySelector('defs');
 
@@ -224,8 +430,31 @@ function defsOf(plan: SVGSVGElement): SVGDefsElement {
     return existing;
   }
 
-  const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+  const defs = document.createElementNS(SVG_NAMESPACE, 'defs');
   plan.prepend(defs);
 
   return defs;
+}
+
+/** What a screen reader gets to hear instead of the colour. */
+function describe(workplace: Workplace, state: Occupancy | undefined): string {
+  if (!state) {
+    return `${workplace.name}: frei`;
+  }
+
+  const when = state.state === 'busy' ? 'belegt' : 'bald belegt';
+
+  return `${workplace.name}: ${when}, ${state.details.timeRange}, ${state.details.booking.name}`;
+}
+
+/**
+ * The present moment on the calendar's quarter-hour grid, rounded down — the same
+ * time a click on the day view would hand to the form. Downwards and not to the
+ * nearest, so that the start never lies after the moment one meant.
+ */
+function currentSlot(now: Date): Date {
+  const slot = new Date(now);
+  slot.setMinutes(Math.floor(now.getMinutes() / GRID_MINUTES) * GRID_MINUTES, 0, 0);
+
+  return slot;
 }

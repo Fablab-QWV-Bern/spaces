@@ -10,6 +10,10 @@
   height: 100dvh;
   font-family: system-ui, sans-serif;
   color: var(--ink);
+
+  // Binds the card to this view's anchor, as calendar-block.scss does for bar
+  // and card.
+  anchor-scope: --block;
 }
 
 .error {
@@ -22,41 +26,257 @@
   flex: 1;
   // Without this a flex item grows to its content instead of scrolling.
   min-height: 0;
-  padding: 0;
+  display: flex;
+}
+
+// Scrolls the plan. The two columns scroll separately: the plan is twice as tall
+// as the window, the list a few lines — in one container the list would be gone
+// after the first turn of the wheel.
+.board {
+  flex: 1;
+  min-width: 0;
   overflow-y: auto;
 }
 
-// The plan takes the full width and becomes as tall as its aspect ratio demands
-// — for a portrait floor plan that is more than the window offers, so it scrolls.
-// Better large and scrolled than fully visible and illegible: on a plan one wants
-// to read the labels.
+// The list beside the plan. On a narrow screen it is not there at all: it would
+// push the map into a column too slim to read, and everything in it is on the map
+// anyway. The threshold is where both still have room — below it, width belongs
+// to the plan.
 //
-// The aspect ratio is not cosmetic here but the precondition for the figures
-// sitting right. They are positioned in percentages of the map area; if a margin
-// were left anywhere because the SVG sits in a box of a different shape, those
-// same percentages would point somewhere else. That is why the box gets the
-// `viewBox`'s ratio — rather than the SVG getting a box it has to fit itself
-// into.
-.plan {
-  position: relative;
-  aspect-ratio: var(--aspect-number, 1);
-  width: 100%;
-  background: var(--paper);
-  overflow: hidden;
+// 64rem is 1024px here, not 1178: inside a media query `rem` counts from the
+// browser's initial 16px and knows nothing of the 115% on `html`. The same holds
+// for the 48rem in the calendar chrome, which is 768px.
+.agenda {
+  display: none;
 }
 
-// The grafted-in floor plan. Positioned absolutely so that its height of 100% has
-// a fixed reference — a height derived from the aspect ratio is not everywhere one
-// that percentages can be computed against.
+@media (width >= 44rem) {
+  .agenda {
+    display: block;
+    flex: 0 0 18rem;
+    overflow-y: auto;
+    border-left: 1px solid var(--line);
+    background: var(--surface-sunken);
+    padding: 0 1rem 1.5rem;
+    font-size: 0.85rem;
+  }
+}
+
+.agenda {
+  h2 {
+    position: sticky;
+    top: 0;
+    margin: 0;
+    background: var(--surface-sunken);
+    padding: 1rem 0 0.5rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+
+  // The group heading carries the whole meaning of the lines under it, so it is
+  // set apart rather than merely made bold: a reader scanning for "what is at
+  // five" looks for the mark, not for the weight.
+  h3 {
+    margin: 1rem 0 0.35rem;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    display: grid;
+    // The time keeps a column of its own so that the entries line up under one
+    // another; the name takes the whole width beneath, because it is the one
+    // thing here with no predictable length.
+    grid-template-columns: 1fr auto;
+    gap: 0 0.5rem;
+    border-top: 1px solid var(--line);
+    padding: 0.4rem 0;
+  }
+
+  .where {
+    font-weight: 600;
+  }
+
+  .when {
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .who {
+    grid-column: 1 / -1;
+    color: var(--text-soft);
+  }
+
+  .empty {
+    margin: 0.5rem 0 0;
+    color: var(--text-muted);
+  }
+}
+
+// The plan takes the full width and becomes as tall as its aspect ratio demands
+// — for the portrait floor plan that is more than the window offers, so it
+// scrolls. Better large and scrolled than fully visible and illegible: on a plan
+// one wants to read the labels.
 //
-// It is background and catches no clicks; only the figures above it are
-// clickable. That saves a selector reaching into the grafted tree:
-// `pointer-events` is inherited.
+// It is also what the anchor's coordinates count from, hence `relative`.
+.plan {
+  position: relative;
+  background: var(--paper);
+}
+
+// The floor plan itself. Nothing is positioned on top of it any more, so it needs
+// no box of its own — the SVG brings its ratio along in the `viewBox` and fills
+// the width.
+// The plan is scenery and takes no clicks — only the workplaces switch hit
+// testing back on below. Without this, a click on a workplace's own label would
+// go nowhere: the names are drawn in a layer of their own, above the shapes and
+// outside them, so the event would never pass a workplace on its way up.
+//
+// The rule sits on the class we set ourselves rather than on the layer's name, so
+// that the file is still asked for nothing but its identifiers.
 .drawing {
-  position: absolute;
-  inset: 0;
   line-height: 0;
   pointer-events: none;
+
+  ::ng-deep svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+}
+
+// Invisible stand-in for the clicked shape. An SVG shape generates no CSS box, so
+// `anchor-name` is parsed there and silently ignored — the card would then fall
+// back to its static position in the corner. Measured in `MapView`, drawn nowhere.
+.anchor {
+  position: absolute;
+  pointer-events: none;
+  anchor-name: --block;
+}
+
+// The card hangs under the middle of the shape rather than running off to one
+// side. In the calendar it starts at the bar and may run to the end of the row —
+// there the bar *is* the row, and a card beginning anywhere else would look
+// detached. Here the anchor is a bounding box on an open surface, and a card
+// hanging off one corner of it looks as though it belonged to the neighbour.
+//
+// Hence the override here and not in booking-card.scss: the placement follows
+// from the surroundings, and only this view has these.
+app-booking-card {
+  position-area: block-end center;
+
+  // On a narrow screen a shape near the edge cannot have its card centred under
+  // it; the browser then pushes the card inwards instead of letting it hang over
+  // the edge. Without a margin it ends up flush against the edge of the screen.
+  // Only sideways: downwards it stays flush against the shape, as in the
+  // calendar, so that the pointer can travel over without a gap.
+  margin-inline: 0.5rem;
+}
+
+// ---- The marking on the workplaces ----
+//
+// The grafted plan belongs to no template and therefore carries none of Angular's
+// encapsulation attributes; a plain `.busy` here would match nothing. `::ng-deep`
+// under `:host` keeps the rule bound to this view all the same.
+//
+// The state shows in the outline, not in the fill: the shapes carry their area's
+// colour as an inline `fill`, and that beats any stylesheet. Overriding it would
+// cost an `!important` and, worse, the information about which area a bench
+// belongs to — two facts on one surface, of which only the newer would be legible.
+:host ::ng-deep {
+  // Set by `MapView` on every shape it found a workplace for — so the file is
+  // asked for nothing beyond the identifiers. Which group they sit in and what it
+  // is called stays the designer's business.
+  .workplace {
+    pointer-events: auto;
+    cursor: pointer;
+    // The plan draws its shapes without an outline; the two below are ours.
+    stroke-width: 0;
+    transition:
+      stroke-width 0.15s ease,
+      filter 0.12s ease;
+
+    // Under the pointer the fill answers. Darkened rather than replaced: the
+    // inline `fill` would need an `!important` to overrule, and the bench would
+    // lose the colour of its area for as long as the pointer rests on it. A
+    // filter works on whatever colour it finds and takes none of its own — which
+    // is also why no palette entry is needed for it.
+    &:hover {
+      filter: brightness(0.88);
+    }
+
+    // The browser draws a ring of its own around a focused shape, and it happens
+    // to be amber — next to `soon-busy` that reads as a third state. Ours
+    // appears only where a focus ring is meant to: under the keyboard.
+    &:focus {
+      outline: none;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+  }
+
+  .busy {
+    //stroke: var(--danger);
+    //stroke-width: 6;
+  }
+
+  .soon-busy {
+    stroke: var(--warning);
+    stroke-width: 6;
+    // Dashed, so that the two states stay apart without relying on colour — and
+    // because something not yet in force reads as a dotted line.
+    stroke-dasharray: 14 8;
+  }
+
+  // The figure needs no rule of its own. It is drawn where the plan drew it, in
+  // the plan's colour and at its scale, and it takes no clicks — `.drawing` has
+  // switched those off and only `.workplace` turns them back on, so a click on a
+  // figure reaches the bench beneath it.
+}
+
+// ---- The free workplace's card ----
+//
+// Projected into `BookingCard`, so styled from here: projected content keeps the
+// encapsulation of the template it is written in.
+.card-free {
+  margin: 0 0 0.15rem;
+  color: var(--text-muted);
+}
+
+.card-notice {
+  margin: 0.35rem 0 0;
+  color: var(--text-muted);
+}
+
+.card-create {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.5rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 0.25rem;
+  background: var(--paper);
+  padding: 0.3rem 0.6rem;
+  font: inherit;
+  font-size: 0.8rem;
+  color: inherit;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--surface-muted);
+  }
 }
 
 .hint {

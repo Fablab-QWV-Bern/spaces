@@ -12,6 +12,7 @@ export type IconName =
   | 'map'
   | 'series'
   | 'edit'
+  | 'add'
   | 'external'
   | 'remove'
   | 'photo'
@@ -56,6 +57,8 @@ export const ICON_PATHS: Record<IconName, readonly string[]> = {
     'M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z',
     'm15 5 4 4',
   ],
+  // plus
+  add: ['M5 12h14', 'M12 5v14'],
   // arrow-up-right
   external: ['M7 7h10v10', 'M7 17 17 7'],
   // x
