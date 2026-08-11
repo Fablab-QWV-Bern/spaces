@@ -114,6 +114,16 @@ import { SessionService } from './session-service';
       font-size: 0.85rem;
       color: var(--text-muted);
 
+      // Wherever a bar states a height for its controls, this button joins in;
+      // where none is stated it keeps its own. The fallback is what makes that
+      // difference — without it the declaration would fall away instead, which
+      // amounts to the same thing but only by accident.
+      button {
+        display: inline-flex;
+        align-items: center;
+        min-height: var(--control-height, 0);
+      }
+
       .icon {
         display: none;
       }
@@ -137,6 +147,7 @@ import { SessionService } from './session-service';
       padding: 0.35rem 0.7rem;
       font: inherit;
       font-size: 0.85rem;
+      line-height: 1.2;
       border: 1px solid var(--line-strong);
       border-radius: 0.25rem;
       background: var(--paper);

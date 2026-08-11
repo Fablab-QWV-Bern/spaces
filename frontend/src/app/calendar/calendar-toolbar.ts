@@ -151,6 +151,14 @@ import { SessionService } from '../shared/session-service';
   `,
   styles: `
     :host {
+      // One height for everything in the bar. Left to the boxes, it is the date
+      // field that decides: a date input is taller than a button with the same
+      // padding and font — barely in Chrome, noticeably in Safari — and since a
+      // flex row stretches its items, that surplus went to every control beside
+      // it. Named once here, the row no longer depends on what an engine thinks
+      // a date field is.
+      --control-height: 2rem;
+
       display: flex;
       align-items: baseline;
       justify-content: space-between;
@@ -165,10 +173,14 @@ import { SessionService } from '../shared/session-service';
       font-weight: 600;
     }
 
+    // Centred rather than stretched: a control that turns out taller than the
+    // others should stand out on its own instead of pulling its neighbours up
+    // with it.
     .right,
     .controls,
     .extras {
       display: flex;
+      align-items: center;
       gap: 0.25rem;
     }
 
@@ -182,6 +194,9 @@ import { SessionService } from '../shared/session-service';
         padding: 0.35rem 0.7rem;
         font: inherit;
         font-size: 0.9rem;
+        // Spelled out rather than left to the default, so that the text inside
+        // sets the same height everywhere and not one height per engine.
+        line-height: 1.2;
         border-radius: 0.25rem;
         cursor: pointer;
 
@@ -190,8 +205,27 @@ import { SessionService } from '../shared/session-service';
         }
       }
 
+      // The height is a floor, not a measurement: whatever a browser's font
+      // makes of the text may still grow beyond it, nothing gets cut off.
+      button,
+      .date-icon,
+      .overview {
+        display: inline-flex;
+        align-items: center;
+        min-height: var(--control-height);
+      }
+
+      // The one control given its height instead of allowed to find it — its
+      // box is the one the engines disagree about.
       input[type='date'] {
+        height: var(--control-height);
         cursor: text;
+      }
+
+      // Without this the span would wrap the field in a line box of its own and
+      // add its leading on top of the height just fixed.
+      .date {
+        display: inline-flex;
       }
 
       .date-icon {
@@ -207,7 +241,6 @@ import { SessionService } from '../shared/session-service';
     }
 
     .admin {
-      align-self: center;
       margin-left: 0.5rem;
       font-size: 0.85rem;
       color: var(--text-muted);
@@ -224,6 +257,7 @@ import { SessionService } from '../shared/session-service';
     .map {
       display: flex;
       align-items: center;
+      min-height: var(--control-height);
       margin-left: 0.25rem;
       border: 1px solid var(--line-strong);
       background: var(--paper);
@@ -247,10 +281,14 @@ import { SessionService } from '../shared/session-service';
       margin-left: 0.5rem;
 
       a {
+        display: inline-flex;
+        align-items: center;
+        min-height: var(--control-height);
         border: 1px solid var(--line-strong);
         background: var(--paper);
         padding: 0.35rem 0.7rem;
         font-size: 0.9rem;
+        line-height: 1.2;
         color: inherit;
         text-decoration: none;
 
@@ -318,9 +356,9 @@ import { SessionService } from '../shared/session-service';
         grid-area: 1 / 2;
       }
 
+      // Out of hiding, and back into the row's shared height along with it.
       .controls .date-icon {
-        display: block;
-        line-height: 1.2;
+        display: inline-flex;
       }
 
       // When narrow, only the cog remains of the route into the admin area — an
