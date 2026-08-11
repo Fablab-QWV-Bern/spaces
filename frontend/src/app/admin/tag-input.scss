@@ -1,0 +1,80 @@
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.35rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 0.25rem;
+  background: var(--paper);
+
+  &:focus-within {
+    outline: 2px solid var(--accent);
+    outline-offset: -1px;
+  }
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.1rem 0.2rem 0.1rem 0.4rem;
+  border-radius: 0.2rem;
+  background: var(--line);
+  font-size: 0.8rem;
+
+  button {
+    border: 0;
+    background: none;
+    padding: 0 0.15rem;
+    font: inherit;
+    font-size: 0.9rem;
+    line-height: 1;
+    color: var(--text-muted);
+    cursor: pointer;
+
+    &:hover {
+      color: var(--danger-text);
+    }
+  }
+}
+
+input {
+  flex: 1 1 6rem;
+  min-width: 6rem;
+  border: 0;
+  padding: 0.15rem;
+  font: inherit;
+  font-size: 0.9rem;
+
+  &:focus {
+    outline: none;
+  }
+}
+
+// The suggestions sit in the flow rather than above it: they are few and
+// short, and a floating panel would only cover the next form field here.
+.suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.3rem;
+}
+
+.suggestion {
+  padding: 0.1rem 0.4rem;
+  border: 1px dashed var(--line-strong);
+  border-radius: 0.2rem;
+  background: none;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    border-style: solid;
+    background: var(--line);
+    color: var(--ink);
+  }
+}

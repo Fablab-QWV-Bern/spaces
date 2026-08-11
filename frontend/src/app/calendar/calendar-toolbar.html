@@ -1,0 +1,122 @@
+<h1>{{ heading() }}</h1>
+
+<!-- Two groups, so that the narrow layout can pull the second one up next to
+     the heading: what is about this date belongs together with the paging,
+     everything that leads elsewhere does not. Wide, the wrapper puts them
+     back into one row. -->
+<div class="right">
+  <nav class="controls">
+    @if (overview()) {
+      <a class="overview" routerLink="/tag" [queryParams]="{ datum: date() }"
+        >Zurück zur Übersicht</a
+      >
+    }
+
+    @if (navigable()) {
+      <button type="button" (click)="shift.emit(-1)" [attr.aria-label]="backLabel()">
+        <app-icon name="back" />
+      </button>
+      <button type="button" (click)="today.emit()">Heute</button>
+      <button type="button" (click)="shift.emit(1)" [attr.aria-label]="forwardLabel()">
+        <app-icon name="forward" />
+      </button>
+
+      <!-- When narrow, the field shrinks to its icon: the date is already
+           there as a heading, and spelling it out a second time only costs
+           width. The field stays where it is, transparent behind the icon —
+           it remains the control, only its display disappears.
+
+           Who opens the picker depends on what one points with, because the
+           browsers disagree: Chrome opens it only from its own handle, which
+           is not visible here, Firefox from a click anywhere in the field —
+           and there our showPicker() and the browser's own cancelled each
+           other out within the same click. With a mouse the icon is
+           therefore a button and the field beneath it takes no clicks at
+           all. Under a finger it is the other way round: the field takes the
+           tap and the browser opens its own picker, because iOS Safari
+           ignores showPicker() for dates — without an error, without
+           anything happening. Either way exactly one place opens it.
+
+           No label around the two: it would have nothing to say that the
+           field's aria-label does not already say, and a click on a button
+           inside a label is a case one has to look up. -->
+      <span class="date">
+        <input
+          #picker
+          type="date"
+          [value]="date()"
+          (change)="dateSelected.emit($any($event.target).value)"
+          aria-label="Datum wählen"
+        />
+
+        <button
+          type="button"
+          class="date-icon"
+          (click)="picker.showPicker()"
+          tabindex="-1"
+          aria-hidden="true"
+        >
+          <app-icon name="calendar" />
+        </button>
+      </span>
+    }
+
+    @if (zoomable()) {
+      <span class="spans">
+        <a
+          routerLink="/tag"
+          [queryParams]="{ datum: date() }"
+          routerLinkActive="active"
+          #tag="routerLinkActive"
+          [attr.aria-current]="tag.isActive ? 'page' : null"
+          >Tag</a
+        >
+        <a
+          routerLink="/woche"
+          [queryParams]="{ datum: date() }"
+          routerLinkActive="active"
+          #woche="routerLinkActive"
+          [attr.aria-current]="woche.isActive ? 'page' : null"
+          >Woche</a
+        >
+      </span>
+    }
+  </nav>
+
+  <div class="extras">
+    @if (zoomable()) {
+      <!-- The map sits next to the switch, not in it: it is not a third zoom
+           level but a different question — not "when" but "who is here now".
+           An icon is enough; spelled out it would stand on a par with the
+           periods.
+
+           It behaves like a switch and therefore leads back too: pressed
+           again it returns to the day. Which is why it does not ask
+           routerLinkActive where it is — its target depends on the answer,
+           and the directive would then keep measuring against the target it
+           has just changed. -->
+      <a
+        class="map"
+        [routerLink]="onMap() ? '/tag' : '/karte'"
+        [queryParams]="onMap() ? { datum: date() } : null"
+        [class.active]="onMap()"
+        [attr.aria-current]="onMap() ? 'page' : null"
+        [title]="onMap() ? 'Zurück zum Kalender' : 'Übersichtskarte'"
+        [attr.aria-label]="onMap() ? 'Zurück zum Kalender' : 'Übersichtskarte'"
+      >
+        <app-icon name="map" />
+      </a>
+    }
+
+    <!-- The anonymous role can carry permissions without anybody being logged
+         in; access to the admin area still belongs behind the login. -->
+    @if (!session.isAnonymous() && session.canManageAnything()) {
+      <a class="admin" routerLink="/verwaltung" title="Verwaltung" aria-label="Verwaltung">
+        <app-icon class="icon" name="settings" />
+        <span class="text">Verwaltung</span>
+      </a>
+    }
+
+    <app-session-bar />
+  </div>
+</div>

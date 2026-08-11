@@ -1,0 +1,166 @@
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+
+  // Wherever a bar states a height for its controls, this button joins in;
+  // where none is stated it keeps its own. The fallback is what makes that
+  // difference — without it the declaration would fall away instead, which
+  // amounts to the same thing but only by accident.
+  button {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--control-height, 0);
+  }
+
+  .icon {
+    display: none;
+  }
+}
+
+// The same threshold as in the calendar chrome.
+@media (width < 48rem) {
+  .bar {
+    .icon {
+      display: inline-flex;
+      font-size: 1rem;
+    }
+
+    .text {
+      display: none;
+    }
+  }
+}
+
+button {
+  padding: 0.35rem 0.7rem;
+  font: inherit;
+  font-size: 0.85rem;
+  line-height: 1.2;
+  border: 1px solid var(--line-strong);
+  border-radius: 0.25rem;
+  background: var(--paper);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--surface-muted);
+  }
+
+  &.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--paper);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.login {
+  border: 1px solid var(--line-strong);
+  border-radius: 0.4rem;
+  padding: 1.25rem;
+  min-width: 18rem;
+
+  &::backdrop {
+    background: var(--scrim);
+  }
+
+  h2 {
+    margin: 0 0 0.75rem;
+    font-size: 1.1rem;
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    font-family: system-ui, sans-serif;
+  }
+
+  // One connected switch rather than a row of separate buttons: it is one
+  // choice and not several offers. Built like the zoom switch in the header —
+  // shared edge, rounding only on the outside, marked in --text-muted. The
+  // accent stays with the login button: what is selected is something other
+  // than what the click does.
+  .roles {
+    display: flex;
+  }
+
+  .role-choice {
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.95rem;
+    border-radius: 0;
+
+    // The inner edges lie on top of each other; otherwise there would be a
+    // double line.
+    &:not(:first-child) {
+      margin-left: -1px;
+    }
+
+    &:first-child {
+      border-radius: 0.25rem 0 0 0.25rem;
+    }
+
+    &:last-child {
+      border-radius: 0 0.25rem 0.25rem 0;
+    }
+
+    // Brought forward so that the selected role's dark edge does not
+    // disappear beneath its neighbour's.
+    &.selected {
+      position: relative;
+      background: var(--text-muted);
+      border-color: var(--text-muted);
+      color: var(--paper);
+    }
+  }
+
+  // Clipped rather than hidden — why is explained at the spot itself.
+  .username {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    border: 0;
+    clip-path: inset(50%);
+    overflow: hidden;
+  }
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    font-size: 0.85rem;
+  }
+
+  input {
+    padding: 0.4rem 0.5rem;
+    font: inherit;
+    border: 1px solid var(--line-strong);
+    border-radius: 0.25rem;
+  }
+
+  .actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.35rem;
+  }
+
+  .error {
+    margin: 0;
+    color: var(--danger-text);
+    font-size: 0.85rem;
+  }
+
+  .hint {
+    margin: 0;
+    color: var(--text-soft);
+    font-size: 0.85rem;
+  }
+}

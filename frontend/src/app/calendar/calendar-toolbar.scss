@@ -1,0 +1,254 @@
+:host {
+  // One height for everything in the bar. Left to the boxes, it is the date
+  // field that decides: a date input is taller than a button with the same
+  // padding and font — barely in Chrome, noticeably in Safari — and since a
+  // flex row stretches its items, that surplus went to every control beside
+  // it. Named once here, the row no longer depends on what an engine thinks
+  // a date field is.
+  --control-height: 2rem;
+
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1rem 1.5rem 0.5rem;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+// Centred rather than stretched: a control that turns out taller than the
+// others should stand out on its own instead of pulling its neighbours up
+// with it.
+.right,
+.controls,
+.extras {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.controls {
+  button,
+  input,
+  .date-icon,
+  .overview {
+    border: 1px solid var(--line-strong);
+    background: var(--paper);
+    padding: 0.35rem 0.7rem;
+    font: inherit;
+    font-size: 0.9rem;
+    // Spelled out rather than left to the default, so that the text inside
+    // sets the same height everywhere and not one height per engine.
+    line-height: 1.2;
+    border-radius: 0.25rem;
+    cursor: pointer;
+
+    &:hover {
+      background: var(--surface-muted);
+    }
+  }
+
+  // The height is a floor, not a measurement: whatever a browser's font
+  // makes of the text may still grow beyond it, nothing gets cut off.
+  button,
+  .date-icon,
+  .overview {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--control-height);
+  }
+
+  // The one control given its height instead of allowed to find it — its
+  // box is the one the engines disagree about.
+  input[type='date'] {
+    height: var(--control-height);
+    cursor: text;
+  }
+
+  // Without this the span would wrap the field in a line box of its own and
+  // add its leading on top of the height just fixed.
+  .date {
+    display: inline-flex;
+  }
+
+  .date-icon {
+    display: none;
+  }
+
+  .overview {
+    margin-right: 0.5rem;
+    color: inherit;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+}
+
+.admin {
+  margin-left: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+
+  &:hover {
+    color: var(--ink);
+  }
+
+  .icon {
+    display: none;
+  }
+}
+
+.map {
+  display: flex;
+  align-items: center;
+  min-height: var(--control-height);
+  margin-left: 0.25rem;
+  border: 1px solid var(--line-strong);
+  background: var(--paper);
+  border-radius: 0.25rem;
+  padding: 0.35rem 0.6rem;
+  color: inherit;
+
+  &:hover {
+    background: var(--surface-muted);
+  }
+
+  &.active {
+    background: var(--text-muted);
+    border-color: var(--text-muted);
+    color: var(--paper);
+  }
+}
+
+.spans {
+  display: flex;
+  margin-left: 0.5rem;
+
+  a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--control-height);
+    border: 1px solid var(--line-strong);
+    background: var(--paper);
+    padding: 0.35rem 0.7rem;
+    font-size: 0.9rem;
+    line-height: 1.2;
+    color: inherit;
+    text-decoration: none;
+
+    &:hover {
+      background: var(--surface-muted);
+    }
+
+    &:first-child {
+      border-radius: 0.25rem 0 0 0.25rem;
+    }
+
+    &:last-child {
+      border-radius: 0 0.25rem 0.25rem 0;
+      margin-left: -1px;
+    }
+
+    &.active {
+      background: var(--text-muted);
+      border-color: var(--text-muted);
+      color: var(--paper);
+    }
+  }
+}
+
+// The same threshold as in the calendar chrome: below the grid's minimum
+// width it scrolls, and the bar gives up whatever it can spare.
+@media (width < 48rem) {
+  // Two rows instead of one: the heading gets what leads out of the calendar
+  // as its company, the paging keeps the row below to itself. Nothing here
+  // needs to know its neighbours' widths, so nothing has to be cut off.
+  :host {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 0.75rem 0.5rem;
+  }
+
+  // Dissolved, so that its two halves can go into different rows.
+  .right {
+    display: contents;
+  }
+
+  h1 {
+    grid-area: 1 / 1;
+    font-size: 1.25rem;
+  }
+
+  .extras {
+    grid-area: 1 / 2;
+  }
+
+  // Wrapping instead of overflowing: with the way back to the overview the
+  // row can become longer than the screen, and a button that lies outside is
+  // worse than one a line further down.
+  .controls {
+    grid-area: 2 / 1 / auto / -1;
+    flex-wrap: wrap;
+  }
+
+  // Without paging, the controls are only the zoom switch — that fits next to
+  // the heading, and the wrapper stays whole for it.
+  :host(.no-paging) .right {
+    display: flex;
+    grid-area: 1 / 2;
+  }
+
+  // Out of hiding, and back into the row's shared height along with it.
+  .controls .date-icon {
+    display: inline-flex;
+  }
+
+  // When narrow, only the cog remains of the route into the admin area — an
+  // underlined icon would look like an error.
+  .admin {
+    text-decoration: none;
+    font-size: 1rem;
+
+    .icon {
+      display: block;
+    }
+
+    .text {
+      display: none;
+    }
+  }
+
+  .date {
+    position: relative;
+    display: grid;
+
+    // The field lies over the button, invisible and unclickable — the button
+    // opens the picker, the field only holds the value and stays reachable by
+    // keyboard. This is not for typing, this is for looking something up.
+    input {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      padding: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    // Under a finger the invisible field takes the tap after all: on a touch
+    // device every browser opens its picker from the field itself, and iOS
+    // Safari opens it from nowhere else — showPicker() returns there without
+    // an error and without a picker. It lies over the icon anyway, so the tap
+    // target stays the one you can see.
+    @media (pointer: coarse) {
+      input {
+        pointer-events: auto;
+      }
+    }
+  }
+}

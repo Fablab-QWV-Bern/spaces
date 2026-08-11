@@ -1,0 +1,81 @@
+<!-- The role name stands on its own: next to a logout button, "Angemeldet
+     als" says nothing that is not already there. When narrow, only one glyph
+     each remains of the buttons; they are labelled nonetheless — via
+     aria-label and title, not via visible text. -->
+<div class="bar">
+  @if (session.isAnonymous()) {
+    <button type="button" (click)="open()" title="Anmelden" aria-label="Anmelden">
+      <app-icon class="icon" name="login" />
+      <span class="text">Anmelden</span>
+    </button>
+  } @else {
+    <strong class="role">{{ session.roleName() }}</strong>
+    <button type="button" (click)="logout()" title="Abmelden" aria-label="Abmelden">
+      <app-icon class="icon" name="logout" />
+      <span class="text">Abmelden</span>
+    </button>
+  }
+</div>
+
+<dialog #dialog class="login">
+  <form method="dialog" (submit)="$event.preventDefault(); submit()">
+    <h2>Anmelden</h2>
+
+    @if (loadingRoles()) {
+      <p class="hint">Wird geladen …</p>
+    } @else {
+      <div class="roles" role="group" aria-label="Rolle">
+        @for (role of roles(); track role) {
+          <button
+            type="button"
+            class="role-choice"
+            [class.selected]="selectedRole() === role"
+            [attr.aria-pressed]="selectedRole() === role"
+            (click)="selectRole(role)"
+          >
+            {{ role }}
+          </button>
+        }
+      </div>
+    }
+
+    <!-- The browser's password manager needs a username alongside the
+         password, otherwise it does not know what to file the saved entry
+         under and when to offer it. It is not visible here — the role is
+         already above as a switch. It is taken out of the layout by clipping
+         rather than via hidden or display: none — what the browser does not
+         render at all, it does not count as a field either. -->
+    <input
+      class="username"
+      type="text"
+      name="username"
+      autocomplete="username"
+      [value]="selectedRole() ?? ''"
+      readonly
+      tabindex="-1"
+      aria-hidden="true"
+    />
+
+    <label>
+      <span>Kennwort</span>
+      <input
+        #passwordField
+        type="password"
+        [ngModel]="password()"
+        (ngModelChange)="password.set($event)"
+        name="password"
+        autocomplete="current-password"
+        required
+      />
+    </label>
+
+    @if (error(); as message) {
+      <p class="error" role="alert">{{ message }}</p>
+    }
+
+    <div class="actions">
+      <button type="submit" class="primary" [disabled]="busy() || !selectedRole()">Anmelden</button>
+      <button type="button" (click)="close()">Abbrechen</button>
+    </div>
+  </form>
+</dialog>

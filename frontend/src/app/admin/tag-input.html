@@ -1,0 +1,49 @@
+<div #root class="tag-input" (focusin)="open.set(true)" (focusout)="onFocusOut($event)">
+  <div class="tags">
+    @for (tag of value(); track tag) {
+      <span class="tag">
+        {{ tag }}
+        <button type="button" [attr.aria-label]="tag + ' entfernen'" (click)="remove(tag)">
+          <app-icon name="remove" />
+        </button>
+      </span>
+    }
+
+    <input
+      #field
+      type="text"
+      [attr.placeholder]="placeholder()"
+      autocomplete="off"
+      spellcheck="false"
+      (input)="onInput($event)"
+      (keydown)="onKeydown($event)"
+      (blur)="commit()"
+    />
+  </div>
+
+  @if (open() && matches().length) {
+    <div class="suggestions">
+      @for (tag of matches(); track tag) {
+        <!--
+          mousedown rather than click to prevent: otherwise the field would
+          lose focus before the click arrives — and the blur would commit the
+          half-typed tag.
+        -->
+        <!--
+          Not in the tab order: from here Tab leads to the next form field,
+          not through the suggestions. Whoever is typing gets there faster via
+          the completion.
+        -->
+        <button
+          type="button"
+          class="suggestion"
+          tabindex="-1"
+          (mousedown)="$event.preventDefault()"
+          (click)="choose(tag)"
+        >
+          {{ tag }}
+        </button>
+      }
+    </div>
+  }
+</div>
