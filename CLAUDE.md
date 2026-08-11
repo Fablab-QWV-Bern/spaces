@@ -273,15 +273,22 @@ changing the spec first.
   only bookings. A card of its own would have written the booking half a second
   time, including its routes into the form.
 - **On a wide screen the map gets a column beside it** (`agenda.ts`): the day's
-  remaining bookings, grouped into "Aktuell" and one heading per hour in which
-  something begins. It answers what the plan cannot — not "is this bench taken"
-  but "what is still coming today"; the map has no date and no time axis. Grouped
-  by the hour and not by the exact minute, because on a quarter-hour grid the
-  latter would produce a heading per booking. One row per booking rather than per
-  occupied workplace: a booking that blocks three neighbours is one event, and
-  three lines would read as three. Below the threshold the column disappears
-  entirely instead of shrinking — everything in it is on the map as well, and the
-  plan needs the width more.
+  remaining bookings, grouped into "Aktuell" and the part of the day in which
+  something begins — Vormittag, Nachmittag, Abend, cut at noon and at five within
+  the 08:00–21:00 opening hours. It answers what the plan cannot — not "is this
+  bench taken" but "what is still coming today"; the map has no date and no time
+  axis. Three groups and not one per hour, because a thinly booked day would
+  otherwise produce a heading per booking — and because that is how the day is
+  talked about in the workshop. One row per booking rather than per occupied
+  workplace: a booking that blocks three neighbours is one event, and three lines
+  would read as three. Below the threshold the column disappears entirely instead
+  of shrinking — everything in it is on the map as well, and the plan needs the
+  width more.
+- **The plan's width is capped at 40rem, and the room left over goes to its
+  left.** Its aspect ratio is fixed, so every extra pixel of width is paid for in
+  height and thus in vertical scrolling — and the labels are legible long before
+  the plan fills a wide window. Left rather than centred, so that it stays next
+  to the agenda column instead of drifting away from it.
 - **The map is not a third zoom level.** It has no date but the present moment,
   and asks for it afresh every minute — which is why its button sits next to the
   view switcher rather than in it, and its header carries neither paging nor a

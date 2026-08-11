@@ -53,7 +53,7 @@
 @media (width >= 44rem) {
   .agenda {
     display: block;
-    flex: 0 0 18rem;
+    flex: 0 0 30%;
     overflow-y: auto;
     border-left: 1px solid var(--line);
     background: var(--surface-sunken);
@@ -122,14 +122,22 @@
   }
 }
 
-// The plan takes the full width and becomes as tall as its aspect ratio demands
-// — for the portrait floor plan that is more than the window offers, so it
-// scrolls. Better large and scrolled than fully visible and illegible: on a plan
-// one wants to read the labels.
+// The plan takes the width it is given and becomes as tall as its aspect ratio
+// demands — for the portrait floor plan that is more than the window offers, so
+// it scrolls. Better large and scrolled than fully visible and illegible: on a
+// plan one wants to read the labels.
+//
+// The width is capped all the same. Without a cap a wide window makes the plan
+// wider and, because the ratio is fixed, taller with it — the labels are legible
+// long before that, and every further pixel of width is paid for in vertical
+// scrolling. The room left over goes to the left, so that the plan stays next to
+// the list it belongs with instead of drifting away from it.
 //
 // It is also what the anchor's coordinates count from, hence `relative`.
 .plan {
   position: relative;
+  max-width: 40rem;
+  margin-left: auto;
   background: var(--paper);
 }
 

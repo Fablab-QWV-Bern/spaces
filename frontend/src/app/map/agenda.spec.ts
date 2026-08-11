@@ -43,57 +43,71 @@ describe('agendaFor', () => {
     expect(agendaFor([booking({})], nameOf, now('11:00'))).toEqual([]);
   });
 
-  it('names the hour in which something begins', () => {
+  it('names the part of the day in which something begins', () => {
     const groups = agendaFor(
       [booking({ startTime: at('17:30'), endTime: at('19:00') })],
       nameOf,
       now('10:00'),
     );
 
-    expect(groups.map((group) => group.heading)).toEqual(['ab 17 Uhr']);
+    expect(groups.map((group) => group.heading)).toEqual(['Abend']);
     expect(groups[0].entries[0].timeRange).toBe('17:30–19:00');
   });
 
-  it('collects an hour into one group', () => {
+  it('cuts the parts at noon and at five', () => {
+    const headingAt = (time: string) =>
+      agendaFor([booking({ startTime: at(time), endTime: at('21:00') })], nameOf, now('07:00'))[0]
+        .heading;
+
+    expect(headingAt('08:00')).toBe('Vormittag');
+    expect(headingAt('11:59')).toBe('Vormittag');
+    expect(headingAt('12:00')).toBe('Nachmittag');
+    expect(headingAt('16:59')).toBe('Nachmittag');
+    expect(headingAt('17:00')).toBe('Abend');
+    expect(headingAt('20:45')).toBe('Abend');
+  });
+
+  it('collects a part of the day into one group', () => {
     const groups = agendaFor(
       [
         booking({ id: 'a', startTime: at('17:00'), endTime: at('18:00') }),
-        booking({ id: 'b', startTime: at('17:45'), endTime: at('18:30') }),
+        booking({ id: 'b', startTime: at('19:45'), endTime: at('20:30') }),
       ],
       nameOf,
       now('10:00'),
     );
 
     expect(groups).toHaveLength(1);
+    expect(groups[0].heading).toBe('Abend');
     expect(groups[0].entries.map((entry) => entry.id)).toEqual(['a', 'b']);
   });
 
-  it('opens a group only for an hour that has something in it', () => {
+  it('opens a group only for a part that has something in it', () => {
     const groups = agendaFor(
       [
         booking({ id: 'abends', startTime: at('19:00'), endTime: at('20:00') }),
-        booking({ id: 'gleich', startTime: at('17:00'), endTime: at('18:00') }),
+        booking({ id: 'gleich', startTime: at('11:00'), endTime: at('12:00') }),
       ],
       nameOf,
-      now('10:00'),
+      now('08:00'),
     );
 
-    // Nothing between 17 and 19, so no empty heading in between.
-    expect(groups.map((group) => group.heading)).toEqual(['ab 17 Uhr', 'ab 19 Uhr']);
+    // Nothing in the afternoon, so no empty heading in between.
+    expect(groups.map((group) => group.heading)).toEqual(['Vormittag', 'Abend']);
   });
 
-  it('puts the running group first, then the hours in order', () => {
+  it('puts the running group first, then the parts in the order of the day', () => {
     const groups = agendaFor(
       [
         booking({ id: 'spaet', startTime: at('19:00'), endTime: at('20:00') }),
         booking({ id: 'laeuft', startTime: at('09:00'), endTime: at('11:00') }),
-        booking({ id: 'frueher', startTime: at('17:00'), endTime: at('18:00') }),
+        booking({ id: 'frueher', startTime: at('13:00'), endTime: at('14:00') }),
       ],
       nameOf,
       now('10:00'),
     );
 
-    expect(groups.map((group) => group.heading)).toEqual(['Aktuell', 'ab 17 Uhr', 'ab 19 Uhr']);
+    expect(groups.map((group) => group.heading)).toEqual(['Aktuell', 'Nachmittag', 'Abend']);
   });
 
   it('sorts within a group by start time', () => {
