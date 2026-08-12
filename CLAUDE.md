@@ -234,12 +234,18 @@ changing the spec first.
   second source of truth and would not travel along the next time the file is
   swapped. It is measured, moved into the `defs` — where it is no longer drawn but
   stays reachable for `<use>` — and then hung in once per occupied workplace.
-  Measure first, then stow: what is not drawn has no bounding box either. The
-  `<use>` goes in as a *sibling of the shape*, not into a layer of its own: there
-  it is placed in exactly the user space the shape was measured in, whatever
-  transforms the plan puts around its groups, and one translation settles it for
-  good — nothing to recompute when the window changes size. A plan without a
-  figure is not an error; the outline then carries the state alone.
+  Measure first, then stow: what is not drawn has no bounding box either. One
+  translation settles each figure for good — nothing to recompute when the window
+  changes size. A plan without a figure is not an error; the outline then carries
+  the state alone.
+- **The figures stand in the top layer**, the one the plan drew its figure in,
+  moved to the end of the document — SVG knows no `z-index`, so being drawn over
+  everything means standing last. Beside the shape they would be run across by
+  the layers that follow it, the arrows and the workplace names, and a person
+  half behind a label reads as a drawing error. The price is that the shape is
+  measured in one layer and placed in another, so the two have to share a user
+  space: in `karte.svg` none of the layers carries a transform. A plan that
+  transformed them would need the shape's box mapped between the two.
 - **A figure means presence, not occupancy.** It appears only where somebody is
   actually standing — not for what is merely imminent, and not for a blockage,
   where the bench is unusable because somebody is at *another* one. Both of those

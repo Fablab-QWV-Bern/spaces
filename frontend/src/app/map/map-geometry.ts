@@ -37,10 +37,11 @@ const FOOT_OVERLAP = 5;
  * scale, and a workbench is wider than a person. Stretched, a giant would stand
  * at the planing bench and a dwarf at the soldering station.
  *
- * Both boxes have to be measured in the same user space. They are: the `<use>`
- * is hung in as a sibling of the shape it belongs to, so it is placed in exactly
- * the space that shape was measured in — and what `<use>` references brings its
- * own coordinates along, untouched by wherever in the plan it was drawn.
+ * Both boxes have to be measured in the same user space, and in the plan they
+ * are: its layers sit side by side without a transform between them, so the
+ * shape's box counts unchanged in the layer the `<use>` is hung into. What
+ * `<use>` references brings its own coordinates along anyway, untouched by
+ * wherever in the plan it was drawn.
  */
 export function standingOn(target: Box, figure: Box): string {
   const dx = middle(target.x, target.width) - middle(figure.x, figure.width);

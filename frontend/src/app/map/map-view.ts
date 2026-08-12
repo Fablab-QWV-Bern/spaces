@@ -100,6 +100,11 @@ export class MapView {
    *  plan brings none along. */
   private readonly figureBox = signal<Box | null>(null);
 
+  /** The layer the standing figures are hung into — the one the plan drew its
+   *  figure in, moved to the top of the stack. Null while no plan is grafted or
+   *  the plan brings no figure along. */
+  private layer: Element | null = null;
+
   /** The figures currently standing, by workplace. Not a signal: they are not
    *  rendered but hung into the grafted tree, and this is only the note of what
    *  is already there. */
@@ -315,11 +320,18 @@ export class MapView {
   }
 
   /**
-   * Measures the figure the plan brings along and puts it away.
+   * Measures the figure the plan brings along, puts it away, and keeps the layer
+   * it was drawn in as the place the standing figures go.
    *
    * Measure first, then stow: what is not drawn has no bounding box either. In
    * the `defs` it is no longer drawn but stays reachable for `<use>` — without
    * this it would go on standing at the one spot the designer parked it.
+   *
+   * The layer it leaves behind is empty afterwards and moves to the end of the
+   * stack, because SVG knows no `z-index`: what is to be drawn over everything
+   * else has to stand last in the document. In this plan that is where its
+   * `#personen` already sits, so the move changes nothing — it only says that
+   * the figures belong on top, whatever order the next file is saved in.
    *
    * A plan without a figure is not an error; then the marking on the shapes has
    * to carry the state on its own. That is the same tolerance the ids get: what
@@ -333,7 +345,14 @@ export class MapView {
     }
 
     this.figureBox.set(boxOf(figure));
+
+    const layer = figure.parentElement;
     defsOf(plan).append(figure);
+
+    if (layer) {
+      layer.parentElement?.append(layer);
+      this.layer = layer;
+    }
   }
 
   /**
@@ -381,9 +400,13 @@ export class MapView {
    * at another one. A figure there would place a person where none is. Both cases
    * keep their outline; only the figure is reserved for presence.
    *
-   * The `<use>` is hung in beside the shape rather than in a layer of its own:
-   * there it is measured in the same user space it is placed in, whatever
-   * transforms the plan may put around its groups.
+   * The `<use>` goes into the figures' layer, on top of everything, and not
+   * beside the shape it belongs to: beside it, the layers the plan draws
+   * afterwards — the arrows and the workplace names — would run across the
+   * figure, and a person half behind a label reads as a drawing error. What that
+   * costs is a shared coordinate system: the shape is measured in its own layer
+   * and placed in another, so the two have to be the same user space. In this
+   * plan they are, because none of its layers carries a transform.
    */
   private stand(
     workplaceId: string,
@@ -394,12 +417,12 @@ export class MapView {
     const wanted = figure !== null && state?.state === 'busy' && !state.details.isBlockage;
     const standing = this.figures.get(workplaceId);
 
-    if (wanted && !standing) {
+    if (wanted && !standing && this.layer) {
       const use = document.createElementNS(SVG_NAMESPACE, 'use');
 
       use.setAttribute('href', `#${FIGURE_ID}`);
       use.setAttribute('transform', standingOn(boxOf(element), figure));
-      element.after(use);
+      this.layer.append(use);
       this.figures.set(workplaceId, use);
     } else if (!wanted && standing) {
       standing.remove();
