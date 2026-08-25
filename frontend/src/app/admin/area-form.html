@@ -15,24 +15,88 @@
       <div class="field">
         <span>Farbe</span>
 
-        <div class="swatches">
-          @for (swatch of swatches; track swatch) {
-            <button
-              type="button"
-              class="swatch"
-              [class.chosen]="areaForm.color().value() === swatch"
-              [style.background]="swatch"
-              [attr.aria-label]="'Farbe ' + swatch"
-              [attr.aria-pressed]="areaForm.color().value() === swatch"
-              (click)="pick(swatch)"
-            ></button>
-          }
+        <div class="picker">
+          <div class="preview" [style.background]="areaForm.color().value()">
+            <span>Balken im Kalender</span>
+          </div>
+
+          <label class="slider">
+            <span>Farbton</span>
+            <input
+              type="range"
+              [min]="range.h.min"
+              [max]="range.h.max"
+              [step]="range.h.step"
+              [value]="channels().h"
+              [style.backgroundImage]="hueRail()"
+              (input)="setChannel('h', $event)"
+            />
+          </label>
+
+          <label class="slider">
+            <span>Buntheit</span>
+            <span class="rail">
+              <input
+                type="range"
+                [min]="range.c.min"
+                [max]="range.c.max"
+                [step]="range.c.step"
+                [value]="channels().c"
+                [style.backgroundImage]="chromaRail()"
+                (input)="setChannel('c', $event)"
+              />
+              <!-- Where the recommended value sits. Drawn rather than native: a
+                   range input shows the marks of a datalist only as long as it
+                   wears the system's own look, and these rails are painted in
+                   what they set. -->
+              <span class="mark" [style.left.%]="chromaMark" aria-hidden="true"></span>
+            </span>
+          </label>
+
+          <label class="slider">
+            <span>Helligkeit</span>
+            <span class="rail">
+              <input
+                type="range"
+                [min]="range.l.min"
+                [max]="range.l.max"
+                [step]="range.l.step"
+                [value]="channels().l"
+                [style.backgroundImage]="lightnessRail()"
+                (input)="setChannel('l', $event)"
+              />
+              <span class="mark" [style.left.%]="lightnessMark" aria-hidden="true"></span>
+            </span>
+          </label>
         </div>
+
+        <span class="note">
+          Die Marke auf den beiden unteren Reglern ist der empfohlene Wert ({{ recommended.c }} und
+          {{ recommended.l }}). Bereiche, die sich nur im Farbton unterscheiden, bleiben im Kalender
+          untereinander lesbar — die Schrift auf den Balken ist dunkel.
+        </span>
+
+        @if (swatches().length) {
+          <span class="note">Farben aus dem Grundriss</span>
+          <div class="swatches">
+            @for (swatch of swatches(); track swatch.color) {
+              <button
+                type="button"
+                class="swatch"
+                [class.chosen]="swatch.key === chosenKey()"
+                [style.background]="swatch.color"
+                [attr.aria-label]="'Farbe ' + swatch.color"
+                [attr.aria-pressed]="swatch.key === chosenKey()"
+                (click)="pick(swatch.color)"
+              ></button>
+            }
+          </div>
+        }
 
         <input type="text" class="color-value" [formField]="areaForm.color" spellcheck="false" />
         <span class="note">
-          Jede CSS-Farbe ist erlaubt. Die Vorschläge unterscheiden sich nur im Farbton — so bleiben
-          die Balken im Kalender untereinander lesbar.
+          Gespeichert wird dieser Wert. Jede CSS-Farbe ist erlaubt — die Regler schreiben
+          <code>oklch(…)</code>, der Grundriss zeichnet in <code>rgb(…)</code>.
         </span>
       </div>
     </section>

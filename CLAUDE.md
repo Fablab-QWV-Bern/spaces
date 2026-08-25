@@ -248,17 +248,85 @@ changing the spec first.
   transformed them would need the shape's box mapped between the two.
 - **A figure means presence, not occupancy.** It appears only where somebody is
   actually standing — not for what is merely imminent, and not for a blockage,
-  where the bench is unusable because somebody is at *another* one. Both of those
+  where the bench is unusable because somebody is at _another_ one. Both of those
   keep their outline. Marking them with a figure would put a person where none is.
-- **The state shows in the outline, not in the fill.** The shapes carry their
-  area's colour as an inline `fill`, and inline beats any stylesheet. Overriding
-  it would cost an `!important` and, worse, the information about which area a
-  bench belongs to. `soon-busy` is additionally dashed, so the two do not depend
+- **The colour of a bench comes from its area, not from the plan.** The file
+  draws them in colours of its own; `MapView` writes the area's `color` over
+  them, so the map says the same thing as the calendar's blocks and follows a
+  workplace moved into another area without the plan being redrawn. It arrives
+  as `--area-color` on the shape and is painted in `map-view.scss`, one rule for
+  all of them, marked `.tinted`; the strays' grey the same way through
+  `--obstacle-fill` on the plan's root. Both rules need `!important`: the plan
+  writes its own fills inline, and only an important author declaration outranks
+  a style attribute. That is the whole reason for them, and it is worth it —
+  with the fill written onto every shape by hand, no rule in this file could ever
+  reach it, and a state, a hover or a defect could only ever be said in the
+  outline. The class carries the decision rather than the variable alone: a
+  workplace whose area is unknown stays untinted and keeps the drawn colour,
+  where an undefined variable would make the declaration invalid and drop the
+  bench to black. Stripping the fills out of `karte.svg` instead was considered
+  and dropped — those very fills are what `planPalette` offers as swatches in the
+  area form, and every re-export from the drawing tool would put them back. The seeded areas meet the plan
+  halfway: those with benches on it carry the `rgb(…)` the plan draws them in
+  (`WorkshopSeeder`), so the overwrite is invisible where the two agree and shows
+  exactly where they disagree — `cnc-holz` is drawn as Fablab but configured as
+  Holz, `gravurlaser` drawn as a laser but configured as Metall. The
+  configuration wins there, and that is the point of writing the fill at all.
+  Kurse and Spezial have no bench on the plan and keep an `oklch(…)` of their
+  own. The value goes in as it comes:
+  raising the chroma for the small shapes was tried and taken out again — the map
+  showing a different colour from the calendar is the worse trade. (An earlier
+  note here claimed the boost was swallowed by the gamut anyway. That is wrong,
+  and measured: painting `oklch(L 0.2 H)` against `oklch(L 0.32 H)` gives a
+  different pixel at every hue, at both 0.6 and 0.8 lightness. The boost did
+  something; it was simply not worth the disagreement with the calendar.)
+- **The area's colour is set on three sliders, not picked from a row.** Hue,
+  chroma and lightness in oklch; the latter two carry a mark at the recommended
+  0.1 and 0.8. A fixed row of hues was there before and could not express what
+  the areas actually carry since they took their colours from the floor plan.
+  The mark is drawn and does not catch: a detent was tried and taken out again.
+  It has to hold against a dragging pointer and let go of a pressed arrow key,
+  and from the same `input` event the two cannot be had — holding means writing
+  the value back, which fights the drag, and a slider that twitches is worse than
+  one that goes where it is pushed. What the mark says is where the value
+  belongs, which was the useful half. Below the sliders the
+  plan's own colours as swatches, read out of `karte.svg` (`planPalette` in
+  `map/plan.ts`) rather than listed a second time. Each rail is painted in what
+  it sets, and the hue rail is a gradient between two identical colours with
+  `longer hue` — that is what makes it a full circle. Stops every 60° would look
+  the same at a glance and be wrong: between them the interpolation runs on the
+  chord through the colour circle instead of along its arc, and the chroma sags
+  to 0.087 of the 0.1 it claims. The rails bind `background-image` and not the
+  `background` shorthand: the shorthand resets `background-origin` to
+  `padding-box`, and inline beats the stylesheet — the gradient is then computed
+  one image narrower than the box it is painted on, and `repeat` fills the last
+  pixel column with the start of the next tile. On the lightness rail that is the
+  darkest colour it has, sitting where the rail should be at its lightest. No off-the-shelf picker:
+  they all offer three free axes, and two thirds of that would have to be
+  configured away again. Conversions are the browser's — `color-mix(in oklch, x,
+x)` hands back any CSS colour as `oklch(…)`, so a value stored as `rgb(…)`
+  still moves the sliders without a colour space conversion in the code. The
+  same trick decides whether a swatch is the current colour: comparing the
+  strings would answer no for `rgb(255,219,73)` against `rgb(255, 219, 73)`.
+- **A bench the configuration does not know becomes an obstacle.** The plan draws
+  more workplaces than the workshop rents out; in their drawn colour they look
+  bookable, while a click on them does nothing and nobody is ever shown at them.
+  They therefore take the fill of the fixed obstacles — the Striebig, the saw, the
+  wood store — and read as part of the room. That grey is taken from the plan
+  rather than from the palette, because two nearly identical greys next to each
+  other look like a mistake. For this the map asks the file for two layer names
+  besides the workplace identifiers: `Arbeitsplätze` says which shapes were meant
+  as benches, `Hindernisse` where their colour comes from. A plan carrying neither
+  leaves the shapes as drawn.
+- **The state shows in the outline, not in the fill.** The fill is already spoken
+  for by the area — a state in it would be two facts on one surface, of which
+  only the newer would be legible. `soon-busy` is additionally dashed, so the two do not depend
   on colour alone. What counts as soon is half an hour — `SOON_MINUTES` in
   `occupancy.ts`. The pointer does reach the fill, but through
   `filter: brightness()` rather than a colour: a filter works on whatever it
-  finds, needs no `!important`, and brings no shade the palette would have to
-  know about.
+  finds — the area's colour, the strays' grey — and brings no shade the palette
+  would have to know about. It stays a choice now that the fill is reachable
+  from the stylesheet, not a workaround.
 - **The plan takes no clicks, only the workplaces do.** `.drawing` is
   `pointer-events: none` and `.workplace` switches it back on. Without that a
   click on a workplace's own label would go nowhere: the names are drawn in a
@@ -436,9 +504,10 @@ on every deployment.
 - Xdebug is loaded on the server (`50-xdebug.ini`). If `xdebug.mode` is not `off`,
   that costs noticeable performance.
 - The four `_3d-drucker-*` in `frontend/public/karte.svg`: the plan shows four side
-  by side, the configuration knows only three besides the XL. Until that is
-  decided they stay empty — not an error, but no information either. The rest of
-  the renaming table in `spec/karte-kennungen.markdown` is done.
+  by side, the configuration knows only three besides the XL — as with `loeten-2`,
+  where it knows one bench. Until that is decided they show as obstacles (see
+  below), which says "not bookable" but not why. The rest of the renaming table in
+  `spec/karte-kennungen.markdown` is done.
 - Defective and disabled workplaces are not marked on the map. Free, occupied and
   about to be occupied are; those two would need a third and fourth look, and it
   is not settled whether the map is where one wants to read them.

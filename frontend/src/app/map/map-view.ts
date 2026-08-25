@@ -21,12 +21,10 @@ import { Icon } from '../shared/icon';
 import { agendaFor } from './agenda';
 import { Box, standingOn } from './map-geometry';
 import { Occupancy, occupancyAt } from './occupancy';
+import { OBSTACLE_LAYER_ID, PLAN_URL, WORKPLACE_LAYER_ID } from './plan';
 
 /** How often the map asks again who is here now. */
 const REFRESH_MS = 60_000;
-
-/** Where the floor plan lives. It is shipped as a file, see below. */
-const PLAN_URL = '/karte.svg';
 
 /**
  * The figure's identifier in the plan. Part of the contract with the file, just
@@ -155,6 +153,11 @@ export class MapView {
    */
   protected readonly agenda = computed(() =>
     agendaFor(this.store.bookings(), this.store.nameOf(), this.now()),
+  );
+
+  /** Every area's colour, by area — the same value the calendar's blocks carry. */
+  private readonly colorOfArea = computed(
+    () => new Map(this.store.areas().map((area) => [area.id, area.color])),
   );
 
   /** Which workplaces are occupied or about to be, and by whom. */
@@ -356,23 +359,50 @@ export class MapView {
   }
 
   /**
-   * Sets the state on the workplace shapes: a class for the marking, and the
-   * attributes that make a shape reachable by keyboard.
+   * Sets the state on the workplace shapes: the area's colour, a class for the
+   * marking, and the attributes that make a shape reachable by keyboard.
+   *
+   * The colour comes from the configuration and not from the file. The plan draws
+   * its benches in colours of its own, but which area a bench belongs to is
+   * decided in the admin area — and a colour that says something different there
+   * from what it says in the calendar is worse than none at all. So the area's
+   * colour is handed over as `--area-color` and the stylesheet paints with it,
+   * over the one the designer set: whoever moves a bench into another area sees
+   * it on the map without the plan having to be redrawn.
    *
    * A workplace with no shape on the plan is skipped, and a shape with no
-   * workplace stays as it is drawn — neither is an error, but the expected state
-   * of a map that is drawn by hand.
+   * workplace is greyed out — neither is an error, but the expected state of a map
+   * that is drawn by hand. A workplace whose area is unknown keeps the drawn
+   * colour rather than losing its fill.
    */
   private mark(plan: SVGSVGElement | null, occupancy: Map<string, Occupancy>): void {
     if (!plan) {
       return;
     }
 
+    const colorOfArea = this.colorOfArea();
+
+    this.greyStrays(plan);
+
     for (const workplace of this.store.workplaces()) {
       const element = plan.querySelector<SVGGraphicsElement>(`#${CSS.escape(workplace.id)}`);
 
       if (!element) {
         continue;
+      }
+
+      const color = colorOfArea.get(workplace.areaId);
+
+      // The colour goes in as a variable, and the fill itself is set in the
+      // stylesheet. There it can be reasoned about — a hover, a state, a defect
+      // may reach the fill, which a paint written here would have shut out for
+      // good. The class is what says the fill is ours: without a colour it stays
+      // off, and the bench keeps the one the plan drew it in rather than losing
+      // its fill to a variable nobody defined.
+      element.classList.toggle('tinted', color !== undefined);
+
+      if (color) {
+        element.style.setProperty('--area-color', color);
       }
 
       const state = occupancy.get(workplace.id);
@@ -389,6 +419,46 @@ export class MapView {
       element.setAttribute('aria-label', describe(workplace, state));
 
       this.stand(workplace.id, element, state);
+    }
+  }
+
+  /**
+   * Marks the benches the configuration does not know.
+   *
+   * They are drawn like the others — the four 3D printers where there are three,
+   * a machine that stands in the room without being bookable — and in the plan's
+   * colours they look like a workplace of some area. But nothing opens when they
+   * are clicked and nobody is ever shown at them: a promise the map cannot keep.
+   * So they take the colour of the Striebig and the saw and are read as what
+   * they are, part of the room.
+   *
+   * That colour is taken from the plan and not from the palette. Two greys that
+   * are nearly but not quite the same look like a mistake, and the drawing is
+   * where this one is decided. Where the plan carries neither layer, the shapes
+   * stay as they were drawn — the same tolerance the identifiers get.
+   *
+   * Ordering: this runs before the workplaces are marked, so a shape that arrives
+   * in the configuration later loses the mark again in the same pass.
+   */
+  private greyStrays(plan: SVGSVGElement): void {
+    const shapes = plan.querySelectorAll<SVGElement>(`#${CSS.escape(WORKPLACE_LAYER_ID)} > *`);
+    const obstacle = plan.querySelector<SVGElement>(`#${CSS.escape(OBSTACLE_LAYER_ID)} > *`);
+
+    if (!shapes.length || !obstacle) {
+      return;
+    }
+
+    // Computed rather than read from the style attribute: how the plan writes its
+    // fill — attribute, inline style, a rule of its own — is the drawing's
+    // business, and the browser has already settled it by the time we ask. It is
+    // read once and handed to the stylesheet as a variable; what marks a shape is
+    // then a class, not a colour written onto it forty times over.
+    plan.style.setProperty('--obstacle-fill', getComputedStyle(obstacle).fill);
+
+    const known = this.store.workplaceById();
+
+    for (const shape of shapes) {
+      shape.classList.toggle('stray', !known.has(shape.id));
     }
   }
 

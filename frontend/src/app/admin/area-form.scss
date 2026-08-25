@@ -9,6 +9,86 @@
   max-width: 40rem;
 }
 
+.picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 22rem;
+}
+
+// The colour on the surface it is meant for: a bar with dark text. That is what
+// the lightness is about, and it is easier to see here than to read in a note.
+.preview {
+  border: 1px solid var(--hairline);
+  border-radius: 0.3rem;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.8rem;
+}
+
+.slider {
+  display: grid;
+  // The label keeps a column of its own so that the three rails start at the
+  // same place and can be compared as one control.
+  grid-template-columns: 5rem 1fr;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-muted);
+}
+
+// Carries the mark for the recommended value, which has to sit over the rail
+// without taking the clicks meant for it.
+.rail {
+  position: relative;
+  display: block;
+}
+
+.mark {
+  position: absolute;
+  top: 50%;
+  translate: -50% -50%;
+  width: 2px;
+  height: 1.4rem;
+  background: var(--ink);
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+// The rails are painted in what they set — hence no accent colour and no system
+// look: the track carries the gradient the component computes, the thumb is a
+// ring that shows the colour underneath it rather than covering it.
+.picker input[type='range'] {
+  appearance: none;
+  width: 100%;
+  margin: 0;
+  border: 1px solid var(--hairline);
+  border-radius: 0.6rem;
+  padding: 0;
+  height: 1.1rem;
+  // The gradient has to span the border box, not the padding box inside it.
+  // Otherwise it is computed one image narrower than the surface it is painted
+  // on, and the default `repeat` fills the last pixel column at the right edge
+  // with the beginning of the next tile — a dark seam where the rail should be
+  // at its lightest. Barely visible on the hue rail, whose two ends meet in the
+  // same colour, and unmissable on the lightness rail, which starts dark.
+  background-origin: border-box;
+
+  &::-webkit-slider-thumb {
+    appearance: none;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid var(--paper);
+    border-radius: 50%;
+    background: transparent;
+    box-shadow: 0 0 0 1px var(--line-strong);
+    cursor: pointer;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
 .swatches {
   display: flex;
   flex-wrap: wrap;

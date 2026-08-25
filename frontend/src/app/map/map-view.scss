@@ -196,10 +196,17 @@ app-booking-card {
 // encapsulation attributes; a plain `.busy` here would match nothing. `::ng-deep`
 // under `:host` keeps the rule bound to this view all the same.
 //
-// The state shows in the outline, not in the fill: the shapes carry their area's
-// colour as an inline `fill`, and that beats any stylesheet. Overriding it would
-// cost an `!important` and, worse, the information about which area a bench
-// belongs to — two facts on one surface, of which only the newer would be legible.
+// The state shows in the outline, not in the fill: the fill is already spoken
+// for. It carries the area's colour, so a bench says which area it belongs to —
+// a state on top of that would be two facts on one surface, of which only the
+// newer would be legible.
+//
+// The fill is set here and not in `MapView`, although only the code knows the
+// colour: it arrives as a variable, and what is done with it is decided in this
+// file. That is what the two `!important`s buy. The plan writes its own fills
+// inline, and a normal declaration loses against a style attribute — an important
+// one does not. Without them nothing here could ever reach the fill, which is
+// why the colour used to be painted onto every shape by hand.
 :host ::ng-deep {
   // Set by `MapView` on every shape it found a workplace for — so the file is
   // asked for nothing beyond the identifiers. Which group they sit in and what it
@@ -214,10 +221,9 @@ app-booking-card {
       filter 0.12s ease;
 
     // Under the pointer the fill answers. Darkened rather than replaced: the
-    // inline `fill` would need an `!important` to overrule, and the bench would
-    // lose the colour of its area for as long as the pointer rests on it. A
-    // filter works on whatever colour it finds and takes none of its own — which
-    // is also why no palette entry is needed for it.
+    // bench would otherwise lose the colour of its area for as long as the
+    // pointer rests on it. A filter works on whatever colour it finds and takes
+    // none of its own, which is also why no palette entry is needed for it.
     &:hover {
       filter: brightness(0.88);
     }
@@ -233,6 +239,24 @@ app-booking-card {
       outline: 2px solid var(--accent);
       outline-offset: 2px;
     }
+  }
+
+  // The area's colour, handed over by `MapView` as `--area-color`. The class and
+  // not the variable alone decides, so that a bench whose area is unknown keeps
+  // what the plan drew it in instead of falling back to black: an undefined
+  // variable makes the whole declaration invalid, and `fill` then inherits from a
+  // layer that has none.
+  .tinted {
+    fill: var(--area-color) !important;
+  }
+
+  // A bench the configuration does not know. It takes the fixed obstacles' grey —
+  // read off the plan and set as `--obstacle-fill` on its root — because in a
+  // bookable colour it would promise something no click can keep. Where the plan
+  // has no obstacles to read the grey from, `MapView` sets neither variable nor
+  // class, and the shapes stay as they were drawn.
+  .stray {
+    fill: var(--obstacle-fill) !important;
   }
 
   .busy {

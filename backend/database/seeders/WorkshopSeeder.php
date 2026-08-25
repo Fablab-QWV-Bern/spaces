@@ -24,16 +24,32 @@ class WorkshopSeeder extends Seeder
     /** @return array<string, string> */
     private function seedAreas(): array
     {
+        // The colours are the ones the workshop has set, written back here so that
+        // a reset does not undo them. They come in two notations, and that is not
+        // an oversight.
+        //
+        // Holz and Metall carry the `rgb(…)` the floor plan draws their benches in
+        // (`frontend/public/karte.svg`), verbatim rather than converted, so that
+        // drawing and configuration can be held against each other by eye. The map
+        // paints the area's colour over the shape, so where the two agree the
+        // overwrite is invisible and where they differ it shows.
+        //
+        // The rest are set on the sliders in the area form and are written in
+        // oklch. Diverses is the one to be careful with: its bicycle and parking
+        // spaces are bookable, so its colour has to stay clear of the grey the map
+        // gives the fixed obstacles — a neutral one would make a parking space
+        // read like the saw, as something nobody can book. Hence a little chroma
+        // in it rather than none.
         $areas = [
             'spezial' => [
                 'name' => 'Spezial',
-                'color' => 'oklch(0.8 0.1 130)',
+                'color' => 'oklch(0.8 0.1 20)',
                 'max_booking_duration_minutes' => 1440,
                 'sort_order' => 10,
             ],
             'kurse' => [
                 'name' => 'Kurse',
-                'color' => 'oklch(0.8 0.1 70)',
+                'color' => 'oklch(0.8 0.1 130)',
                 'max_booking_duration_minutes' => 720,
                 // Courses are planned far in advance.
                 'max_booking_end_offset_days' => 365,
@@ -41,13 +57,13 @@ class WorkshopSeeder extends Seeder
             ],
             'holz' => [
                 'name' => 'Holz',
-                'color' => 'oklch(0.8 0.1 450)',
+                'color' => 'rgb(255,219,73)',
                 'max_booking_duration_minutes' => 480,
                 'sort_order' => 30,
             ],
             'metall' => [
                 'name' => 'Metall',
-                'color' => 'oklch(0.8 0.1 230)',
+                'color' => 'rgb(135,206,244)',
                 'max_booking_duration_minutes' => 480,
                 'sort_order' => 40,
             ],
@@ -61,7 +77,7 @@ class WorkshopSeeder extends Seeder
             ],
             'diverses' => [
                 'name' => 'Diverses',
-                'color' => 'oklch(0.8 0 0)',
+                'color' => 'oklch(0.84 0.04 70)',
                 'max_booking_duration_minutes' => 2880,
                 // A vehicle may be left standing overnight.
                 'allow_nightly_activities' => true,
