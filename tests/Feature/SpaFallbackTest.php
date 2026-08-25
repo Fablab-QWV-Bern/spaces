@@ -23,8 +23,8 @@ it('leaves the API alone', function (): void {
 it('leaves /storage alone', function (): void {
     // In development that is where the `local` disk's route lives, and in
     // production the symlink to `storage/app/public`. Both are better than an
-    // HTML page in place of a missing photo.
-    expect(handlerFor('/storage/kein-foto.jpg'))->not->toBe(SpaController::class);
+    // HTML page in place of a missing file.
+    expect(handlerFor('/storage/gibtesnicht.svg'))->not->toBe(SpaController::class);
 });
 
 it('takes effect for Angular router paths', function (): void {

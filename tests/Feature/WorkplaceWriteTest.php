@@ -5,8 +5,6 @@ use App\Models\Role;
 use App\Models\Workplace;
 use Carbon\CarbonImmutable;
 use Database\Seeders\DatabaseSeeder;
-use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 use Spectator\Spectator;
 
 beforeEach(function () {
@@ -176,89 +174,4 @@ it('lets only manageWorkplaces write', function () {
     $this->actingAs($this->member)
         ->putJson('/api/workplaces/order', ['ids' => Workplace::pluck('id')->all()])
         ->assertValidResponse(403);
-});
-
-// Only the response is checked against the spec: Spectator compares the
-// request's media type literally and trips over the "; boundary=…" that every
-// multipart request carries.
-it('accepts a photo and derives a thumbnail', function () {
-    Storage::fake('public');
-
-    $response = $this->actingAs($this->admin)
-        ->post(
-            '/api/workplaces/holz-1/photo',
-            ['file' => UploadedFile::fake()->image('werkbank.jpg', 2400, 1200)],
-            ['Accept' => 'application/json'],
-        )
-        ->assertValidResponse(200);
-
-    $photo = $response->json('photoUrl');
-    $thumbnail = $response->json('photoThumbnailUrl');
-
-    // Without scheme and host — API, storage and SPA live on the same host.
-    expect($photo)->toStartWith('/storage/')
-        ->and($thumbnail)->toStartWith('/storage/')
-        ->and($photo)->not->toBe($thumbnail);
-
-    $workplace = Workplace::findOrFail('holz-1');
-
-    Storage::disk('public')->assertExists($workplace->photo_path);
-    Storage::disk('public')->assertExists($workplace->photo_thumbnail_path);
-
-    // Scaled down to the longer edge, aspect ratio preserved.
-    $size = getimagesizefromstring(Storage::disk('public')->get($workplace->photo_thumbnail_path));
-    expect($size[0])->toBe(400)->and($size[1])->toBe(200);
-});
-
-it('replaces an existing photo and leaves nothing behind', function () {
-    Storage::fake('public');
-
-    $upload = fn () => $this->actingAs($this->admin)->post(
-        '/api/workplaces/holz-1/photo',
-        ['file' => UploadedFile::fake()->image('werkbank.jpg', 800, 600)],
-        ['Accept' => 'application/json'],
-    );
-
-    $upload()->assertValidResponse(200);
-    $first = Workplace::findOrFail('holz-1')->photo_path;
-
-    $this->travel(1)->seconds();
-
-    $upload()->assertValidResponse(200);
-    $second = Workplace::findOrFail('holz-1')->photo_path;
-
-    expect($second)->not->toBe($first);
-    Storage::disk('public')->assertMissing($first);
-});
-
-it('deletes the photo', function () {
-    Storage::fake('public');
-
-    $this->actingAs($this->admin)->post(
-        '/api/workplaces/holz-1/photo',
-        ['file' => UploadedFile::fake()->image('werkbank.jpg', 800, 600)],
-        ['Accept' => 'application/json'],
-    );
-
-    $path = Workplace::findOrFail('holz-1')->photo_path;
-
-    $this->actingAs($this->admin)
-        ->deleteJson('/api/workplaces/holz-1/photo')
-        ->assertValidRequest()
-        ->assertValidResponse(204);
-
-    Storage::disk('public')->assertMissing($path);
-    expect(Workplace::findOrFail('holz-1')->photo_path)->toBeNull();
-});
-
-it('rejects a file that is not an image', function () {
-    Storage::fake('public');
-
-    $this->actingAs($this->admin)
-        ->post(
-            '/api/workplaces/holz-1/photo',
-            ['file' => UploadedFile::fake()->create('handbuch.pdf', 100, 'application/pdf')],
-            ['Accept' => 'application/json'],
-        )
-        ->assertValidResponse(422);
 });

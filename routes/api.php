@@ -5,10 +5,10 @@ use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\BookingSeriesController;
 use App\Http\Controllers\Api\CalendarFeedController;
 use App\Http\Controllers\Api\ConfigController;
+use App\Http\Controllers\Api\FloorPlanController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\SessionController;
 use App\Http\Controllers\Api\WorkplaceController;
-use App\Http\Controllers\Api\WorkplacePhotoController;
 use Illuminate\Support\Facades\Route;
 
 // The permissions match the `x-permissions` in spec/reservation-api.yml.
@@ -48,15 +48,19 @@ Route::middleware('permission:manageAreas')->group(function (): void {
 Route::get('workplaces', [WorkplaceController::class, 'index']);
 Route::get('workplaces/{workplace}', [WorkplaceController::class, 'show']);
 
+// The plan itself is fetched from wherever this says it lies — a static asset
+// next to the interface, or the uploaded one on the public disk.
+Route::get('floor-plan', [FloorPlanController::class, 'show']);
+
 Route::middleware('permission:manageWorkplaces')->group(function (): void {
+    Route::post('floor-plan', [FloorPlanController::class, 'store']);
+    Route::delete('floor-plan', [FloorPlanController::class, 'destroy']);
+
     Route::put('workplaces/order', [WorkplaceController::class, 'reorder']);
 
     Route::post('workplaces', [WorkplaceController::class, 'store']);
     Route::put('workplaces/{workplace}', [WorkplaceController::class, 'update']);
     Route::delete('workplaces/{workplace}', [WorkplaceController::class, 'destroy']);
-
-    Route::post('workplaces/{workplace}/photo', [WorkplacePhotoController::class, 'store']);
-    Route::delete('workplaces/{workplace}/photo', [WorkplacePhotoController::class, 'destroy']);
 });
 
 Route::middleware('permission:viewBookings')->group(function (): void {
