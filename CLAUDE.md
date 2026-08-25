@@ -219,12 +219,40 @@ changing the spec first.
   instance is its own booking with its own ID; RRULE would additionally require
   local time with an accompanying VTIMEZONE. As long as every instance sits
   individually in the database, UTC timestamps are the more honest representation.
-- **The floor plan is a shipped file, not source code.**
-  `frontend/public/karte.svg` is fetched at runtime and grafted into the tree by
-  hand — not via `innerHTML`, because Angular's sanitisation strips `id`
-  attributes, and those are exactly what carries the mapping to the workplaces.
-  Rearranging the workshop means swapping the file and rebuilding nothing;
-  incidentally its 300 kB stay out of the bundle of every other view.
+- **The floor plan is a file, not source code.** It is fetched at runtime and
+  grafted into the tree by hand — not via `innerHTML`, because Angular's
+  sanitisation strips `id` attributes, and those are exactly what carries the
+  mapping to the workplaces. Incidentally its 300 kB stay out of the bundle of
+  every other view.
+- **Which file, the API says.** `frontend/public/karte.svg` ships with the
+  interface and is what a fresh installation draws; an uploaded plan lies on the
+  storage disk and takes precedence. Nobody who wants the drawing should have to
+  know which of the two it is, so `GET /floor-plan` answers that and
+  `map/plan-source.ts` turns the two requests into one call — shared, because
+  three places read the same 300 kB: the map, the area form's swatch row, and
+  the admin page's comparison. `refresh()` after an upload is what keeps the
+  three from showing the plan that was just replaced.
+- **An uploaded plan is stripped before it is stored.** This is not the usual
+  caution around an upload: a photo used to land in an `<img>`, where the
+  browser treats the file as pixels, but the plan is parsed and grafted into the
+  application's own document — which is the whole point, since that is how the
+  ids become reachable. Everything in it therefore runs in our origin. So
+  `App\Support\FloorPlan` removes what can act or fetch — scripts, `on*`
+  handlers, `foreignObject`, `@import`, every reference that leads out of the
+  document — and keeps the drawing with its layers and ids. Two details are not
+  obvious: entities are never expanded (no `LIBXML_NOENT`, and a doctype with an
+  internal subset is refused outright), so a file cannot define itself a million
+  times over; and the ordinary `<!DOCTYPE svg PUBLIC …>` that every drawing tool
+  writes is _not_ that — refusing it would refuse the workshop's own plan, so it
+  is accepted and dropped.
+- **The admin page for the plan is there for the comparison.** Replacing the
+  file is the smaller half. The map cannot report what it does not find: a
+  workplace nobody drew is simply absent from it, and a bench the configuration
+  does not know sits there as an obstacle — both look like a decision rather
+  than an oversight. `admin/plan-match.ts` names them, in both directions, for
+  the plan in use and — before saving — for the file about to replace it.
+  Neither side is the authority: the plan legitimately draws more than the
+  workshop rents out, and a workplace may exist before anyone has drawn it.
 - **The state sits on the workplace's own shape** as a class — `.busy`,
   `.soon-busy`, and nothing at all for free. So the map needs no geometry for it:
   no `viewBox` arithmetic, no placement in percentages. It takes the full width
@@ -507,7 +535,9 @@ hand once; deployment does not touch them. What is uploaded lives under
 - The four `_3d-drucker-*` in `frontend/public/karte.svg`: the plan shows four side
   by side, the configuration knows only three besides the XL — as with `loeten-2`,
   where it knows one bench. Until that is decided they show as obstacles (see
-  below), which says "not bookable" but not why. The rest of the renaming table in
+  below), which says "not bookable" but not why. They are the five entries the
+  Karte page lists as drawn but not configured; that page is where the question
+  now surfaces by itself. The rest of the renaming table in
   `spec/karte-kennungen.markdown` is done.
 - Defective and disabled workplaces are not marked on the map. Free, occupied and
   about to be occupied are; those two would need a third and fourth look, and it

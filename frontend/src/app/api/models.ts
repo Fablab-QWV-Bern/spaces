@@ -12,6 +12,7 @@ export type { BookingValidation } from './models/booking-validation';
 export type { BookingWrite } from './models/booking-write';
 export type { Config } from './models/config';
 export type { Error } from './models/error';
+export type { FloorPlan } from './models/floor-plan';
 export type { LoginRequest } from './models/login-request';
 export type { Permissions } from './models/permissions';
 export type { Role } from './models/role';

@@ -4,6 +4,7 @@ import { AdminRouteData, AdminShell } from './admin/admin-shell';
 import { AreaForm } from './admin/area-form';
 import { AreaList } from './admin/area-list';
 import { ConfigForm } from './admin/config-form';
+import { MapAdmin } from './admin/map-admin';
 import { RoleForm } from './admin/role-form';
 import { RoleList } from './admin/role-list';
 import { SeriesForm } from './admin/series-form';
@@ -96,6 +97,18 @@ export const routes: Routes = [
         component: WorkplaceForm,
         title: 'Arbeitsplatz bearbeiten',
         data: { ...workplaces, heading: 'Arbeitsplatz bearbeiten' } satisfies AdminRouteData,
+      },
+      {
+        // The plan hangs off the workplaces' permission: whoever configures
+        // benches configures the drawing they stand on.
+        path: 'karte',
+        component: MapAdmin,
+        title: 'Karte verwalten',
+        data: {
+          ...workplaces,
+          heading: 'Karte',
+          needs: 'Zum Verwalten der Karte',
+        } satisfies AdminRouteData,
       },
       {
         path: 'serien',

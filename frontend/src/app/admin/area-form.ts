@@ -9,7 +9,8 @@ import { createArea, getArea, updateArea } from '../api/functions';
 // Renamed so that the generated model does not shadow the global Error.
 import { Area, AreaWrite, Error as ApiError } from '../api/models';
 import { formatDuration } from '../calendar/time-axis';
-import { PLAN_URL, planPalette } from '../map/plan';
+import { planPalette } from '../map/plan';
+import { PlanSource } from '../map/plan-source';
 import { refinePageTitle } from '../shared/page-title';
 import { Oklch, RANGE, RECOMMENDED, colorKey, formatOklch, toOklch } from './area-color';
 
@@ -41,6 +42,7 @@ export class AreaForm {
   private readonly rootUrl = inject(ApiConfiguration).rootUrl;
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly plans = inject(PlanSource);
 
   protected readonly range = RANGE;
   protected readonly recommended = RECOMMENDED;
@@ -157,7 +159,7 @@ export class AreaForm {
     // already uses is invisible on the map as an overwrite, which is what one
     // wants where the two agree. A plan that will not load costs the row and
     // nothing else.
-    this.http.get(PLAN_URL, { responseType: 'text' }).subscribe({
+    this.plans.read().subscribe({
       next: (svg) => this.planColors.set(planPalette(svg)),
       error: () => this.planColors.set([]),
     });

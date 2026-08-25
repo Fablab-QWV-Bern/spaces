@@ -1,4 +1,3 @@
-import { HttpClient } from '@angular/common/http';
 import {
   Component,
   DestroyRef,
@@ -21,7 +20,8 @@ import { Icon } from '../shared/icon';
 import { agendaFor } from './agenda';
 import { Box, standingOn } from './map-geometry';
 import { Occupancy, occupancyAt } from './occupancy';
-import { OBSTACLE_LAYER_ID, PLAN_URL, WORKPLACE_LAYER_ID } from './plan';
+import { OBSTACLE_LAYER_ID, WORKPLACE_LAYER_ID } from './plan';
+import { PlanSource } from './plan-source';
 
 /** How often the map asks again who is here now. */
 const REFRESH_MS = 60_000;
@@ -67,7 +67,7 @@ const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 })
 export class MapView {
   protected readonly store = inject(CalendarStore);
-  private readonly http = inject(HttpClient);
+  private readonly plans = inject(PlanSource);
   private readonly router = inject(Router);
 
   /** The surface the anchor's coordinates count from, and the box the floor plan
@@ -114,7 +114,7 @@ export class MapView {
     this.store.span.set('day');
     this.store.goToToday();
 
-    this.http.get(PLAN_URL, { responseType: 'text' }).subscribe({
+    this.plans.read().subscribe({
       next: (svg) => this.source.set(svg),
       error: () => this.planError.set('Der Grundriss konnte nicht geladen werden.'),
     });

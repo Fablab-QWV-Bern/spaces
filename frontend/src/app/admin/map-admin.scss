@@ -1,0 +1,96 @@
+@use './admin';
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0 1.5rem 1.5rem;
+  max-width: 40rem;
+}
+
+h2 {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+// The plan is portrait and taller than any panel should be. Capped by height
+// rather than width, so that the shape of the room stays recognisable — this is
+// a picture to identify the plan by, not one to read benches off.
+.preview {
+  display: flex;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 0.3rem;
+  background: var(--paper);
+  padding: 0.5rem;
+
+  img {
+    max-height: 22rem;
+    max-width: 100%;
+    object-fit: contain;
+  }
+}
+
+// The file field itself is invisible; the label is the button, as in the other
+// admin forms.
+input[type='file'] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.warn {
+  margin: 0;
+  color: var(--warning-text);
+  font-size: 0.8rem;
+}
+
+.saved {
+  color: var(--success);
+  font-size: 0.85rem;
+}
+
+.mismatch {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+
+  h3 {
+    margin: 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    font-size: 0.85rem;
+  }
+
+  li {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+
+  code {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+  }
+}
+
+.agree {
+  margin: 0;
+  color: var(--success);
+  font-size: 0.85rem;
+}

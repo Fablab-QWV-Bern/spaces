@@ -47,6 +47,12 @@ export type { UpdateWorkplace$Params as UpdateWorkplace$Params } from './fn/work
 export { updateWorkplace as updateWorkplace } from './fn/workplaces/update-workplace';
 export type { DeleteWorkplace$Params as DeleteWorkplace$Params } from './fn/workplaces/delete-workplace';
 export { deleteWorkplace as deleteWorkplace } from './fn/workplaces/delete-workplace';
+export type { GetFloorPlan$Params as GetFloorPlan$Params } from './fn/floor-plan/get-floor-plan';
+export { getFloorPlan as getFloorPlan } from './fn/floor-plan/get-floor-plan';
+export type { UploadFloorPlan$Params as UploadFloorPlan$Params } from './fn/floor-plan/upload-floor-plan';
+export { uploadFloorPlan as uploadFloorPlan } from './fn/floor-plan/upload-floor-plan';
+export type { DeleteFloorPlan$Params as DeleteFloorPlan$Params } from './fn/floor-plan/delete-floor-plan';
+export { deleteFloorPlan as deleteFloorPlan } from './fn/floor-plan/delete-floor-plan';
 export type { ListBookings$Params as ListBookings$Params } from './fn/bookings/list-bookings';
 export { listBookings as listBookings } from './fn/bookings/list-bookings';
 export type { CreateBooking$Params as CreateBooking$Params } from './fn/bookings/create-booking';

@@ -26,6 +26,7 @@ import { SessionService } from '../shared/session-service';
       }
       @if (session.canManageWorkplaces()) {
         <a routerLink="/verwaltung/arbeitsplaetze" routerLinkActive="active">Arbeitsplätze</a>
+        <a routerLink="/verwaltung/karte" routerLinkActive="active">Karte</a>
       }
       @if (session.canManageBookingSeries()) {
         <a routerLink="/verwaltung/serien" routerLinkActive="active">Serien</a>

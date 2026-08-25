@@ -1,0 +1,134 @@
+@if (loadError(); as message) {
+  <p class="error" role="alert">{{ message }}</p>
+} @else if (loading()) {
+  <p class="hint">Wird geladen …</p>
+} @else if (plan(); as current) {
+  <div class="page">
+    <section class="panel">
+      <h2>Plan im Einsatz</h2>
+
+      <div class="preview">
+        <img [src]="current.url" alt="Grundriss der Werkstatt" />
+      </div>
+
+      <p class="note">
+        @if (current.isDefault) {
+          Der Plan, der mit der Anwendung ausgeliefert wird. Solange nichts hochgeladen ist, gilt
+          er.
+        } @else {
+          Hochgeladen am {{ storedAt() }}.
+        }
+      </p>
+
+      @if (!current.isDefault) {
+        <div class="actions">
+          <button type="button" class="danger" [disabled]="saving()" (click)="reset()">
+            Wieder den mitgelieferten Plan verwenden
+          </button>
+        </div>
+      }
+    </section>
+
+    <section class="panel">
+      <h2>Plan ersetzen</h2>
+
+      <div class="actions">
+        <label class="button">
+          SVG wählen
+          <input type="file" accept="image/svg+xml,.svg" (change)="onFilePicked($event)" />
+        </label>
+
+        @if (picked(); as file) {
+          <button type="button" class="primary" [disabled]="!canUpload()" (click)="upload()">
+            {{ saving() ? 'Wird hochgeladen …' : 'Hochladen' }}
+          </button>
+          <button type="button" [disabled]="saving()" (click)="clearPick()">Verwerfen</button>
+        }
+
+        @if (saveError(); as message) {
+          <span class="save-error" role="alert">{{ message }}</span>
+        } @else if (saved()) {
+          <span class="saved" role="status">Gespeichert.</span>
+        }
+      </div>
+
+      @if (picked(); as file) {
+        <p class="note">{{ file.name }}</p>
+      }
+
+      @if (pickedMatch(); as match) {
+        @if (pickedIsBlank()) {
+          <p class="warn" role="alert">
+            Diese Datei zeichnet keinen einzigen der konfigurierten Arbeitsplätze. Entweder fehlt
+            die Ebene «Arbeitsplätze» oder ihre Formen heissen anders — die Karte bliebe leer.
+          </p>
+        } @else {
+          <p class="note">
+            Zeichnet {{ match.matched.length }} der
+            {{ match.matched.length + match.missing.length }} Arbeitsplätze
+            @if (match.strays.length) {
+              , dazu {{ match.strays.length }} unbekannte Formen
+            }
+            . Was danach nicht zusammenpasst, steht unten.
+          </p>
+        }
+      }
+
+      <p class="note">
+        Ein SVG, höchstens 5 MB. Beim Speichern fällt heraus, was handeln oder nachladen könnte:
+        Skripte, Ereignis-Handler und Verweise, die aus dem Dokument hinausführen. Die Ebenen und
+        die Kennungen bleiben, denn daran hängt die Karte.
+      </p>
+    </section>
+
+    <section class="panel">
+      <h2>Abgleich mit den Arbeitsplätzen</h2>
+
+      @if (match(); as match) {
+        <p class="note">
+          {{ match.matched.length }} von {{ match.matched.length + match.missing.length }}
+          Arbeitsplätzen sind gezeichnet.
+        </p>
+
+        @if (match.missing.length) {
+          <div class="mismatch">
+            <h3>Konfiguriert, aber nicht gezeichnet</h3>
+            <p class="note">Auf der Karte nicht zu finden — im Kalender sind sie ganz normal da.</p>
+            <ul>
+              @for (workplace of match.missing; track workplace.id) {
+                <li>
+                  <strong>{{ workplace.name }}</strong>
+                  <code>{{ workplace.id }}</code>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+
+        @if (match.strays.length) {
+          <div class="mismatch">
+            <h3>Gezeichnet, aber nicht konfiguriert</h3>
+            <p class="note">
+              Die Karte zeigt sie in der Farbe der festen Hindernisse: sichtbar, aber nicht
+              anklickbar. Wer sie buchbar machen will, legt einen Arbeitsplatz mit genau dieser
+              Kennung an.
+            </p>
+            <ul>
+              @for (id of match.strays; track id) {
+                <li>
+                  <code>{{ id }}</code>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+
+        @if (!match.missing.length && !match.strays.length) {
+          <p class="agree">Plan und Konfiguration stimmen überein.</p>
+        }
+      } @else {
+        <p class="note">Der Plan liess sich nicht lesen — ohne ihn kein Abgleich.</p>
+      }
+    </section>
+  </div>
+}

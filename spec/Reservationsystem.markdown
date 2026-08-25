@@ -148,6 +148,8 @@ Every bullet point is its own page.
 - Workplace overview (grouped by area)
 - Edit workplace
 - Edit global configuration
+- Floor plan: which one the overview map uses, replacing it, and where it and the configured
+  workplaces disagree
 - Recurring booking (for admins) (to be implemented later)
 
 ## Models

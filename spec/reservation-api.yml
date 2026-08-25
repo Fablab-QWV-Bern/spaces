@@ -26,6 +26,8 @@ tags:
     description: Areas grouping workplaces, carrying booking limits and colour.
   - name: Workplaces
     description: Bookable workplaces, their status and blocking rules.
+  - name: FloorPlan
+    description: The drawing the overview map is made of.
   - name: Bookings
     description: Individual bookings and the pre-flight validation behind the booking form.
   - name: BookingSeries
@@ -403,6 +405,34 @@ components:
         - blocksWorkplacesWithTag
         - tags
         - sortOrder
+
+    FloorPlan:
+      type: object
+      description: |
+        Where the overview map fetches its drawing. Either the file shipped with the interface or
+        one uploaded afterwards — the client follows `url` and needs to know nothing further.
+      properties:
+        url:
+          type: string
+          format: uri-reference
+          description: |
+            Relative, like every URL this API hands out: API, storage and SPA live on the same host,
+            and an absolute one built from a misconfigured APP_URL would take the map down with it.
+          example: /storage/karte.svg
+        isDefault:
+          type: boolean
+          description: |
+            True while nothing has been uploaded; `url` then points at the file that came with the
+            interface. A fresh installation therefore has a plan without anyone uploading one.
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the uploaded plan was stored. Null for the shipped one.
+      required:
+        - url
+        - isDefault
+        - updatedAt
 
     WorkplaceCreate:
       type: object
@@ -1235,6 +1265,80 @@ paths:
           $ref: "#/components/responses/NotFound"
         "422":
           $ref: "#/components/responses/UnprocessableEntity"
+
+  /floor-plan:
+    get:
+      tags: [FloorPlan]
+      operationId: getFloorPlan
+      summary: Where the overview map's drawing lives
+      description: |
+        Readable by everyone: the map is part of the calendar, and without this the client would not
+        know whether a plan has been uploaded.
+      responses:
+        "200":
+          description: The plan in use
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FloorPlan"
+
+    post:
+      tags: [FloorPlan]
+      operationId: uploadFloorPlan
+      summary: Upload or replace the floor plan
+      description: |
+        An SVG, at most 5 MB. It is stripped before it is stored — scripts, event handlers and
+        references leading off the document do not survive the upload, because the interface grafts
+        the plan into its own DOM rather than showing it in an `<img>`.
+
+        The workplace identifiers are not checked here. Which shapes the plan knows and which
+        workplaces are configured are two lists that may legitimately differ, and the admin area
+        shows where they do.
+      x-permissions: ["manageWorkplaces"]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+              required:
+                - file
+      responses:
+        "200":
+          description: Plan stored
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FloorPlan"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "413":
+          description: File too large
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+    delete:
+      tags: [FloorPlan]
+      operationId: deleteFloorPlan
+      summary: Drop the uploaded plan and fall back to the shipped one
+      x-permissions: ["manageWorkplaces"]
+      responses:
+        "200":
+          description: The plan now in use
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FloorPlan"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /bookings:
     get:
