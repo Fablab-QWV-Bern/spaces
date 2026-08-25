@@ -91,8 +91,6 @@ describe('SeriesForm', () => {
         description: null,
         usageRules: null,
         wikiUrl: null,
-        photoUrl: null,
-        thumbnailUrl: null,
       },
     ]);
 

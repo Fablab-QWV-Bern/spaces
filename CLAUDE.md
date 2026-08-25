@@ -150,12 +150,13 @@ changing the spec first.
   the list is its own drag area (`drag-order.ts`), so dragging can never change
   the area — that stays a matter for the form. And whatever arrives new lands at
   the end, because that is where you look for it.
-- **Photo URLs are relative** (`/storage/…`). API, storage and SPA live on the
-  same host; an absolute URL would come from `APP_URL`, and a misconfigured
-  `APP_URL` on the hosting would make every photo unreachable at once.
-- **Images are processed by GD**, not by a library from Composer: the hosting
-  ships GD, and `vendor/` travels by FTP. Thumbnail and downscaled original are
-  both produced from the original file — scaling twice costs sharpness.
+- **A workplace has no photo.** It had one — upload, thumbnail, a panel in the
+  admin form, two endpoints and an image pipeline on GD — and it went unused. A
+  feature nobody fills in is not neutral: it is a panel every editor has to skip
+  past, a nullable column in every response, and an upload path to keep safe. It
+  came out root and branch, migration included, because nothing is deployed yet
+  and a drop-migration for a column that never existed anywhere is bookkeeping
+  about bookkeeping. If it ever comes back, it comes back from the spec first.
 - **A series produces bookings; it is not one.** `booking_series` describes a
   rhythm; nothing of it appears in the calendar — instead there is an ordinary
   booking per occurrence, with `booking_series_id` as the only hint. Everything
@@ -390,7 +391,7 @@ cd backend && php artisan serve               # API on :8000
 cd frontend && npx ng serve                   # SPA on :4200, proxies /api and /storage
 ```
 
-Once, so that uploaded photos are served:
+Once, so that uploaded files are served:
 
 ```bash
 cd backend && php artisan storage:link
@@ -479,9 +480,9 @@ back. Three things in it are not visible from the outside:
   `COMPOSER_BIN=… bash deploy.sh`.
 
 `.env` and the contents of `storage/` are not in the repository and are created by
-hand once; deployment does not touch them. Photos live under `storage/app/public`
-and are served through the `public/storage` symlink, which `storage:link` renews
-on every deployment.
+hand once; deployment does not touch them. What is uploaded lives under
+`storage/app/public` and is served through the `public/storage` symlink, which
+`storage:link` renews on every deployment.
 
 ## Working practices
 

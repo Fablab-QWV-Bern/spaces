@@ -27,8 +27,6 @@ class Workplace extends Model
         'name',
         'description',
         'usage_rules',
-        'photo_path',
-        'photo_thumbnail_path',
         'status',
         'location',
         'area_id',

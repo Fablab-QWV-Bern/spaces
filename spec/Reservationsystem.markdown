@@ -32,8 +32,8 @@ hosttech web hosting, "Smart Deal" package (CHF 6.90/month). The resulting const
   daily series run and the CSV import still work in batches and are resumable — a deployment action
   has its own, shorter time budget.
 - No long-running processes — no queue workers, everything periodic via cron.
-- Backup every 24 h by the host. Photo uploads live outside the deploy directory so that a release
-  does not overwrite them.
+- Backup every 24 h by the host. Uploads live outside the deploy directory so that a release does
+  not overwrite them.
 - List-valued fields (`tags`, `blocksWorkplaceIds`, `blockedWorkplaceIds`, `blocksWorkplacesWithTag`)
   are normalised into their own tables rather than JSON columns — indexable and independent of the
   MariaDB version.
@@ -52,41 +52,41 @@ The calendar component is built in-house, not bought in.
   to the workplace IDs. Elements without a matching workplace are rendered neutrally, workplaces
   without an element do not appear on the map — neither is an error.
 - Colour-coding of the workplaces (free/occupied/broken/disabled)
-    - "occupied" = a booking overlaps the current moment, or the workplace is blocked at that moment
-      by a booking on another workplace
-    - DEFECT and DISABLED take precedence over free/occupied
+  - "occupied" = a booking overlaps the current moment, or the workplace is blocked at that moment
+    by a booking on another workplace
+  - DEFECT and DISABLED take precedence over free/occupied
 - Hovering a workplace shows details and a link to book it (if permitted)
 - Auto-refresh every 60 seconds
 
 ### Creating a booking
 
 - Selecting the workplace (dropdown with search)
-- Display of the workplace details (name, photo, description (markdown, formatted), usage rules,
+- Display of the workplace details (name, description (markdown, formatted), usage rules,
   location, wiki link, status, tags)
 - Date selection (dropdown with today, tomorrow, ... max days into the future)
-    - the number of entries follows from `maxBookingEndOffsetDays` of the area or the global
-      configuration
-    - with `noTimeRestrictions` a free date picker is shown instead
+  - the number of entries follows from `maxBookingEndOffsetDays` of the area or the global
+    configuration
+  - with `noTimeRestrictions` a free date picker is shown instead
 - Time selection as a horizontal timeline (initially between 08:00 and 21:00)
-    - in 15-minute intervals
-    - scrollable if necessary (the date selection simply scrolls to the matching range)
-    - existing bookings are shown as coloured blocks
-    - blocks caused by bookings on other workplaces as grey blocks
-    - the booking about to be created is shown as a highlighted block
+  - in 15-minute intervals
+  - scrollable if necessary (the date selection simply scrolls to the matching range)
+  - existing bookings are shown as coloured blocks
+  - blocks caused by bookings on other workplaces as grey blocks
+  - the booking about to be created is shown as a highlighted block
 - Start and end time are what gets chosen. As a shortcut there is a duration dropdown with the
   permitted durations (based on workplace + area, cf. time rules), which sets the end to
   "start + duration".
-    - Overnight bookings are captured through an end time on the following day, not through the
-      duration dropdown. There is no end date: with one you could set the same day and thus an end
-      before the start. Selectable are the end times at which the chargeable duration lands on one of
-      the permitted durations.
-    - the chargeable duration (excluding night hours) is derived from that and displayed; it is only
-      relevant for validation against the maximum booking duration
+  - Overnight bookings are captured through an end time on the following day, not through the
+    duration dropdown. There is no end date: with one you could set the same day and thus an end
+    before the start. Selectable are the end times at which the chargeable duration lands on one of
+    the permitted durations.
+  - the chargeable duration (excluding night hours) is derived from that and displayed; it is only
+    relevant for validation against the maximum booking duration
 - Collisions are checked and displayed in real time. The check in the frontend is a preview; binding
   is the check in the backend on save.
 - Input fields for information about the person booking:
-    - Name (text field, required, stored as a cookie)
-    - Contact (text field, required, stored as a cookie, e.g. email or phone)
+  - Name (text field, required, stored as a cookie)
+  - Contact (text field, required, stored as a cookie, e.g. email or phone)
 - Checkbox "usage rules read" (required, only if the workplace has usage rules)
 - Button "create booking"
 - If everything works out, the booking is created and the user is redirected to the "all workplaces"
@@ -101,11 +101,11 @@ The calendar component is built in-house, not bought in.
 - At the top: zoom level "day" / "week" / "month", plus "today", "tomorrow", arrows for paging and a
   date picker
 - Scale per zoom level:
-    - Day: columns are hours across the opening hours, blocks are placed to quarter-hour precision
-    - Week: columns are the 7 days; each day cell is its own small timeline across the opening hours,
-      on which the bookings sit as bars, to scale
-    - Month: same as week, only with one column per day of the month and correspondingly narrower
-      cells
+  - Day: columns are hours across the opening hours, blocks are placed to quarter-hour precision
+  - Week: columns are the 7 days; each day cell is its own small timeline across the opening hours,
+    on which the bookings sit as bars, to scale
+  - Month: same as week, only with one column per day of the month and correspondingly narrower
+    cells
 - In week and month the selected day is highlighted as a column; weekends have a grey background
 - In week and month the bar labels are mostly too short to read — hover with details is not optional
   there but the only way to the information
@@ -164,17 +164,17 @@ flag, not by its name; exactly one role carries the flag, it has no password and
 - Name (string, renameable)
 - Password (stored salted and hashed)
 - Permissions:
-    - View bookings, including the name of the person booking (boolean, `viewBookings`)
-    - Additionally view the contact details of the person booking (boolean, `viewBookingsDetails`)
-    - Create, change and delete bookings (boolean, `manageBookings`)
-    - No restriction on booking duration and horizon (boolean, `noTimeRestrictions`)
-    - Manage booking series (boolean, `manageBookingSeries`)
-    - Change workplaces (boolean, `manageWorkplaces`)
-    - Change areas (boolean, `manageAreas`)
-    - Change user roles and global configuration (boolean, `manageRoles`)
+  - View bookings, including the name of the person booking (boolean, `viewBookings`)
+  - Additionally view the contact details of the person booking (boolean, `viewBookingsDetails`)
+  - Create, change and delete bookings (boolean, `manageBookings`)
+  - No restriction on booking duration and horizon (boolean, `noTimeRestrictions`)
+  - Manage booking series (boolean, `manageBookingSeries`)
+  - Change workplaces (boolean, `manageWorkplaces`)
+  - Change areas (boolean, `manageAreas`)
+  - Change user roles and global configuration (boolean, `manageRoles`)
 
 There is no notion of ownership on bookings: `manageBookings` permits creating, changing and deleting
-*any* booking, no matter which other user made it — there are, after all, only "user roles".
+_any_ booking, no matter which other user made it — there are, after all, only "user roles".
 
 At least one role must have `manageRoles` at all times; the last such role can neither be deleted nor
 stripped of that permission.
@@ -185,8 +185,6 @@ stripped of that permission.
 - Name (string)
 - Description (string, markdown)
 - Usage rules (string, markdown, optional)
-- Photo (optional, one image, uploaded in the admin view; JPEG/PNG/WebP, max. 5 MB, the backend
-  additionally produces a thumbnail and stores both locally on disk)
 - Status (string, enum: "OK", "DEFECT", "DISABLED")
 - Location (string, "Raum 3")
 - Reference to area (string, areaId)
@@ -274,7 +272,7 @@ The tag rules no longer appear here: they were already resolved into the respect
 
 Time ranges are compared half-open (`[start, end)`): 10:00–11:00 does not collide with 11:00–12:00.
 
-Two bookings that block the same third workplace do *not* collide with each other — only the third
+Two bookings that block the same third workplace do _not_ collide with each other — only the third
 one is blocked.
 
 When a booking is changed, it is itself excluded from the check.

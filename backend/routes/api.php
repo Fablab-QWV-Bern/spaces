@@ -8,7 +8,6 @@ use App\Http\Controllers\Api\ConfigController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\SessionController;
 use App\Http\Controllers\Api\WorkplaceController;
-use App\Http\Controllers\Api\WorkplacePhotoController;
 use Illuminate\Support\Facades\Route;
 
 // The permissions match the `x-permissions` in spec/reservation-api.yml.
@@ -54,9 +53,6 @@ Route::middleware('permission:manageWorkplaces')->group(function (): void {
     Route::post('workplaces', [WorkplaceController::class, 'store']);
     Route::put('workplaces/{workplace}', [WorkplaceController::class, 'update']);
     Route::delete('workplaces/{workplace}', [WorkplaceController::class, 'destroy']);
-
-    Route::post('workplaces/{workplace}/photo', [WorkplacePhotoController::class, 'store']);
-    Route::delete('workplaces/{workplace}/photo', [WorkplacePhotoController::class, 'destroy']);
 });
 
 Route::middleware('permission:viewBookings')->group(function (): void {

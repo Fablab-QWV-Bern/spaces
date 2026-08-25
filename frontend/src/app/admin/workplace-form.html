@@ -82,46 +82,6 @@
     </section>
 
     <section class="panel">
-      <h2>Foto</h2>
-
-      <div class="photo">
-        <div class="preview">
-          @if (photoPreview(); as url) {
-            <img [src]="url" alt="Vorschau des Fotos" />
-          } @else {
-            <span class="no-photo">kein Foto</span>
-          }
-        </div>
-
-        <div class="photo-actions">
-          <label class="button">
-            Bild wählen
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              (change)="onFilePicked($event)"
-            />
-          </label>
-
-          @if (pickedFile(); as file) {
-            <p class="note">
-              {{ file.name }} — wird beim Speichern hochgeladen.
-              <button type="button" class="link" (click)="clearPick()">verwerfen</button>
-            </p>
-          } @else if (editing()?.photoUrl) {
-            <button type="button" class="danger" (click)="removePhoto()">Foto entfernen</button>
-          } @else {
-            <p class="note">JPEG, PNG oder WebP, höchstens 5 MB.</p>
-          }
-
-          @if (photoError(); as message) {
-            <p class="warn" role="alert">{{ message }}</p>
-          }
-        </div>
-      </div>
-    </section>
-
-    <section class="panel">
       <label class="field">
         <span>Beschreibung</span>
         <textarea [formField]="workplaceForm.description"></textarea>

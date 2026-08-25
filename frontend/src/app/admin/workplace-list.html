@@ -45,14 +45,6 @@
                 <app-icon name="drag" label="Ziehen, um den Arbeitsplatz zu verschieben" />
               </div>
 
-              <div class="thumb">
-                @if (workplace.photoThumbnailUrl; as url) {
-                  <img [src]="url" [alt]="'Foto von ' + workplace.name" loading="lazy" />
-                } @else {
-                  <app-icon class="no-photo" name="photo" />
-                }
-              </div>
-
               <div class="about">
                 <div class="title">
                   <strong>{{ workplace.name }}</strong>

@@ -2,26 +2,21 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormField, form, required } from '@angular/forms/signals';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Observable, forkJoin, map, of, switchMap } from 'rxjs';
+import { Observable, forkJoin, map, of } from 'rxjs';
 
 import { ApiConfiguration } from '../api/api-configuration';
 import {
   createWorkplace,
-  deleteWorkplacePhoto,
   getWorkplace,
   listAreas,
   listWorkplaces,
   updateWorkplace,
-  uploadWorkplacePhoto,
 } from '../api/functions';
 // Renamed so that the generated model does not shadow the global Error.
 import { Area, Error as ApiError, Workplace, WorkplaceCreate } from '../api/models';
 import { formatDuration } from '../calendar/time-axis';
 import { refinePageTitle } from '../shared/page-title';
 import { TagInput } from './tag-input';
-
-/** The limit is in the spec too — here only to warn early and clearly. */
-const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
 interface WorkplaceFormValue {
   id: string;
@@ -86,19 +81,6 @@ export class WorkplaceForm {
     }
 
     return [...seen.values()].sort((a, b) => a.localeCompare(b, 'de-CH'));
-  });
-
-  // --- Photo ----------------------------------------------------------------
-
-  /** The selected file, not yet uploaded. */
-  protected readonly pickedFile = signal<File | null>(null);
-  protected readonly photoError = signal<string | null>(null);
-
-  /** Preview of the selected file, otherwise the stored photo. */
-  protected readonly photoPreview = computed(() => {
-    const file = this.pickedFile();
-
-    return file ? URL.createObjectURL(file) : (this.editing()?.photoUrl ?? null);
   });
 
   protected readonly model = signal<WorkplaceFormValue>({
@@ -233,45 +215,6 @@ export class WorkplaceForm {
 
   private idTouched = false;
 
-  // --- Photo ----------------------------------------------------------------
-
-  protected onFilePicked(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0] ?? null;
-
-    this.photoError.set(null);
-
-    if (file && file.size > MAX_PHOTO_BYTES) {
-      this.photoError.set('Das Bild ist grösser als 5 MB.');
-      input.value = '';
-
-      return;
-    }
-
-    this.pickedFile.set(file);
-  }
-
-  protected clearPick(): void {
-    this.pickedFile.set(null);
-    this.photoError.set(null);
-  }
-
-  protected removePhoto(): void {
-    const workplace = this.editing();
-
-    if (!workplace || !confirm('Das Foto wirklich entfernen?')) {
-      return;
-    }
-
-    deleteWorkplacePhoto(this.http, this.rootUrl, { id: workplace.id }).subscribe({
-      next: () => {
-        this.pickedFile.set(null);
-        this.editing.set({ ...workplace, photoUrl: null, photoThumbnailUrl: null });
-      },
-      error: () => this.photoError.set('Das Foto liess sich nicht entfernen.'),
-    });
-  }
-
   // --- Saving ---------------------------------------------------------------
 
   protected submit(): void {
@@ -295,9 +238,7 @@ export class WorkplaceForm {
         )
       : createWorkplace(this.http, this.rootUrl, { body }).pipe(map((r) => r.body));
 
-    // The photo follows as a separate request — when creating, there is only an
-    // identifier to attach it to after the save.
-    saved.pipe(switchMap((stored) => this.uploadPicked(stored))).subscribe({
+    saved.subscribe({
       next: () => this.router.navigate(['/verwaltung/arbeitsplaetze']),
       error: (response: HttpErrorResponse) => {
         this.saving.set(false);
@@ -306,17 +247,6 @@ export class WorkplaceForm {
         );
       },
     });
-  }
-
-  private uploadPicked(workplace: Workplace): Observable<unknown> {
-    const file = this.pickedFile();
-
-    return file
-      ? uploadWorkplacePhoto(this.http, this.rootUrl, {
-          id: workplace.id,
-          body: { file },
-        })
-      : of(workplace);
   }
 
   protected cancel(): void {

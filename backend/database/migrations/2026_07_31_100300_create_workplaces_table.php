@@ -18,9 +18,6 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->text('usage_rules')->nullable();
 
-            $table->string('photo_path')->nullable();
-            $table->string('photo_thumbnail_path')->nullable();
-
             $table->enum('status', ['OK', 'DEFECT', 'DISABLED'])->default('OK');
             $table->string('location', 150)->nullable();
 

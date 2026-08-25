@@ -10,8 +10,9 @@ export interface Area {
 
   /**
    * Any CSS colour the browser understands, used as-is as the background of this area's
-   * blocks. The seeded areas use `oklch(0.8 0.1 <hue>)` so that they differ in hue alone
-   * and share a lightness — a hex value works just as well.
+   * blocks and as the fill of its benches on the map. The seeded areas mix both spellings:
+   * those with benches on the floor plan carry the `rgb(…)` the plan draws them in, the
+   * rest an `oklch(0.8 0.1 <hue>)` of their own.
    */
   color: string;
   id: string;

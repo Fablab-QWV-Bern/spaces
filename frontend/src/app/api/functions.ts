@@ -47,10 +47,6 @@ export type { UpdateWorkplace$Params as UpdateWorkplace$Params } from './fn/work
 export { updateWorkplace as updateWorkplace } from './fn/workplaces/update-workplace';
 export type { DeleteWorkplace$Params as DeleteWorkplace$Params } from './fn/workplaces/delete-workplace';
 export { deleteWorkplace as deleteWorkplace } from './fn/workplaces/delete-workplace';
-export type { UploadWorkplacePhoto$Params as UploadWorkplacePhoto$Params } from './fn/workplaces/upload-workplace-photo';
-export { uploadWorkplacePhoto as uploadWorkplacePhoto } from './fn/workplaces/upload-workplace-photo';
-export type { DeleteWorkplacePhoto$Params as DeleteWorkplacePhoto$Params } from './fn/workplaces/delete-workplace-photo';
-export { deleteWorkplacePhoto as deleteWorkplacePhoto } from './fn/workplaces/delete-workplace-photo';
 export type { ListBookings$Params as ListBookings$Params } from './fn/bookings/list-bookings';
 export { listBookings as listBookings } from './fn/bookings/list-bookings';
 export type { CreateBooking$Params as CreateBooking$Params } from './fn/bookings/create-booking';

@@ -25,7 +25,7 @@ tags:
   - name: Areas
     description: Areas grouping workplaces, carrying booking limits and colour.
   - name: Workplaces
-    description: Bookable workplaces, their status, blocking rules and photo.
+    description: Bookable workplaces, their status and blocking rules.
   - name: Bookings
     description: Individual bookings and the pre-flight validation behind the booking form.
   - name: BookingSeries
@@ -40,7 +40,6 @@ tags:
 security: []
 
 components:
-
   securitySchemes:
     SessionCookie:
       type: apiKey
@@ -64,34 +63,33 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
     Unauthorized:
       description: Authentication required or session expired
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
     Forbidden:
       description: The current role lacks the required permission
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
     NotFound:
       description: Resource not found
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
     UnprocessableEntity:
       description: Validation failed
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
 
   schemas:
-
     Error:
       type: object
       properties:
@@ -109,7 +107,7 @@ components:
 
     BookingConflictError:
       allOf:
-        - $ref: '#/components/schemas/Error'
+        - $ref: "#/components/schemas/Error"
         - type: object
           properties:
             conflictingBookingIds:
@@ -171,7 +169,7 @@ components:
             Exactly one role carries this flag. It has no password, cannot be deleted, and is the
             implicit role of unauthenticated clients. Not settable through the API.
         permissions:
-          $ref: '#/components/schemas/Permissions'
+          $ref: "#/components/schemas/Permissions"
       required:
         - id
         - name
@@ -195,7 +193,7 @@ components:
           writeOnly: true
           nullable: true
         permissions:
-          $ref: '#/components/schemas/Permissions'
+          $ref: "#/components/schemas/Permissions"
       required:
         - name
         - permissions
@@ -211,7 +209,7 @@ components:
         isAnonymous:
           type: boolean
         permissions:
-          $ref: '#/components/schemas/Permissions'
+          $ref: "#/components/schemas/Permissions"
       required:
         - roleId
         - roleName
@@ -237,12 +235,12 @@ components:
       properties:
         opensAt:
           type: string
-          pattern: '^([01][0-9]|2[0-3]):[0-5][05]$'
+          pattern: "^([01][0-9]|2[0-3]):[0-5][05]$"
           example: "08:00"
           description: Local time, aligned to the 15-minute grid. Valid on all weekdays.
         closesAt:
           type: string
-          pattern: '^([01][0-9]|2[0-3]):[0-5][05]$'
+          pattern: "^([01][0-9]|2[0-3]):[0-5][05]$"
           example: "21:00"
           description: Local time, aligned to the 15-minute grid. Must be later than opensAt.
         maxBookingEndOffsetDays:
@@ -362,21 +360,6 @@ components:
           type: string
           nullable: true
           description: Markdown, same rendering restrictions. When set, bookings must acknowledge it.
-        photoUrl:
-          type: string
-          format: uri-reference
-          nullable: true
-          readOnly: true
-          description: |
-            Relative to the host that serves the API (`/storage/...`). Deliberately not absolute:
-            the API, the storage directory and the SPA live on the same host, and an absolute URL
-            built from a misconfigured APP_URL would break every photo at once.
-          example: /storage/workplaces/holz-3/foto-20260801120000.jpg
-        photoThumbnailUrl:
-          type: string
-          format: uri-reference
-          nullable: true
-          readOnly: true
         status:
           type: string
           enum: [OK, DEFECT, DISABLED]
@@ -424,12 +407,12 @@ components:
     WorkplaceCreate:
       type: object
       description: |
-        The photo is uploaded separately via POST /workplaces/{id}/photo, the order for all
-        workplaces at once via PUT /workplaces/order. A new workplace lands at the end of its area.
+        The order for all workplaces at once via PUT /workplaces/order. A new workplace lands at
+        the end of its area.
       properties:
         id:
           type: string
-          pattern: '^[a-z0-9][a-z0-9-]*$'
+          pattern: "^[a-z0-9][a-z0-9-]*$"
         name:
           type: string
           minLength: 1
@@ -474,7 +457,7 @@ components:
 
     WorkplaceUpdate:
       allOf:
-        - $ref: '#/components/schemas/WorkplaceCreate'
+        - $ref: "#/components/schemas/WorkplaceCreate"
         - type: object
           description: The id is taken from the path and cannot be changed.
           properties:
@@ -725,7 +708,7 @@ components:
         bookings — those instances are skipped and reported here.
       properties:
         series:
-          $ref: '#/components/schemas/BookingSeries'
+          $ref: "#/components/schemas/BookingSeries"
         skippedInstances:
           type: array
           items:
@@ -750,7 +733,6 @@ components:
         - skippedInstances
 
 paths:
-
   /session:
     get:
       tags: [Session]
@@ -760,12 +742,12 @@ paths:
         Returns the anonymous role when no session exists. The frontend uses this to decide what to
         render, so it never 401s.
       responses:
-        '200':
+        "200":
           description: Current session
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Session'
+                $ref: "#/components/schemas/Session"
 
     post:
       tags: [Session]
@@ -777,29 +759,29 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LoginRequest'
+              $ref: "#/components/schemas/LoginRequest"
       responses:
-        '200':
+        "200":
           description: Logged in; session cookie set
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Session'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '429':
+                $ref: "#/components/schemas/Session"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
           description: Too many attempts
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
     delete:
       tags: [Session]
       operationId: logout
       summary: Log out
       responses:
-        '204':
+        "204":
           description: Session ended; caller falls back to the anonymous role
 
   /session/roles:
@@ -812,7 +794,7 @@ paths:
         every role except the anonymous one; carries no permissions or other detail, just the names,
         in the order roles were created.
       responses:
-        '200':
+        "200":
           description: Role names
           content:
             application/json:
@@ -827,12 +809,12 @@ paths:
       operationId: getConfig
       summary: Read global configuration
       responses:
-        '200':
+        "200":
           description: Global configuration
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Config'
+                $ref: "#/components/schemas/Config"
 
     put:
       tags: [Config]
@@ -844,18 +826,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Config'
+              $ref: "#/components/schemas/Config"
       responses:
-        '200':
+        "200":
           description: Configuration updated
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Config'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '422':
-          $ref: '#/components/responses/UnprocessableEntity'
+                $ref: "#/components/schemas/Config"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
 
   /roles:
     get:
@@ -864,16 +846,16 @@ paths:
       summary: List roles
       x-permissions: ["manageRoles"]
       responses:
-        '200':
+        "200":
           description: List of roles
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Role'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+                  $ref: "#/components/schemas/Role"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
     post:
       tags: [Roles]
@@ -885,9 +867,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RoleWrite'
+              $ref: "#/components/schemas/RoleWrite"
       responses:
-        '201':
+        "201":
           description: Role created
           headers:
             Location:
@@ -896,31 +878,31 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Role'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '422':
-          $ref: '#/components/responses/UnprocessableEntity'
+                $ref: "#/components/schemas/Role"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
 
   /roles/{id}:
     parameters:
-      - $ref: '#/components/parameters/IdInPath'
+      - $ref: "#/components/parameters/IdInPath"
     get:
       tags: [Roles]
       operationId: getRole
       summary: Get role
       x-permissions: ["manageRoles"]
       responses:
-        '200':
+        "200":
           description: Role
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Role'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/Role"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
     put:
       tags: [Roles]
@@ -935,20 +917,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RoleWrite'
+              $ref: "#/components/schemas/RoleWrite"
       responses:
-        '200':
+        "200":
           description: Role updated
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Role'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/UnprocessableEntity'
+                $ref: "#/components/schemas/Role"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
 
     delete:
       tags: [Roles]
@@ -959,14 +941,14 @@ paths:
         the role keep their creatorRoleId as a dangling reference — they are historical records.
       x-permissions: ["manageRoles"]
       responses:
-        '204':
+        "204":
           description: Role deleted
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/UnprocessableEntity'
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
 
   /areas:
     get:
@@ -974,14 +956,14 @@ paths:
       operationId: listAreas
       summary: List areas
       responses:
-        '200':
+        "200":
           description: List of areas, in sortOrder
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Area'
+                  $ref: "#/components/schemas/Area"
 
     post:
       tags: [Areas]
@@ -993,9 +975,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AreaWrite'
+              $ref: "#/components/schemas/AreaWrite"
       responses:
-        '201':
+        "201":
           description: Area created
           headers:
             Location:
@@ -1004,11 +986,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Area'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '422':
-          $ref: '#/components/responses/UnprocessableEntity'
+                $ref: "#/components/schemas/Area"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
 
   /areas/order:
     put:
@@ -1024,37 +1006,37 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SortOrderWrite'
+              $ref: "#/components/schemas/SortOrderWrite"
       responses:
-        '200':
+        "200":
           description: The areas in their new order
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Area'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '422':
-          $ref: '#/components/responses/UnprocessableEntity'
+                  $ref: "#/components/schemas/Area"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
 
   /areas/{id}:
     parameters:
-      - $ref: '#/components/parameters/IdInPath'
+      - $ref: "#/components/parameters/IdInPath"
     get:
       tags: [Areas]
       operationId: getArea
       summary: Get area
       responses:
-        '200':
+        "200":
           description: Area
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Area'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/Area"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
     put:
       tags: [Areas]
@@ -1066,20 +1048,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AreaWrite'
+              $ref: "#/components/schemas/AreaWrite"
       responses:
-        '200':
+        "200":
           description: Area updated
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Area'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/UnprocessableEntity'
+                $ref: "#/components/schemas/Area"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
 
     delete:
       tags: [Areas]
@@ -1088,14 +1070,14 @@ paths:
       description: 422 while workplaces are still assigned to the area.
       x-permissions: ["manageAreas"]
       responses:
-        '204':
+        "204":
           description: Area deleted
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/UnprocessableEntity'
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
 
   /workplaces:
     get:
@@ -1117,16 +1099,16 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: List of workplaces
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Workplace'
-        '400':
-          $ref: '#/components/responses/BadRequest'
+                  $ref: "#/components/schemas/Workplace"
+        "400":
+          $ref: "#/components/responses/BadRequest"
 
     post:
       tags: [Workplaces]
@@ -1138,9 +1120,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WorkplaceCreate'
+              $ref: "#/components/schemas/WorkplaceCreate"
       responses:
-        '201':
+        "201":
           description: Workplace created
           headers:
             Location:
@@ -1149,17 +1131,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Workplace'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '409':
+                $ref: "#/components/schemas/Workplace"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
           description: A workplace with this id already exists
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          $ref: '#/components/responses/UnprocessableEntity'
+                $ref: "#/components/schemas/Error"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
 
   /workplaces/order:
     put:
@@ -1176,37 +1158,37 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SortOrderWrite'
+              $ref: "#/components/schemas/SortOrderWrite"
       responses:
-        '200':
+        "200":
           description: The workplaces in their new order
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Workplace'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '422':
-          $ref: '#/components/responses/UnprocessableEntity'
+                  $ref: "#/components/schemas/Workplace"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
 
   /workplaces/{id}:
     parameters:
-      - $ref: '#/components/parameters/IdInPath'
+      - $ref: "#/components/parameters/IdInPath"
     get:
       tags: [Workplaces]
       operationId: getWorkplace
       summary: Get workplace
       responses:
-        '200':
+        "200":
           description: Workplace
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Workplace'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/Workplace"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
     put:
       tags: [Workplaces]
@@ -1221,20 +1203,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WorkplaceUpdate'
+              $ref: "#/components/schemas/WorkplaceUpdate"
       responses:
-        '200':
+        "200":
           description: Workplace updated
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Workplace'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/UnprocessableEntity'
+                $ref: "#/components/schemas/Workplace"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
 
     delete:
       tags: [Workplaces]
@@ -1245,70 +1227,14 @@ paths:
         every other workplace's blocksWorkplaceIds.
       x-permissions: ["manageWorkplaces"]
       responses:
-        '204':
+        "204":
           description: Workplace deleted
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/UnprocessableEntity'
-
-  /workplaces/{id}/photo:
-    parameters:
-      - $ref: '#/components/parameters/IdInPath'
-    post:
-      tags: [Workplaces]
-      operationId: uploadWorkplacePhoto
-      summary: Upload or replace the workplace photo
-      description: |
-        JPEG, PNG or WebP, at most 5 MB. Stored on the local disk; the backend derives a thumbnail
-        and returns both URLs. Replaces any existing photo.
-      x-permissions: ["manageWorkplaces"]
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                file:
-                  type: string
-                  format: binary
-              required:
-                - file
-      responses:
-        '200':
-          description: Photo stored
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Workplace'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '413':
-          description: File too large
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          $ref: '#/components/responses/UnprocessableEntity'
-
-    delete:
-      tags: [Workplaces]
-      operationId: deleteWorkplacePhoto
-      summary: Remove the workplace photo
-      x-permissions: ["manageWorkplaces"]
-      responses:
-        '204':
-          description: Photo removed
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
 
   /bookings:
     get:
@@ -1342,18 +1268,18 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: List of bookings
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Booking'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '422':
-          $ref: '#/components/responses/UnprocessableEntity'
+                  $ref: "#/components/schemas/Booking"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
 
     post:
       tags: [Bookings]
@@ -1368,9 +1294,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BookingWrite'
+              $ref: "#/components/schemas/BookingWrite"
       responses:
-        '201':
+        "201":
           description: Booking created
           headers:
             Location:
@@ -1379,17 +1305,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Booking'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '409':
+                $ref: "#/components/schemas/Booking"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
           description: Collides with an existing booking
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BookingConflictError'
-        '422':
-          $ref: '#/components/responses/UnprocessableEntity'
+                $ref: "#/components/schemas/BookingConflictError"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
 
   /bookings/validate:
     post:
@@ -1411,20 +1337,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BookingWrite'
+              $ref: "#/components/schemas/BookingWrite"
       responses:
-        '200':
+        "200":
           description: Validation result
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BookingValidation'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+                $ref: "#/components/schemas/BookingValidation"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /bookings/{id}:
     parameters:
-      - $ref: '#/components/parameters/IdInPath'
+      - $ref: "#/components/parameters/IdInPath"
     get:
       tags: [Bookings]
       operationId: getBooking
@@ -1434,16 +1360,16 @@ paths:
         viewBookingsDetails.
       x-permissions: ["viewBookings"]
       responses:
-        '200':
+        "200":
           description: Booking
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Booking'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/Booking"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
     put:
       tags: [Bookings]
@@ -1458,26 +1384,26 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BookingWrite'
+              $ref: "#/components/schemas/BookingWrite"
       responses:
-        '200':
+        "200":
           description: Booking updated
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Booking'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
+                $ref: "#/components/schemas/Booking"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
           description: Collides with an existing booking
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BookingConflictError'
-        '422':
-          $ref: '#/components/responses/UnprocessableEntity'
+                $ref: "#/components/schemas/BookingConflictError"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
 
     delete:
       tags: [Bookings]
@@ -1486,14 +1412,14 @@ paths:
       description: 422 once the booking's end lies in the past.
       x-permissions: ["manageBookings"]
       responses:
-        '204':
+        "204":
           description: Booking deleted
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/UnprocessableEntity'
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
 
   /booking-series:
     get:
@@ -1502,16 +1428,16 @@ paths:
       summary: List booking series
       x-permissions: ["viewBookings"]
       responses:
-        '200':
+        "200":
           description: List of booking series
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/BookingSeries'
-        '403':
-          $ref: '#/components/responses/Forbidden'
+                  $ref: "#/components/schemas/BookingSeries"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
     post:
       tags: [BookingSeries]
@@ -1527,9 +1453,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BookingSeriesWrite'
+              $ref: "#/components/schemas/BookingSeriesWrite"
       responses:
-        '201':
+        "201":
           description: Series created, possibly with skipped instances
           headers:
             Location:
@@ -1538,31 +1464,31 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BookingSeriesResult'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '422':
-          $ref: '#/components/responses/UnprocessableEntity'
+                $ref: "#/components/schemas/BookingSeriesResult"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
 
   /booking-series/{id}:
     parameters:
-      - $ref: '#/components/parameters/IdInPath'
+      - $ref: "#/components/parameters/IdInPath"
     get:
       tags: [BookingSeries]
       operationId: getBookingSeries
       summary: Get booking series
       x-permissions: ["viewBookings"]
       responses:
-        '200':
+        "200":
           description: Booking series
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BookingSeries'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/BookingSeries"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
     put:
       tags: [BookingSeries]
@@ -1579,20 +1505,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BookingSeriesWrite'
+              $ref: "#/components/schemas/BookingSeriesWrite"
       responses:
-        '200':
+        "200":
           description: Series updated, possibly with skipped instances
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BookingSeriesResult'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/UnprocessableEntity'
+                $ref: "#/components/schemas/BookingSeriesResult"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
 
     delete:
       tags: [BookingSeries]
@@ -1603,12 +1529,12 @@ paths:
         with their bookingSeriesId cleared.
       x-permissions: ["manageBookingSeries"]
       responses:
-        '204':
+        "204":
           description: Series deleted
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
   /calendar.ics:
     get:
@@ -1652,13 +1578,13 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: iCalendar feed
           content:
             text/calendar:
               schema:
                 type: string
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"

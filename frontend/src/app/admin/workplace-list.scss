@@ -56,34 +56,9 @@
   flex: none;
   display: flex;
   align-items: center;
-  // Against the thumbnail next to it the icon would otherwise look like a
-  // caption; it stands for the row, not for the picture.
+  // Without this the icon reads as a caption for the name beside it; it stands
+  // for the row, not for the text.
   margin-right: -0.25rem;
-}
-
-.thumb {
-  flex: none;
-  width: 4rem;
-  height: 3rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  border-radius: 0.25rem;
-  background: var(--surface-muted);
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  .no-photo {
-    // Larger than the surrounding body text: the icon stands alone in a 4×3 box
-    // and is not a glyph in a line of text.
-    font-size: 1.4rem;
-    opacity: 0.35;
-  }
 }
 
 .about {

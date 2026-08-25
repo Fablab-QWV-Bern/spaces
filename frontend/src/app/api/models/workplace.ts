@@ -23,14 +23,6 @@ export interface Workplace {
    */
   maxBookingDurationMinutes?: number | null;
   name: string;
-  photoThumbnailUrl?: string | null;
-
-  /**
-   * Relative to the host that serves the API (`/storage/...`). Deliberately not absolute:
-   * the API, the storage directory and the SPA live on the same host, and an absolute URL
-   * built from a misconfigured APP_URL would break every photo at once.
-   */
-  photoUrl?: string | null;
 
   /**
    * Within the area. Set through PUT /workplaces/order, not here.

@@ -38,7 +38,6 @@ const ICONS = {
   add: 'plus',
   external: 'arrow-up-right',
   remove: 'x',
-  photo: 'image',
   drag: 'grip-vertical',
 };
 

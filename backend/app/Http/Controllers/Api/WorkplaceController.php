@@ -208,8 +208,8 @@ class WorkplaceController extends Controller
 
     /**
      * PUT replaces the whole workplace: whatever the call omits falls back to its
-     * default rather than keeping the previous value. Photo and order are exempt
-     * from this — both have an endpoint of their own.
+     * default rather than keeping the previous value. The order is exempt from
+     * this — it has an endpoint of its own.
      *
      * @param  array<string, mixed>  $data
      * @return array<string, mixed>
