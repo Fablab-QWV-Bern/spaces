@@ -6,6 +6,7 @@ import { refinePageTitle } from '../shared/page-title';
 import { Block, blocksFor } from './blocks';
 import { CalendarStore, IsoDate, isoDate } from './calendar-store';
 import { CalendarToolbar } from './calendar-toolbar';
+import { pageWithArrowKeys } from './arrow-key-paging';
 import { syncDateWithUrl } from './date-in-url';
 import { DayTrack } from './day-track';
 import { percentOfAxis } from './time-axis';
@@ -53,6 +54,7 @@ export class WeekCalendar {
   constructor() {
     this.store.span.set('week');
     syncDateWithUrl();
+    pageWithArrowKeys();
     this.store.load();
 
     // "Woche" in front, because a range alone in the tab does not say which zoom

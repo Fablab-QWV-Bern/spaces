@@ -7,6 +7,7 @@ import { Block, blocksFor } from './blocks';
 import { leadTimeNotice } from './booking-horizon';
 import { CalendarStore, IsoDate, isoDate } from './calendar-store';
 import { CalendarToolbar } from './calendar-toolbar';
+import { pageWithArrowKeys } from './arrow-key-paging';
 import { syncDateWithUrl } from './date-in-url';
 import { DayTrack, SIGN_IN_NOTICE } from './day-track';
 import { HourHeader } from './hour-header';
@@ -59,6 +60,7 @@ export class WorkplaceCalendar {
   constructor() {
     this.store.span.set('month');
     syncDateWithUrl();
+    pageWithArrowKeys();
     this.store.load();
 
     // Without a workplace only the month would remain of the title — and in the
