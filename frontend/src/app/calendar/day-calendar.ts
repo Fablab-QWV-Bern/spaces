@@ -7,6 +7,7 @@ import { Block, blocksFor } from './blocks';
 import { leadTimeNotice } from './booking-horizon';
 import { CalendarStore, isoDate } from './calendar-store';
 import { CalendarToolbar } from './calendar-toolbar';
+import { pageWithArrowKeys } from './arrow-key-paging';
 import { syncDateWithUrl } from './date-in-url';
 import { DayTrack, SIGN_IN_NOTICE } from './day-track';
 import { HourHeader } from './hour-header';
@@ -32,6 +33,7 @@ export class DayCalendar {
   constructor() {
     this.store.span.set('day');
     syncDateWithUrl();
+    pageWithArrowKeys();
     this.store.load();
 
     // The tab shows what the heading shows — a calendar without a date is no
