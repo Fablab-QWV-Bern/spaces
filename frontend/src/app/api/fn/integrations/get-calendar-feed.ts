@@ -12,6 +12,15 @@ export interface GetCalendarFeed$Params {
    * Unknown id is a 404, so a typo in a subscription URL surfaces at once.
    */
   workplaceId?: string;
+
+  /**
+   * Comma-separated tag names. The feed then carries only bookings on workplaces
+   * that hold at least one of them — the same union as tag-based blocking, not an
+   * intersection. Matched case-insensitively, a leading `#` ignored. A tag no
+   * workplace holds is a 404, like an unknown workplaceId, so a typo in a
+   * subscription URL surfaces at once. Combined with workplaceId the two intersect.
+   */
+  tag?: Array<string>;
 }
 
 export function getCalendarFeed(
@@ -23,6 +32,7 @@ export function getCalendarFeed(
   const rb = new RequestBuilder(rootUrl, getCalendarFeed.PATH, 'get');
   if (params) {
     rb.query('workplaceId', params.workplaceId, {});
+    rb.query('tag', params.tag, { style: 'form', explode: false });
   }
 
   return http.request(rb.build({ responseType: 'text', accept: 'text/calendar', context })).pipe(

@@ -28,6 +28,13 @@ interface WorkplaceGroup {
  * when the two disagree — so the dropdown for it is deliberately left off. The
  * parameter name differs between them (`workplaceId` from the API spec, German
  * `arbeitsplatz` for the widgets), so each URL is built from its own.
+ *
+ * The feed additionally offers a tag filter (`tag`, comma-separated): a
+ * workplace matching any of the ticked tags is in. The tag list is read off the
+ * loaded workplaces rather than fetched — the same values the workplace form
+ * writes. Combined with a workplace the two intersect, as with the area; unlike
+ * the area it is worth having, because "every loud machine" is a subscription
+ * someone actually wants and no single workplace expresses it.
  */
 @Component({
   selector: 'app-interfaces',
@@ -47,13 +54,34 @@ export class Interfaces {
   private readonly host = location.host;
 
   // The calendar subscription, filtered by workplace (`workplaceId` per
-  // spec/reservation-api.yml).
+  // spec/reservation-api.yml) and/or by tag (`tag`, comma-separated).
   protected readonly feedWorkplace = signal('');
+  protected readonly feedTags = signal<string[]>([]);
 
-  /** The `/api/calendar.ics` path with the chosen filter. */
-  protected readonly feedPath = computed(() =>
-    query('/api/calendar.ics', { workplaceId: this.feedWorkplace() }),
+  /** Every tag any workplace carries, deduplicated and sorted for the checkbox row. */
+  protected readonly allTags = computed(() =>
+    [
+      ...new Set(
+        this.groups()
+          .flatMap((group) => group.workplaces)
+          .flatMap((place) => place.tags),
+      ),
+    ].sort((a, b) => a.localeCompare(b, 'de')),
   );
+
+  /** The `/api/calendar.ics` path with the chosen filters. */
+  protected readonly feedPath = computed(() =>
+    query('/api/calendar.ics', {
+      workplaceId: this.feedWorkplace(),
+      tag: this.feedTags().join(','),
+    }),
+  );
+
+  protected toggleFeedTag(tag: string): void {
+    this.feedTags.update((tags) =>
+      tags.includes(tag) ? tags.filter((each) => each !== tag) : [...tags, tag],
+    );
+  }
 
   /**
    * `webcal:` rather than `https:`, so a click subscribes instead of downloading

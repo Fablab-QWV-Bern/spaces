@@ -50,3 +50,35 @@
 .max {
   flex: 0 1 12rem;
 }
+
+// The feed's tag filter: a wrapping row of checkboxes rather than a multi-select,
+// which no browser draws legibly.
+.tags {
+  margin: 0;
+  padding: 0;
+  border: 0;
+
+  legend {
+    padding: 0;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+  }
+
+  .note {
+    margin: 0.15rem 0 0.5rem;
+  }
+
+  .checks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.9rem;
+  }
+
+  .check {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.85rem;
+  }
+}

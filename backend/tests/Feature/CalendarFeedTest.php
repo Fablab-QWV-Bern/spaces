@@ -127,6 +127,46 @@ it('answers an unknown filter with 404 rather than an empty calendar', function 
     $this->get(feed(['workplaceId' => 'gibt-es-nicht']))->assertNotFound();
 });
 
+it('filters by tag, matching any of the given tags', function () {
+    // holz-1 (Hans Cramer, from beforeEach) carries "werkstatt" but not "lärmig";
+    // drechselbank carries both.
+    Booking::create([
+        'workplace_id' => 'drechselbank',
+        'name' => 'Ida Roth',
+        'contact' => 'ida@example.org',
+        'start_time' => $this->start,
+        'end_time' => $this->start->addHour(),
+        'chargeable_duration_minutes' => 60,
+    ]);
+
+    expect($this->get(feed(['tag' => 'lärmig']))->getContent())
+        ->toContain('Ida Roth')
+        ->not->toContain('Hans Cramer');
+
+    expect($this->get(feed(['tag' => 'werkstatt']))->getContent())
+        ->toContain('Ida Roth')
+        ->toContain('Hans Cramer');
+
+    // A leading "#" and casing are tolerated.
+    expect($this->get(feed(['tag' => '#LÄRMIG']))->getContent())
+        ->toContain('Ida Roth')
+        ->not->toContain('Hans Cramer');
+
+    // Several tags are a union: a workplace carrying any of them is in.
+    $body = $this->get(feed(['tag' => 'lärmig,werkstatt']))->getContent();
+    expect($body)->toContain('Ida Roth')->toContain('Hans Cramer');
+});
+
+it('answers an unknown tag with 404 rather than an empty calendar', function () {
+    $this->get(feed(['tag' => 'gibt-es-nicht']))->assertNotFound();
+    $this->get(feed(['tag' => 'werkstatt,gibt-es-nicht']))->assertNotFound();
+});
+
+it('names the tag filter in the calendar name', function () {
+    expect($this->get(feed(['tag' => 'lärmig']))->getContent())
+        ->toContain('X-WR-CALNAME:'.config('app.name').' – #lärmig');
+});
+
 it('covers three months in both directions', function () {
     $outside = fn (CarbonImmutable $start) => Booking::create([
         'workplace_id' => 'holz-2',

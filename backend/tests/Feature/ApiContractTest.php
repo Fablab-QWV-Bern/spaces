@@ -102,7 +102,11 @@ it('holds the contract for /calendar.ics', function () {
 
     $this->get('/api/calendar.ics?workplaceId=holz-1')->assertValidRequest()->assertValidResponse(200);
 
+    $this->get('/api/calendar.ics?tag=werkstatt')->assertValidRequest()->assertValidResponse(200);
+
     $this->get('/api/calendar.ics?workplaceId=gibtsnicht')->assertValidResponse(404);
+
+    $this->get('/api/calendar.ics?tag=gibtsnicht')->assertValidResponse(404);
 });
 
 it('holds the contract for the error responses', function () {

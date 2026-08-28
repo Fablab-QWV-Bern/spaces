@@ -29,6 +29,25 @@
         </label>
       </div>
 
+      @if (allTags().length) {
+        <fieldset class="tags">
+          <legend>Tags (optional)</legend>
+          <p class="note">Ohne Auswahl alle. Ein Arbeitsplatz mit einem der Häkchen ist dabei.</p>
+          <div class="checks">
+            @for (tag of allTags(); track tag) {
+              <label class="check">
+                <input
+                  type="checkbox"
+                  [checked]="feedTags().includes(tag)"
+                  (change)="toggleFeedTag(tag)"
+                />
+                <span>#{{ tag }}</span>
+              </label>
+            }
+          </div>
+        </fieldset>
+      }
+
       <p class="actions">
         <a class="button primary" [href]="feedSubscribeUrl()">Abonnieren</a>
       </p>

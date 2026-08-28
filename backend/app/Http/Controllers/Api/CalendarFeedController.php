@@ -10,6 +10,7 @@ use App\Support\Ical\CalendarFeed;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 
 /**
  * The subscription feed for calendar clients.
@@ -35,11 +36,29 @@ class CalendarFeedController extends Controller
 
         $filters = $request->validate([
             'workplaceId' => ['sometimes', 'string'],
+            'tag' => ['sometimes', 'string'],
         ]);
 
         // A typo in the subscription link should stand out rather than pass as an
-        // empty calendar — one would only notice that weeks later.
+        // empty calendar — one would only notice that weeks later. The same holds
+        // for a tag: it is a 404 when no workplace carries it.
         $workplace = isset($filters['workplaceId']) ? Workplace::findOrFail($filters['workplaceId']) : null;
+
+        // Comma-separated, with a leading "#" and surrounding space tolerated as
+        // in the admin form. Matching then runs through the column's
+        // case-insensitive collation, like tag-based blocking.
+        $tags = collect(explode(',', $filters['tag'] ?? ''))
+            ->map(fn (string $tag): string => ltrim(trim($tag), '#'))
+            ->filter()
+            ->values();
+
+        foreach ($tags as $tag) {
+            abort_unless(
+                DB::table('workplace_tags')->where('tag', $tag)->exists(),
+                404,
+                "Kein Arbeitsplatz trägt den Tag «{$tag}».",
+            );
+        }
 
         $now = CarbonImmutable::now()->utc();
 
@@ -48,12 +67,16 @@ class CalendarFeedController extends Controller
             ->where('start_time', '<', $now->addMonths(self::WINDOW_MONTHS))
             ->where('end_time', '>', $now->subMonths(self::WINDOW_MONTHS))
             ->when($workplace, fn ($query) => $query->where('workplace_id', $workplace->id))
+            ->when($tags->isNotEmpty(), fn ($query) => $query->whereIn(
+                'workplace_id',
+                DB::table('workplace_tags')->select('workplace_id')->whereIn('tag', $tags->all()),
+            ))
             ->orderBy('start_time')
             ->get();
 
         $body = $this->feed->render(
             $bookings,
-            $this->title($workplace),
+            $this->title($workplace, $tags->all()),
             $request->getHost(),
             $role->can('viewBookingsDetails'),
         );
@@ -61,10 +84,23 @@ class CalendarFeedController extends Controller
         return response($body, 200, ['Content-Type' => 'text/calendar; charset=utf-8']);
     }
 
-    private function title(?Workplace $workplace): string
+    /**
+     * The calendar name the client shows. It carries whichever filter is in
+     * force so a subscriber can tell two feeds apart; the workplace wins when
+     * both are given.
+     *
+     * @param  list<string>  $tags
+     */
+    private function title(?Workplace $workplace, array $tags): string
     {
         $name = config('app.name');
 
-        return $workplace !== null ? "{$name} – {$workplace->name}" : $name;
+        $suffix = match (true) {
+            $workplace !== null => $workplace->name,
+            $tags !== [] => implode(', ', array_map(fn (string $tag): string => "#{$tag}", $tags)),
+            default => null,
+        };
+
+        return $suffix !== null ? "{$name} – {$suffix}" : $name;
     }
 }

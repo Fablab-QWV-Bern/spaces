@@ -1691,6 +1691,20 @@ paths:
           description: Unknown id is a 404, so a typo in a subscription URL surfaces at once.
           schema:
             type: string
+        - name: tag
+          in: query
+          description: |
+            Comma-separated tag names. The feed then carries only bookings on workplaces
+            that hold at least one of them — the same union as tag-based blocking, not an
+            intersection. Matched case-insensitively, a leading `#` ignored. A tag no
+            workplace holds is a 404, like an unknown workplaceId, so a typo in a
+            subscription URL surfaces at once. Combined with workplaceId the two intersect.
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
       responses:
         "200":
           description: iCalendar feed
