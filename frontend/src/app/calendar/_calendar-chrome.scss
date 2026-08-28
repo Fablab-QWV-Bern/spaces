@@ -6,7 +6,7 @@
 // `--columns`; everything else comes from here.
 
 :host {
-  --label-width: 10rem;
+  --label-width: clamp(7rem, 25vw, 12rem);
   --row-height: 2rem;
   --columns: 1fr;
   // Below this width it scrolls rather than squeezes. The legend needs the same
@@ -79,9 +79,7 @@
   background: var(--paper);
   border-right: 1px solid var(--line-strong);
   font-size: 0.85rem;
-  text-align: right;
   margin-right: -1px;
-  direction: rtl;
 }
 
 // The label column sticks to the left, the header row to the top; their corner
@@ -193,7 +191,6 @@
 // up to an ellipsis regardless.
 @media (width < 48rem) {
   :host {
-    --label-width: max(25vw, 7rem);
     --gutter: 0.75rem;
   }
 

@@ -29,7 +29,7 @@ import { CalendarStore } from './calendar-store';
       routerLink="/arbeitsplatz"
       [queryParams]="{ arbeitsplatz: workplace().id, datum: store.date() }"
       [title]="'Monat von ' + workplace().name"
-      >{{ workplace().name }}</a
+      ><bdi>{{ workplace().name }}</bdi></a
     >
 
     @if (status(); as label) {
@@ -51,12 +51,19 @@ import { CalendarStore } from './calendar-store';
   styles: `
     // A link, but not styled like one: the column is a label, not a list of
     // links. Only on hover does it reveal itself.
+    //
+    // The label column is narrow. When the name does not fit, the ellipsis
+    // should clip its front so the telling end (XL, 2, gross) stays visible:
+    // direction rtl moves the clip to the inline start. The bdi element in the
+    // template then keeps the bidi algorithm from reordering the Latin name
+    // around its digits and hyphens.
     .name {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
       color: inherit;
       text-decoration: none;
+      direction: rtl;
 
       &:hover {
         text-decoration: underline;

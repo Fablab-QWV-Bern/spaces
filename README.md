@@ -202,6 +202,43 @@ hosting pulls that branch and runs `backend/deploy.sh`, which handles
 documents the constraints that shaped this (no SSH, no Node on the server, no
 long-running processes).
 
+## Scheduled tasks and backups
+
+Two commands run on a schedule:
+
+| Command                              | When         | What                                                                       |
+| ------------------------------------ | ------------ | ------------------------------------------------------------------------- |
+| `php artisan backup:db`              | daily, 02:00 | Gzipped `mysqldump` to `backend/storage/app/backups/`, keeps the last 30 days |
+| `php artisan booking-series:instantiate` | daily, 03:00 | Tops the series horizon back up to a year ahead                          |
+
+Locally, run either by hand, or `php artisan schedule:work` to have them fire on
+their cadence.
+
+On the hosting each is a separate Plesk **Scheduled Task** that calls the command
+directly, set to *notify on error*:
+
+```
+/opt/plesk/php/8.5/bin/php /var/www/vhosts/…/artisan backup:db
+/opt/plesk/php/8.5/bin/php /var/www/vhosts/…/artisan booking-series:instantiate
+```
+
+The path before `artisan` is the Laravel root — the Git checkout directory, one
+level above the document root (`public/`); `deploy.sh` prints it as its first log
+line. A single every-minute `schedule:run` is deliberately avoided: Laravel's
+scheduler reports a failing command through the exception handler and still exits
+0, so Plesk's error notification would never see a backup that produced nothing.
+
+### Where the backup lands
+
+`backend/storage/app/backups/db-2026-08-28-020000.sql.gz` — a gzip-compressed
+dump named by the run's timestamp. It sits outside the document root, so it is
+never served; a dump holds contact details and password hashes. Each run prunes
+whatever is older than 30 days.
+
+The backup is local to the server: it guards against a bad migration or a
+mistaken delete, not against loss of the server itself — the hosting's own
+backups sit under that. 
+
 ## Licence
 
 MIT.
