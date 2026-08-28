@@ -47,6 +47,17 @@ return [
             'report' => false,
         ],
 
+        // Where `backup:db` writes its gzipped dumps and prunes the old ones.
+        // Its own disk, not `local`, so the path is named in one place; under
+        // `storage/`, so it sits outside the document root (that is `public/`)
+        // and is never served.
+        'backups' => [
+            'driver' => 'local',
+            'root' => storage_path('app/backups'),
+            'throw' => false,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),
