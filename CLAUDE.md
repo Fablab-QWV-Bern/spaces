@@ -455,17 +455,29 @@ hosttech "Smart Deal" with Plesk: PHP 8.5, MariaDB, 180 seconds execution time
 (configurable up to 600), no long-running processes. Everything periodic runs via
 cron, not via queue workers.
 
-**A single cron entry suffices**, in Plesk under "Scheduled Tasks", every minute:
+**Two Plesk "Scheduled Tasks"**, one per periodic job, each calling the command
+directly:
 
 ```
-/opt/plesk/php/8.5/bin/php /var/www/vhosts/…/artisan schedule:run
+/opt/plesk/php/8.5/bin/php /var/www/vhosts/…/artisan backup:db                  # daily 02:00, notify on error
+/opt/plesk/php/8.5/bin/php /var/www/vhosts/…/artisan booking-series:instantiate  # daily 03:00, notify on error
 ```
 
-What runs when is in `backend/routes/console.php` — in the repository rather than
-in the Plesk form, for the same reason as with deployment. So far the only thing
-hanging off it is `booking-series:instantiate`, which re-instantiates the series a
-year ahead daily at 03:00. Without the entry, the series eventually run out
-without anything else breaking.
+A single every-minute `schedule:run` was the obvious route and is deliberately
+not taken: Laravel's scheduler reports a command's failure through the exception
+handler and still exits 0, so Plesk's "notify on error" would show a green run
+while the backup produced nothing. Called directly, a non-zero exit reaches
+Plesk. What runs when still lives in `backend/routes/console.php` — `schedule:work`
+uses it locally, and the cadence belongs in the repository rather than only in a
+form. A third periodic job would mean a third task (or reintroducing
+`schedule:run` then); with two, this is the smaller thing. Without the entries the
+series horizon stops advancing and no backups are taken; nothing else breaks.
+
+`backup:db` writes a gzipped `mysqldump` to `storage/app/backups` (outside the
+document root) and keeps 30 days. Local-only: it guards against a bad migration
+or a mistaken delete, not against loss of the server — hosttech's own backups
+sit under that. Retention is a constant in the command; the one thing that may
+differ per host is the path to `mysqldump`, via `MYSQLDUMP_PATH` in `.env`.
 
 **No SSH, but a shell at deployment time.** Plesk pulls from GitHub via Git and
 then runs the shell commands configured for it. That is the only access to the
@@ -542,7 +554,11 @@ hand once; deployment does not touch them. What is uploaded lives under
 - Defective and disabled workplaces are not marked on the map. Free, occupied and
   about to be occupied are; those two would need a third and fourth look, and it
   is not settled whether the map is where one wants to read them.
-- Cron entry for `schedule:run` on the hosting (see "Hosting") — without it the
-  series horizon stays wherever the last change left it.
+- The two Plesk scheduled tasks (`backup:db` 02:00, `booking-series:instantiate`
+  03:00, see "Hosting") are not created on the hosting yet — until they are, no
+  backups run and the series horizon stays wherever the last change left it.
+- Is `mysqldump` on the `PATH` of a Plesk scheduled task, or does `backup:db`
+  need `MYSQLDUMP_PATH` set in `.env`? Untested, like `composer` and `symlink()`
+  above.
 - Subscription link in the admin area with filters (area, workplace) — the feed
   supports it, the interface so far only offers the unfiltered calendar
