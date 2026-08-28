@@ -554,6 +554,12 @@ components:
           description: |
             Set once someone edits a series instance by hand. Editing the series then leaves this
             booking alone instead of regenerating it. Always false when bookingSeriesId is null.
+        skipAutomaticBlocking:
+          type: boolean
+          description: |
+            Whether this booking was last saved with automatic blocking switched off. When true,
+            blockedWorkplaceIds is empty even if the workplace has blocking rules — the booking
+            occupies only its own workplace.
       required:
         - id
         - creatorRoleId
@@ -568,6 +574,7 @@ components:
         - chargeableDurationMinutes
         - bookingSeriesId
         - seriesDetached
+        - skipAutomaticBlocking
 
     BookingWrite:
       type: object
@@ -592,6 +599,13 @@ components:
         usageRulesAcknowledged:
           type: boolean
           description: Must be true when the workplace has usageRules.
+        skipAutomaticBlocking:
+          type: boolean
+          description: |
+            When true the booking occupies only workplaceId itself: the workplaces it would
+            otherwise block (via blocksWorkplaceIds or blocksWorkplacesWithTag) stay free and
+            blockedWorkplaceIds is recorded empty. Bookings that block this workplace still
+            collide. Omitted on update means unchanged, not revoked. Defaults to false.
       required:
         - workplaceId
         - startTime

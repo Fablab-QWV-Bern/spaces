@@ -46,6 +46,13 @@ export interface Booking {
    * booking alone instead of regenerating it. Always false when bookingSeriesId is null.
    */
   seriesDetached: boolean;
+
+  /**
+   * Whether this booking was last saved with automatic blocking switched off. When true,
+   * blockedWorkplaceIds is empty even if the workplace has blocking rules — the booking
+   * occupies only its own workplace.
+   */
+  skipAutomaticBlocking: boolean;
   startTime: string;
   usageRulesAcknowledged: boolean;
   workplaceId: string;

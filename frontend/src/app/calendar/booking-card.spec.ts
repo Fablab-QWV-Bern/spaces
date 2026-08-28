@@ -25,6 +25,7 @@ function booking(overrides: Partial<Booking> = {}): Booking {
     chargeableDurationMinutes: 120,
     bookingSeriesId: 's1',
     seriesDetached: false,
+    skipAutomaticBlocking: false,
     ...overrides,
   };
 }

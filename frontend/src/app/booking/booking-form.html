@@ -188,10 +188,12 @@
                       <li>
                         <!-- In its own tab: this form is what one is in the
                              middle of filling in, and a booking one only wants
-                             to look at should not clear it. -->
+                             to look at should not clear it. `from=blank` tells
+                             that tab to close itself once the conflict is
+                             resolved rather than fall back to the calendar. -->
                         <a
                           [routerLink]="['/buchen']"
-                          [queryParams]="{ booking: conflict.id }"
+                          [queryParams]="{ booking: conflict.id, from: 'blank' }"
                           target="_blank"
                           rel="noopener"
                         >
@@ -208,6 +210,16 @@
           </ul>
         } @else {
           <p class="ok">Der Zeitraum ist frei.</p>
+        }
+      }
+
+      @if (showSkipBlocking()) {
+        <label class="check">
+          <input type="checkbox" [formField]="bookingForm.skipBlocking" />
+          <span>Keine automatischen Blockierungen vornehmen</span>
+        </label>
+        @if (alsoBlocksNames(); as names) {
+          <p class="hint small">Sonst sperrt eine Buchung hier zusätzlich {{ names }}.</p>
         }
       }
     </section>
@@ -271,7 +283,7 @@
         </button>
       }
 
-      <a [routerLink]="returnTo" class="cancel">Abbrechen</a>
+      <button type="button" class="cancel" (click)="leave()">Abbrechen</button>
     </div>
   </form>
 }

@@ -63,6 +63,8 @@ interface BookingFormValue {
   name: string;
   contact: string;
   rulesAcknowledged: boolean;
+  /** Leave the workplaces this one would otherwise sweep in untouched. */
+  skipBlocking: boolean;
 }
 
 interface PreviewBlock {
@@ -103,6 +105,7 @@ export class BookingForm {
     endMinutes: '540',
     ...readBooker(),
     rulesAcknowledged: false,
+    skipBlocking: false,
   });
 
   /**
@@ -135,12 +138,19 @@ export class BookingForm {
   /**
    * Where saving, cancelling or deleting leads back to: the calendar view the
    * form was opened from, carried in `?from=` so it also survives a reload. The
-   * day view stands in when there is no origin — a deep link, or the conflict
-   * link that opens in its own tab.
+   * day view stands in when there is no origin — a deep link, for instance.
    */
   protected readonly returnTo = this.router.parseUrl(
     returnTarget(this.route.snapshot.queryParamMap.get('from')),
   );
+
+  /**
+   * A form opened from a collision hint carries `?from=blank`: it lives in its
+   * own tab, opened only to clear that one conflict. Saving or deleting there
+   * closes the tab instead of redirecting it into the calendar.
+   */
+  private readonly standaloneWindow =
+    this.route.snapshot.queryParamMap.get('from') === STANDALONE_WINDOW;
 
   protected readonly validation = signal<BookingValidation | null>(null);
 
@@ -206,6 +216,7 @@ export class BookingForm {
   protected readonly overnight = computed(() => this.model().overnight);
   protected readonly endMinutes = computed(() => Number(this.model().endMinutes));
   protected readonly rulesAcknowledged = computed(() => this.model().rulesAcknowledged);
+  protected readonly skipBlocking = computed(() => this.model().skipBlocking);
 
   // --- Derived state --------------------------------------------------------
 
@@ -262,6 +273,24 @@ export class BookingForm {
     this.alsoBlocks()
       .map((workplace) => workplace.name)
       .join(', '),
+  );
+
+  /**
+   * What a booking here actually sweeps in — the same set, unless the booker has
+   * switched the automatic blocking off. Drives the preview; `alsoBlocks` above
+   * stays the raw rule so the note can still name what is being left free.
+   */
+  protected readonly effectiveBlocks = computed(() =>
+    this.skipBlocking() ? [] : this.alsoBlocks(),
+  );
+
+  /**
+   * Whether to offer the switch at all: only where a booking here would sweep in
+   * something — or where it already did and the rule has since been dropped, so
+   * the box does not sit unchecked while its value would still be saved.
+   */
+  protected readonly showSkipBlocking = computed(
+    () => this.alsoBlocks().length > 0 || this.skipBlocking(),
   );
 
   protected readonly slots = computed(() => {
@@ -397,6 +426,7 @@ export class BookingForm {
       name: value.name || 'Vorschau',
       contact: value.contact || 'vorschau@example.org',
       usageRulesAcknowledged: value.rulesAcknowledged,
+      skipAutomaticBlocking: value.skipBlocking,
     };
   });
 
@@ -457,7 +487,7 @@ export class BookingForm {
     const workplaceId = this.workplaceId();
     const nameOf = (id: string) =>
       this.workplaces().find((workplace) => workplace.id === id)?.name ?? id;
-    const alsoBlocks = new Set(this.alsoBlocks().map((workplace) => workplace.id));
+    const alsoBlocks = new Set(this.effectiveBlocks().map((workplace) => workplace.id));
 
     const existing = this.dayBookings()
       .filter((booking) => booking.id !== editingId)
@@ -589,6 +619,7 @@ export class BookingForm {
       name: booking.name,
       contact: booking.contact ?? '',
       rulesAcknowledged: booking.usageRulesAcknowledged,
+      skipBlocking: booking.skipAutomaticBlocking,
     }));
   }
 
@@ -701,7 +732,7 @@ export class BookingForm {
           writeBooker({ name: value.name, contact: value.contact });
         }
 
-        this.router.navigateByUrl(this.returnTo);
+        this.leave();
       },
       error: (error: HttpErrorResponse) => {
         this.saving.set(false);
@@ -722,12 +753,26 @@ export class BookingForm {
     deleteBooking(this.http, this.rootUrl, { id: booking.id })
       .pipe(switchMap(() => of(null)))
       .subscribe({
-        next: () => this.router.navigateByUrl(this.returnTo),
+        next: () => this.leave(),
         error: (error: HttpErrorResponse) => {
           this.saving.set(false);
           this.saveError.set(this.describe(error));
         },
       });
+  }
+
+  /**
+   * Leave the form — after a save or delete, or on "Abbrechen". A standalone tab
+   * is closed; `window.close()` is permitted here because such a tab holds a
+   * single history entry. Should the browser refuse it anyway, the redirect below
+   * is the fallback — harmless on a tab that is already closing.
+   */
+  protected leave(): void {
+    if (this.standaloneWindow) {
+      window.close();
+    }
+
+    this.router.navigateByUrl(this.returnTo);
   }
 
   private describe(error: HttpErrorResponse): string {
@@ -743,6 +788,9 @@ export class BookingForm {
   protected readonly formatDuration = formatDuration;
   protected readonly formatMinutes = formatMinutes;
 }
+
+/** Marker in `?from=` for a form that opened in its own tab, see standaloneWindow. */
+const STANDALONE_WINDOW = 'blank';
 
 /**
  * Only an in-app path is a valid return target: `?from=` is otherwise

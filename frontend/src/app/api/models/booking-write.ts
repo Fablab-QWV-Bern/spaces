@@ -9,6 +9,14 @@ export interface BookingWrite {
   contact: string;
   endTime: string;
   name: string;
+
+  /**
+   * When true the booking occupies only workplaceId itself: the workplaces it would
+   * otherwise block (via blocksWorkplaceIds or blocksWorkplacesWithTag) stay free and
+   * blockedWorkplaceIds is recorded empty. Bookings that block this workplace still
+   * collide. Omitted on update means unchanged, not revoked. Defaults to false.
+   */
+  skipAutomaticBlocking?: boolean;
   startTime: string;
 
   /**

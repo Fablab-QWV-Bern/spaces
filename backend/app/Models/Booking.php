@@ -19,6 +19,7 @@ class Booking extends Model
         'name',
         'contact',
         'usage_rules_acknowledged',
+        'skip_automatic_blocking',
         'start_time',
         'end_time',
         'chargeable_duration_minutes',
@@ -33,6 +34,7 @@ class Booking extends Model
             'start_time' => 'immutable_datetime',
             'end_time' => 'immutable_datetime',
             'usage_rules_acknowledged' => 'boolean',
+            'skip_automatic_blocking' => 'boolean',
             'series_detached' => 'boolean',
             'chargeable_duration_minutes' => 'integer',
         ];

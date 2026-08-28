@@ -333,7 +333,11 @@ button {
   }
 }
 
+// A plain text control, not one of the bordered buttons above.
 .cancel {
+  padding: 0;
+  border: 0;
+  background: none;
   font-size: 0.85rem;
   color: var(--text-muted);
 

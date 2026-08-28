@@ -41,13 +41,16 @@ function check(
     ?Role $role = null,
     bool $acknowledged = false,
     ?string $excludeBookingId = null,
+    string $workplaceId = 'holz-1',
+    bool $skipAutomaticBlocking = false,
 ): ValidationResult {
     return test()->validator->validate(
         new BookingCandidate(
-            'holz-1',
+            $workplaceId,
             CarbonImmutable::parse($start, 'Europe/Zurich')->utc(),
             CarbonImmutable::parse($end, 'Europe/Zurich')->utc(),
             $acknowledged,
+            $skipAutomaticBlocking,
             $excludeBookingId,
         ),
         $role ?? test()->member,

@@ -32,6 +32,7 @@ class BookingResource extends JsonResource
             'name' => $this->name,
             'contact' => $role->can('viewBookingsDetails') ? $this->contact : null,
             'usageRulesAcknowledged' => $this->usage_rules_acknowledged,
+            'skipAutomaticBlocking' => (bool) $this->skip_automatic_blocking,
             'startTime' => $this->start_time->toIso8601ZuluString(),
             'endTime' => $this->end_time->toIso8601ZuluString(),
             'chargeableDurationMinutes' => $this->chargeable_duration_minutes,
