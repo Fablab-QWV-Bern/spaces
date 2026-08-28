@@ -540,7 +540,7 @@ export class BookingForm {
 
       if (geometry) {
         existing.push({
-          label: 'Neue Buchung',
+          label: this.editing() ? 'Diese Buchung' : 'Neue Buchung',
           own: true,
           blockage: false,
           collision: this.hasCollision(),
