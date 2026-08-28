@@ -201,12 +201,16 @@ export class WorkplaceForm {
    * Suggests an identifier while the name is typed — but only for as long as it
    * has not been touched by hand.
    */
-  protected onNameInput(): void {
+  protected onNameInput(event: Event): void {
     if (this.editing() || this.idTouched) {
       return;
     }
 
-    this.model.update((value) => ({ ...value, id: slug(value.name) }));
+    // Read the field directly: on the same input event the formField binding has
+    // not yet written the latest character into the model, so value.name would
+    // lag one keystroke behind.
+    const name = (event.target as HTMLInputElement).value;
+    this.model.update((value) => ({ ...value, id: slug(name) }));
   }
 
   protected onIdInput(): void {
