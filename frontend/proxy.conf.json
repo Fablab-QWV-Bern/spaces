@@ -8,5 +8,15 @@
     "target": "http://127.0.0.1:8000",
     "secure": false,
     "changeOrigin": false
+  },
+  "/liste": {
+    "target": "http://127.0.0.1:8000",
+    "secure": false,
+    "changeOrigin": false
+  },
+  "/agenda": {
+    "target": "http://127.0.0.1:8000",
+    "secure": false,
+    "changeOrigin": false
   }
 }

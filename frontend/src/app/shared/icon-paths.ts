@@ -15,7 +15,8 @@ export type IconName =
   | 'add'
   | 'external'
   | 'remove'
-  | 'drag';
+  | 'drag'
+  | 'list';
 
 export const ICON_PATHS: Record<IconName, readonly string[]> = {
   // log-in
@@ -71,4 +72,6 @@ export const ICON_PATHS: Record<IconName, readonly string[]> = {
     'M14 5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0',
     'M14 19a1 1 0 1 0 2 0a1 1 0 1 0 -2 0',
   ],
+  // list
+  list: ['M3 5h.01', 'M3 12h.01', 'M3 19h.01', 'M8 5h13', 'M8 12h13', 'M8 19h13'],
 };

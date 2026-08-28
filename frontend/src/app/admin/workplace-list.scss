@@ -130,5 +130,15 @@
 .row-actions {
   flex: none;
   display: flex;
+  align-items: center;
   gap: 0.4rem;
+}
+
+// The widget link carries only its glyph — square padding so it reads as an
+// icon button beside the worded ones, the icon itself a shade larger than their
+// label.
+.icon-only {
+  display: inline-flex;
+  padding: 0.4rem;
+  font-size: 1rem;
 }

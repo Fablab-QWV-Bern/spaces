@@ -35,7 +35,17 @@ import { SessionService } from '../shared/session-service';
         <a routerLink="/verwaltung/rollen" routerLinkActive="active">Rollen</a>
         <a routerLink="/verwaltung/konfiguration" routerLinkActive="active">Konfiguration</a>
       }
-      <a class="feed" [href]="feedUrl" [title]="feedHint">iCal-Feed</a>
+      <!-- A backend-rendered page outside the SPA, hence a plain href in a new
+           tab. First of the group that the auto margin pushes to the right. -->
+      <a
+        class="aside"
+        href="/agenda"
+        target="_blank"
+        rel="noopener"
+        title="Heutige Belegungen als einbettbare Seite"
+        >Agenda</a
+      >
+      <a [href]="feedUrl" [title]="feedHint">iCal-Feed</a>
       <a routerLink="/tag">Zurück zum Kalender</a>
     </nav>
   `,
@@ -85,7 +95,9 @@ import { SessionService } from '../shared/session-service';
         }
       }
 
-      .feed {
+      // Everything from here on is a utility link, not a section — pushed to the
+      // far side, away from the tabs.
+      .aside {
         margin-left: auto;
       }
     }
