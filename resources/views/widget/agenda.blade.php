@@ -3,6 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  {{-- Reloads once a minute so an embed stays current without scripting — the
+       same cadence the overview map refreshes itself at. --}}
+  <meta http-equiv="refresh" content="60">
   <title>Belegungen heute</title>
   {{-- The agenda column from the overview map, on its own for embedding. Self-
        contained, and with no colours of its own: everything is mixed from

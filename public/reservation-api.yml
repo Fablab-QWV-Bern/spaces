@@ -1,0 +1,1690 @@
+openapi: 3.0.3
+info:
+  title: Reservation System API
+  description: |
+    API for managing areas, workplaces, bookings, booking series, roles and global configuration.
+
+    Authentication is role-based: a client authenticates as a *role*, not as a user. An unauthenticated
+    client is implicitly the role flagged `isAnonymous`. Endpoints document their required permission
+    via `x-permissions`; a request lacking it is rejected with 403.
+
+    All date-time values are UTC and carry an explicit `Z`, with one deliberate exception: booking
+    series carry local wall-clock times so that recurring bookings survive DST changes.
+  version: 2.0.0
+
+servers:
+  - url: https://reservation.quartierwerkstatt-viktoria.ch/api
+
+tags:
+  - name: Session
+    description: Logging in as a role and asking what the current role may do.
+  - name: Roles
+    description: User roles and their permissions.
+  - name: Config
+    description: Global configuration — opening hours, timezone, default booking horizon.
+  - name: Areas
+    description: Areas grouping workplaces, carrying booking limits and colour.
+  - name: Workplaces
+    description: Bookable workplaces, their status and blocking rules.
+  - name: FloorPlan
+    description: The drawing the overview map is made of.
+  - name: Bookings
+    description: Individual bookings and the pre-flight validation behind the booking form.
+  - name: BookingSeries
+    description: Recurring bookings and the instances they generate.
+  - name: Integrations
+    description: Read-only feeds for external consumers.
+
+# No endpoint *requires* a login: without a session cookie the call acts as the
+# role with `isAnonymous`. What that role may do is decided by its permission
+# list — which is why there is no security requirement here, only `x-permissions`
+# on the individual operations.
+security: []
+
+components:
+  securitySchemes:
+    SessionCookie:
+      type: apiKey
+      in: cookie
+      name: session
+      description: |
+        Set by `POST /session`. Absent means the caller acts as the anonymous role.
+        CSRF protection applies to all state-changing requests.
+
+  parameters:
+    IdInPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+
+  responses:
+    BadRequest:
+      description: Malformed request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Unauthorized:
+      description: Authentication required or session expired
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Forbidden:
+      description: The current role lacks the required permission
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    UnprocessableEntity:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+        errors:
+          type: object
+          description: Field-level validation messages, keyed by field path.
+          additionalProperties:
+            type: array
+            items:
+              type: string
+      required:
+        - message
+
+    BookingConflictError:
+      allOf:
+        - $ref: "#/components/schemas/Error"
+        - type: object
+          properties:
+            conflictingBookingIds:
+              type: array
+              description: Existing bookings the request collides with.
+              items:
+                type: string
+          required:
+            - conflictingBookingIds
+
+    Permissions:
+      type: object
+      properties:
+        viewBookings:
+          type: boolean
+          description: View bookings, including who booked. Contact details stay hidden.
+        viewBookingsDetails:
+          type: boolean
+          description: Additionally view the booker's contact details
+        manageBookings:
+          type: boolean
+          description: Create, update and delete any booking
+        noTimeRestrictions:
+          type: boolean
+          description: Ignore maximum booking duration and maxBookingEndOffsetDays. Opening hours still apply.
+        manageBookingSeries:
+          type: boolean
+          description: Manage booking series
+        manageWorkplaces:
+          type: boolean
+          description: Manage workplaces
+        manageAreas:
+          type: boolean
+          description: Manage areas
+        manageRoles:
+          type: boolean
+          description: Manage user roles and global configuration
+      required:
+        - viewBookings
+        - viewBookingsDetails
+        - manageBookings
+        - noTimeRestrictions
+        - manageBookingSeries
+        - manageWorkplaces
+        - manageAreas
+        - manageRoles
+
+    Role:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Stable and immutable. Referenced by Booking.creatorRoleId.
+        name:
+          type: string
+        isAnonymous:
+          type: boolean
+          description: |
+            Exactly one role carries this flag. It has no password, cannot be deleted, and is the
+            implicit role of unauthenticated clients. Not settable through the API.
+        permissions:
+          $ref: "#/components/schemas/Permissions"
+      required:
+        - id
+        - name
+        - isAnonymous
+        - permissions
+
+    RoleWrite:
+      type: object
+      description: |
+        The password is write-only and never returned. Hashing happens server-side; clients never
+        send or receive a hash. Omit `password` on update to leave it unchanged. The anonymous role
+        rejects any password.
+      properties:
+        name:
+          type: string
+          minLength: 1
+        password:
+          type: string
+          format: password
+          minLength: 7
+          writeOnly: true
+          nullable: true
+        permissions:
+          $ref: "#/components/schemas/Permissions"
+      required:
+        - name
+        - permissions
+
+    Session:
+      type: object
+      description: The role the caller currently acts as, plus its permissions.
+      properties:
+        roleId:
+          type: string
+        roleName:
+          type: string
+        isAnonymous:
+          type: boolean
+        permissions:
+          $ref: "#/components/schemas/Permissions"
+      required:
+        - roleId
+        - roleName
+        - isAnonymous
+        - permissions
+
+    LoginRequest:
+      type: object
+      properties:
+        roleName:
+          type: string
+        password:
+          type: string
+          format: password
+          writeOnly: true
+      required:
+        - roleName
+        - password
+
+    Config:
+      type: object
+      description: Global configuration. Readable by everyone, writable with manageRoles.
+      properties:
+        opensAt:
+          type: string
+          pattern: "^([01][0-9]|2[0-3]):[0-5][05]$"
+          example: "08:00"
+          description: Local time, aligned to the 15-minute grid. Valid on all weekdays.
+        closesAt:
+          type: string
+          pattern: "^([01][0-9]|2[0-3]):[0-5][05]$"
+          example: "21:00"
+          description: Local time, aligned to the 15-minute grid. Must be later than opensAt.
+        maxBookingEndOffsetDays:
+          type: integer
+          minimum: 0
+          description: Default limit on how far ahead a booking may end. Areas may override it.
+        timezone:
+          type: string
+          example: Europe/Zurich
+          description: IANA name. Used for display and for interpreting booking series wall-clock times.
+      required:
+        - opensAt
+        - closesAt
+        - maxBookingEndOffsetDays
+        - timezone
+
+    Area:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        color:
+          type: string
+          maxLength: 30
+          description: |
+            Any CSS colour the browser understands, used as-is as the background of this area's
+            blocks and as the fill of its benches on the map. The seeded areas mix both spellings:
+            those with benches on the floor plan carry the `rgb(…)` the plan draws them in, the
+            rest an `oklch(0.8 0.1 <hue>)` of their own.
+          example: oklch(0.8 0.1 130)
+        maxBookingDurationMinutes:
+          type: integer
+          minimum: 15
+          multipleOf: 15
+        maxBookingEndOffsetDays:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Overrides the global value when set.
+        allowNightlyActivities:
+          type: boolean
+          description: |
+            Bookings in this area may span the night. Start and end still have to fall within
+            opening hours; only the hours in between may lie outside.
+        sortOrder:
+          type: integer
+          description: Set through PUT /areas/order, not here.
+      required:
+        - id
+        - name
+        - color
+        - maxBookingDurationMinutes
+        - maxBookingEndOffsetDays
+        - allowNightlyActivities
+        - sortOrder
+
+    AreaWrite:
+      type: object
+      description: |
+        Without sortOrder: the order is set for all areas at once through PUT /areas/order.
+        A new area lands at the end.
+      properties:
+        name:
+          type: string
+          minLength: 1
+        color:
+          type: string
+          maxLength: 30
+          example: oklch(0.8 0.1 130)
+        maxBookingDurationMinutes:
+          type: integer
+          minimum: 15
+          multipleOf: 15
+        maxBookingEndOffsetDays:
+          type: integer
+          minimum: 0
+          nullable: true
+        allowNightlyActivities:
+          type: boolean
+      required:
+        - name
+        - color
+        - maxBookingDurationMinutes
+        - allowNightlyActivities
+
+    SortOrderWrite:
+      type: object
+      description: |
+        The ids in the order they are to have. Position 0 comes first. The list has to name every
+        entry exactly once — a partial one would leave the omitted rows at numbers that mean
+        nothing next to the new ones.
+      properties:
+        ids:
+          type: array
+          items:
+            type: string
+      required:
+        - ids
+
+    Workplace:
+      type: object
+      properties:
+        id:
+          type: string
+          description: |
+            Client-assigned, stable, URL- and SVG-safe (e.g. "tisch-4"). The overview map matches
+            SVG element ids against this value.
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+          description: Markdown. Rendered against a safe subset — no HTML, no scripts, no external images.
+        usageRules:
+          type: string
+          nullable: true
+          description: Markdown, same rendering restrictions. When set, bookings must acknowledge it.
+        status:
+          type: string
+          enum: [OK, DEFECT, DISABLED]
+        location:
+          type: string
+          nullable: true
+        areaId:
+          type: string
+        wikiUrl:
+          type: string
+          format: uri
+          nullable: true
+        maxBookingDurationMinutes:
+          type: integer
+          minimum: 15
+          multipleOf: 15
+          nullable: true
+          description: Overrides the area's value when set.
+        blocksWorkplaceIds:
+          type: array
+          items:
+            type: string
+        blocksWorkplacesWithTag:
+          type: array
+          items:
+            type: string
+        tags:
+          type: array
+          description: Stored without a leading "#", compared case-insensitively.
+          items:
+            type: string
+        sortOrder:
+          type: integer
+          description: Within the area. Set through PUT /workplaces/order, not here.
+      required:
+        - id
+        - name
+        - status
+        - areaId
+        - blocksWorkplaceIds
+        - blocksWorkplacesWithTag
+        - tags
+        - sortOrder
+
+    FloorPlan:
+      type: object
+      description: |
+        Where the overview map fetches its drawing. Either the file shipped with the interface or
+        one uploaded afterwards — the client follows `url` and needs to know nothing further.
+      properties:
+        url:
+          type: string
+          format: uri-reference
+          description: |
+            Relative, like every URL this API hands out: API, storage and SPA live on the same host,
+            and an absolute one built from a misconfigured APP_URL would take the map down with it.
+          example: /storage/karte.svg
+        isDefault:
+          type: boolean
+          description: |
+            True while nothing has been uploaded; `url` then points at the file that came with the
+            interface. A fresh installation therefore has a plan without anyone uploading one.
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the uploaded plan was stored. Null for the shipped one.
+      required:
+        - url
+        - isDefault
+        - updatedAt
+
+    WorkplaceCreate:
+      type: object
+      description: |
+        The order for all workplaces at once via PUT /workplaces/order. A new workplace lands at
+        the end of its area.
+      properties:
+        id:
+          type: string
+          pattern: "^[a-z0-9][a-z0-9-]*$"
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+        usageRules:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [OK, DEFECT, DISABLED]
+        location:
+          type: string
+        areaId:
+          type: string
+        wikiUrl:
+          type: string
+          format: uri
+          nullable: true
+        maxBookingDurationMinutes:
+          type: integer
+          minimum: 15
+          multipleOf: 15
+          nullable: true
+        blocksWorkplaceIds:
+          type: array
+          items:
+            type: string
+        blocksWorkplacesWithTag:
+          type: array
+          items:
+            type: string
+        tags:
+          type: array
+          items:
+            type: string
+      required:
+        - id
+        - name
+        - status
+        - areaId
+
+    WorkplaceUpdate:
+      allOf:
+        - $ref: "#/components/schemas/WorkplaceCreate"
+        - type: object
+          description: The id is taken from the path and cannot be changed.
+          properties:
+            id:
+              readOnly: true
+
+    Booking:
+      type: object
+      properties:
+        id:
+          type: string
+        creatorRoleId:
+          type: string
+          nullable: true
+          description: |
+            Null for bookings the system created itself — series instances have no
+            creator. Kept as a dangling reference when the role is later deleted.
+        ipAddress:
+          type: string
+          nullable: true
+          description: |
+            Only present with manageRoles; null otherwise. Cleared 90 days after creation.
+        createdAt:
+          type: string
+          format: date-time
+        workplaceId:
+          type: string
+        blockedWorkplaceIds:
+          type: array
+          description: |
+            Server-computed snapshot taken when the booking was created or last changed: the union of
+            the workplace's blocksWorkplaceIds and every workplace that carried a matching tag at that
+            moment. Never accepted from a client. Drives the grey blocks in the calendar.
+          items:
+            type: string
+        name:
+          type: string
+          description: |
+            Who booked. Always present — reaching this endpoint at all already requires
+            viewBookings.
+        contact:
+          type: string
+          nullable: true
+          description: Only present with viewBookingsDetails; null otherwise.
+        usageRulesAcknowledged:
+          type: boolean
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        chargeableDurationMinutes:
+          type: integer
+          description: |
+            Time inside opening hours only — night hours of an over-night booking are not counted.
+            Derived from startTime and endTime; validated against the maximum booking duration.
+        bookingSeriesId:
+          type: string
+          nullable: true
+        seriesDetached:
+          type: boolean
+          readOnly: true
+          description: |
+            Set once someone edits a series instance by hand. Editing the series then leaves this
+            booking alone instead of regenerating it. Always false when bookingSeriesId is null.
+      required:
+        - id
+        - creatorRoleId
+        - createdAt
+        - workplaceId
+        - blockedWorkplaceIds
+        - name
+        - contact
+        - usageRulesAcknowledged
+        - startTime
+        - endTime
+        - chargeableDurationMinutes
+        - bookingSeriesId
+        - seriesDetached
+
+    BookingWrite:
+      type: object
+      description: |
+        Start and end must sit on the 15-minute grid and fall within opening hours. Unless the area
+        allows nightly activities, both must be on the same day.
+      properties:
+        workplaceId:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        name:
+          type: string
+          minLength: 1
+        contact:
+          type: string
+          minLength: 1
+        usageRulesAcknowledged:
+          type: boolean
+          description: Must be true when the workplace has usageRules.
+      required:
+        - workplaceId
+        - startTime
+        - endTime
+        - name
+        - contact
+
+    BookingValidation:
+      type: object
+      description: Result of the pre-flight check backing the real-time collision hint in the form.
+      properties:
+        valid:
+          type: boolean
+        conflictingBookingIds:
+          type: array
+          items:
+            type: string
+        violations:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+                enum:
+                  - COLLISION
+                  - OUTSIDE_OPENING_HOURS
+                  - EXCEEDS_MAX_DURATION
+                  - EXCEEDS_MAX_END_OFFSET
+                  # Only when creating. The start may lie in the past — someone
+                  # who books afterwards enters the time they began; only a
+                  # booking already over is refused.
+                  - ENDS_IN_PAST
+                  - NOT_ON_GRID
+                  - SPANS_NIGHT_NOT_ALLOWED
+                  - WORKPLACE_NOT_BOOKABLE
+                  - USAGE_RULES_NOT_ACKNOWLEDGED
+              message:
+                type: string
+            required:
+              - code
+              - message
+        chargeableDurationMinutes:
+          type: integer
+      required:
+        - valid
+        - conflictingBookingIds
+        - violations
+
+    BookingSeries:
+      type: object
+      properties:
+        id:
+          type: string
+        workplaceId:
+          type: string
+        name:
+          type: string
+        contact:
+          type: string
+        interval:
+          type: string
+          enum: [WEEKLY, MONTHLY]
+        intervalCount:
+          type: integer
+          minimum: 1
+          description: e.g. 2 with WEEKLY means every second week.
+        firstInstanceStart:
+          type: string
+          pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$'
+          example: "2026-08-03T09:00"
+          description: |
+            Local wall-clock time in the configured timezone, deliberately without a UTC offset, so a
+            recurring 09:00 stays 09:00 across DST changes. MONTHLY repeats on the same day of month;
+            months lacking that day are skipped.
+        firstInstanceEnd:
+          type: string
+          pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$'
+          example: "2026-08-03T12:00"
+          description: Local wall-clock time, same rules as firstInstanceStart.
+        endDate:
+          type: string
+          format: date
+          nullable: true
+          description: Last day the series may produce instances. Open-ended when null.
+        instantiatedUntil:
+          type: string
+          format: date
+          readOnly: true
+          description: |
+            How far instances have been generated. Advanced to today + 1 year by the daily job.
+      required:
+        - id
+        - workplaceId
+        - name
+        - contact
+        - interval
+        - intervalCount
+        - firstInstanceStart
+        - firstInstanceEnd
+        - endDate
+        - instantiatedUntil
+
+    BookingSeriesWrite:
+      type: object
+      properties:
+        workplaceId:
+          type: string
+        name:
+          type: string
+          minLength: 1
+        contact:
+          type: string
+          minLength: 1
+        interval:
+          type: string
+          enum: [WEEKLY, MONTHLY]
+        intervalCount:
+          type: integer
+          minimum: 1
+        firstInstanceStart:
+          type: string
+          pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$'
+        firstInstanceEnd:
+          type: string
+          pattern: '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$'
+        endDate:
+          type: string
+          format: date
+          nullable: true
+      required:
+        - workplaceId
+        - name
+        - contact
+        - interval
+        - intervalCount
+        - firstInstanceStart
+        - firstInstanceEnd
+
+    BookingSeriesResult:
+      type: object
+      description: |
+        Series are always created or updated, even when some instances collide with existing
+        bookings — those instances are skipped and reported here.
+      properties:
+        series:
+          $ref: "#/components/schemas/BookingSeries"
+        skippedInstances:
+          type: array
+          items:
+            type: object
+            properties:
+              startTime:
+                type: string
+                format: date-time
+              endTime:
+                type: string
+                format: date-time
+              conflictingBookingIds:
+                type: array
+                items:
+                  type: string
+            required:
+              - startTime
+              - endTime
+              - conflictingBookingIds
+      required:
+        - series
+        - skippedInstances
+
+paths:
+  /session:
+    get:
+      tags: [Session]
+      operationId: getSession
+      summary: Current role and its permissions
+      description: |
+        Returns the anonymous role when no session exists. The frontend uses this to decide what to
+        render, so it never 401s.
+      responses:
+        "200":
+          description: Current session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+
+    post:
+      tags: [Session]
+      operationId: login
+      summary: Log in as a role
+      description: Rate-limited per IP to blunt password guessing.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Logged in; session cookie set
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          description: Too many attempts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    delete:
+      tags: [Session]
+      operationId: logout
+      summary: Log out
+      responses:
+        "204":
+          description: Session ended; caller falls back to the anonymous role
+
+  /session/roles:
+    get:
+      tags: [Session]
+      operationId: listLoginableRoles
+      summary: Role names available to log in as
+      description: |
+        Public — the login screen offers one button per role rather than a free-text field. Lists
+        every role except the anonymous one; carries no permissions or other detail, just the names,
+        in the order roles were created.
+      responses:
+        "200":
+          description: Role names
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  /config:
+    get:
+      tags: [Config]
+      operationId: getConfig
+      summary: Read global configuration
+      responses:
+        "200":
+          description: Global configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Config"
+
+    put:
+      tags: [Config]
+      operationId: updateConfig
+      summary: Update global configuration
+      x-permissions: ["manageRoles"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Config"
+      responses:
+        "200":
+          description: Configuration updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Config"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+  /roles:
+    get:
+      tags: [Roles]
+      operationId: listRoles
+      summary: List roles
+      x-permissions: ["manageRoles"]
+      responses:
+        "200":
+          description: List of roles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Role"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+    post:
+      tags: [Roles]
+      operationId: createRole
+      summary: Create role
+      x-permissions: ["manageRoles"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoleWrite"
+      responses:
+        "201":
+          description: Role created
+          headers:
+            Location:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Role"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+  /roles/{id}:
+    parameters:
+      - $ref: "#/components/parameters/IdInPath"
+    get:
+      tags: [Roles]
+      operationId: getRole
+      summary: Get role
+      x-permissions: ["manageRoles"]
+      responses:
+        "200":
+          description: Role
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Role"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    put:
+      tags: [Roles]
+      operationId: updateRole
+      summary: Update role
+      description: |
+        422 when the change would leave no role holding manageRoles, or when a password is set on the
+        anonymous role.
+      x-permissions: ["manageRoles"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoleWrite"
+      responses:
+        "200":
+          description: Role updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Role"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+    delete:
+      tags: [Roles]
+      operationId: deleteRole
+      summary: Delete role
+      description: |
+        422 for the anonymous role, and for the last role holding manageRoles. Bookings created by
+        the role keep their creatorRoleId as a dangling reference — they are historical records.
+      x-permissions: ["manageRoles"]
+      responses:
+        "204":
+          description: Role deleted
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+  /areas:
+    get:
+      tags: [Areas]
+      operationId: listAreas
+      summary: List areas
+      responses:
+        "200":
+          description: List of areas, in sortOrder
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Area"
+
+    post:
+      tags: [Areas]
+      operationId: createArea
+      summary: Create area
+      x-permissions: ["manageAreas"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AreaWrite"
+      responses:
+        "201":
+          description: Area created
+          headers:
+            Location:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Area"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+  /areas/order:
+    put:
+      tags: [Areas]
+      operationId: reorderAreas
+      summary: Set the order of the areas
+      description: |
+        Gives every area the sortOrder of its position in the list. One call for the whole list
+        rather than one PUT per area: half a saved order is worse than none.
+      x-permissions: ["manageAreas"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SortOrderWrite"
+      responses:
+        "200":
+          description: The areas in their new order
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Area"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+  /areas/{id}:
+    parameters:
+      - $ref: "#/components/parameters/IdInPath"
+    get:
+      tags: [Areas]
+      operationId: getArea
+      summary: Get area
+      responses:
+        "200":
+          description: Area
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Area"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    put:
+      tags: [Areas]
+      operationId: updateArea
+      summary: Update area
+      x-permissions: ["manageAreas"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AreaWrite"
+      responses:
+        "200":
+          description: Area updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Area"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+    delete:
+      tags: [Areas]
+      operationId: deleteArea
+      summary: Delete area
+      description: 422 while workplaces are still assigned to the area.
+      x-permissions: ["manageAreas"]
+      responses:
+        "204":
+          description: Area deleted
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+  /workplaces:
+    get:
+      tags: [Workplaces]
+      operationId: listWorkplaces
+      summary: List workplaces
+      description: |
+        Sorted by area sortOrder, then workplace sortOrder. DISABLED workplaces are only ever
+        returned to a role with manageWorkplaces; for anyone else `includeDisabled` is ignored
+        rather than rejected.
+      parameters:
+        - name: includeDisabled
+          in: query
+          schema:
+            type: boolean
+            default: false
+        - name: areaId
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of workplaces
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Workplace"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+    post:
+      tags: [Workplaces]
+      operationId: createWorkplace
+      summary: Create workplace
+      x-permissions: ["manageWorkplaces"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WorkplaceCreate"
+      responses:
+        "201":
+          description: Workplace created
+          headers:
+            Location:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workplace"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          description: A workplace with this id already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+  /workplaces/order:
+    put:
+      tags: [Workplaces]
+      operationId: reorderWorkplaces
+      summary: Set the order of the workplaces
+      description: |
+        One list across all areas, counted anew per area: every workplace gets the sortOrder of
+        its position among those of its own area. The area itself does not change here — for that
+        there is PUT /workplaces/{id}. Disabled workplaces belong in the list too.
+      x-permissions: ["manageWorkplaces"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SortOrderWrite"
+      responses:
+        "200":
+          description: The workplaces in their new order
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Workplace"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+  /workplaces/{id}:
+    parameters:
+      - $ref: "#/components/parameters/IdInPath"
+    get:
+      tags: [Workplaces]
+      operationId: getWorkplace
+      summary: Get workplace
+      responses:
+        "200":
+          description: Workplace
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workplace"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    put:
+      tags: [Workplaces]
+      operationId: updateWorkplace
+      summary: Update workplace
+      description: |
+        Changing blocking rules or tags does not affect existing bookings — they carry their own
+        snapshot in blockedWorkplaceIds.
+      x-permissions: ["manageWorkplaces"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WorkplaceUpdate"
+      responses:
+        "200":
+          description: Workplace updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workplace"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+    delete:
+      tags: [Workplaces]
+      operationId: deleteWorkplace
+      summary: Delete workplace
+      description: |
+        422 while any booking ending in the future references it. On success the id is removed from
+        every other workplace's blocksWorkplaceIds.
+      x-permissions: ["manageWorkplaces"]
+      responses:
+        "204":
+          description: Workplace deleted
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+  /floor-plan:
+    get:
+      tags: [FloorPlan]
+      operationId: getFloorPlan
+      summary: Where the overview map's drawing lives
+      description: |
+        Readable by everyone: the map is part of the calendar, and without this the client would not
+        know whether a plan has been uploaded.
+      responses:
+        "200":
+          description: The plan in use
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FloorPlan"
+
+    post:
+      tags: [FloorPlan]
+      operationId: uploadFloorPlan
+      summary: Upload or replace the floor plan
+      description: |
+        An SVG, at most 5 MB. It is stripped before it is stored — scripts, event handlers and
+        references leading off the document do not survive the upload, because the interface grafts
+        the plan into its own DOM rather than showing it in an `<img>`.
+
+        The workplace identifiers are not checked here. Which shapes the plan knows and which
+        workplaces are configured are two lists that may legitimately differ, and the admin area
+        shows where they do.
+      x-permissions: ["manageWorkplaces"]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+              required:
+                - file
+      responses:
+        "200":
+          description: Plan stored
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FloorPlan"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "413":
+          description: File too large
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+    delete:
+      tags: [FloorPlan]
+      operationId: deleteFloorPlan
+      summary: Drop the uploaded plan and fall back to the shipped one
+      x-permissions: ["manageWorkplaces"]
+      responses:
+        "200":
+          description: The plan now in use
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FloorPlan"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /bookings:
+    get:
+      tags: [Bookings]
+      operationId: listBookings
+      summary: List bookings in a time window
+      description: |
+        `from` and `to` are required so the response stays bounded; the calendar always knows its
+        window. Returns every booking overlapping the window. Without viewBookingsDetails, `contact`
+        comes back as null; `name` is always shown.
+      x-permissions: ["viewBookings"]
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: workplaceId
+          in: query
+          schema:
+            type: string
+        - name: areaId
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Booking"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+    post:
+      tags: [Bookings]
+      operationId: createBooking
+      summary: Create booking
+      description: |
+        Collision check and insert run in one transaction with the affected workplaces locked, so two
+        simultaneous requests cannot both succeed.
+      x-permissions: ["manageBookings"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingWrite"
+      responses:
+        "201":
+          description: Booking created
+          headers:
+            Location:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          description: Collides with an existing booking
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingConflictError"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+  /bookings/validate:
+    post:
+      tags: [Bookings]
+      operationId: validateBooking
+      summary: Pre-flight check for a booking
+      description: |
+        Runs the same rules as create or update without persisting anything, so the form can show
+        collisions and rule violations live. Advisory only — the authoritative check happens on write.
+      x-permissions: ["manageBookings"]
+      parameters:
+        - name: excludeBookingId
+          in: query
+          description: Set when checking an edit, so the booking does not collide with itself.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingWrite"
+      responses:
+        "200":
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingValidation"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /bookings/{id}:
+    parameters:
+      - $ref: "#/components/parameters/IdInPath"
+    get:
+      tags: [Bookings]
+      operationId: getBooking
+      summary: Get booking
+      description: |
+        viewBookings is enough to fetch a booking and see who booked; contact is null without
+        viewBookingsDetails.
+      x-permissions: ["viewBookings"]
+      responses:
+        "200":
+          description: Booking
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    put:
+      tags: [Bookings]
+      operationId: updateBooking
+      summary: Update booking
+      description: |
+        Recomputes blockedWorkplaceIds from the current workplace configuration. 422 once the
+        booking's end lies in the past.
+      x-permissions: ["manageBookings"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingWrite"
+      responses:
+        "200":
+          description: Booking updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Collides with an existing booking
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingConflictError"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+    delete:
+      tags: [Bookings]
+      operationId: deleteBooking
+      summary: Delete booking
+      description: 422 once the booking's end lies in the past.
+      x-permissions: ["manageBookings"]
+      responses:
+        "204":
+          description: Booking deleted
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+  /booking-series:
+    get:
+      tags: [BookingSeries]
+      operationId: listBookingSeries
+      summary: List booking series
+      x-permissions: ["viewBookings"]
+      responses:
+        "200":
+          description: List of booking series
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BookingSeries"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+    post:
+      tags: [BookingSeries]
+      operationId: createBookingSeries
+      summary: Create booking series
+      description: |
+        Generates instances up to one year ahead. Instances colliding with existing bookings are
+        skipped and listed in the response; the series is still created. Instances are exempt from
+        maxBookingEndOffsetDays.
+      x-permissions: ["manageBookingSeries"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingSeriesWrite"
+      responses:
+        "201":
+          description: Series created, possibly with skipped instances
+          headers:
+            Location:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingSeriesResult"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+  /booking-series/{id}:
+    parameters:
+      - $ref: "#/components/parameters/IdInPath"
+    get:
+      tags: [BookingSeries]
+      operationId: getBookingSeries
+      summary: Get booking series
+      x-permissions: ["viewBookings"]
+      responses:
+        "200":
+          description: Booking series
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingSeries"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    put:
+      tags: [BookingSeries]
+      operationId: updateBookingSeries
+      summary: Update booking series
+      description: |
+        Brings the future instances in line with the new definition: matching ones are updated in
+        place and keep their id, obsolete ones are removed, missing ones are created. Past and
+        currently running instances stay untouched, and so do instances with seriesDetached — an
+        occurrence someone has edited or cancelled by hand is never regenerated.
+      x-permissions: ["manageBookingSeries"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingSeriesWrite"
+      responses:
+        "200":
+          description: Series updated, possibly with skipped instances
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingSeriesResult"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+
+    delete:
+      tags: [BookingSeries]
+      operationId: deleteBookingSeries
+      summary: Delete booking series
+      description: |
+        Deletes every instance starting in the future. Past instances remain as standalone bookings
+        with their bookingSeriesId cleared.
+      x-permissions: ["manageBookingSeries"]
+      responses:
+        "204":
+          description: Series deleted
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /calendar.ics:
+    get:
+      tags: [Integrations]
+      operationId: getCalendarFeed
+      summary: iCalendar subscription feed
+      description: |
+        Read-only RFC 5545 feed for calendar clients, modelled on the feed of the system this one
+        replaces. Covers a sliding window of three months either side of the moment of the request.
+
+        The feed always renders as the anonymous role, even when the request carries a session
+        cookie — a calendar client never has one, so rendering anything else would make the browser
+        preview disagree with the actual subscription. Consequently the feed is the same document
+        for everybody, it is cacheable, and `contact` only ever appears in it if the anonymous role
+        itself holds viewBookingsDetails. If that role lacks viewBookings, the feed is 403 for
+        everybody.
+
+        Event mapping, one VEVENT per booking:
+
+        | Property | Source |
+        | --- | --- |
+        | `UID` | booking id, plus the request host |
+        | `DTSTART` / `DTEND` | booking start and end, UTC (`Z` form) |
+        | `SUMMARY` | `"<workplace name>: <booking name>"` |
+        | `LOCATION` | workplace location, else workplace name and area name |
+        | `DESCRIPTION` | `contact`, omitted without viewBookingsDetails |
+        | `LAST-MODIFIED` | booking updated timestamp |
+        | `STATUS` | always `CONFIRMED` |
+
+        Series instances are separate bookings and therefore separate VEVENTs, each with its own
+        UID — no RRULE. The feed does not need to know that series exist, and editing a series
+        (which drops and recreates its future instances) simply yields new events.
+      parameters:
+        - name: workplaceId
+          in: query
+          description: Unknown id is a 404, so a typo in a subscription URL surfaces at once.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: iCalendar feed
+          content:
+            text/calendar:
+              schema:
+                type: string
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
