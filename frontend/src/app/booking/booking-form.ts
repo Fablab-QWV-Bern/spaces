@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, effect, inject, signal } from '@angular/core';
-import { FormField, form, required } from '@angular/forms/signals';
+import { FormField, form, required, validate } from '@angular/forms/signals';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin, map, of, switchMap } from 'rxjs';
 
@@ -110,13 +110,41 @@ export class BookingForm {
 
   /**
    * Signal Forms only takes on what the client can judge for itself: required
-   * fields. All booking rules stay in the backend and come back via
-   * `POST /bookings/validate` — that way they exist only once.
+   * fields and the shape of what was typed. All booking rules stay in the
+   * backend and come back via `POST /bookings/validate` — that way they exist
+   * only once. Name and contact are no booking rules: nothing downstream reads
+   * them, they only have to be usable if someone has to phone the person.
    */
   protected readonly bookingForm = form(this.model, (path) => {
     required(path.name, { message: 'Bitte Vor- und Nachname angeben.' });
+    validate(path.name, ({ value }) => {
+      const trimmed = value().trim();
+
+      // Empty is the `required` message's business — no second error on top.
+      if (trimmed === '' || wordCount(trimmed) >= 2) {
+        return undefined;
+      }
+
+      return {
+        kind: 'fullName',
+        message: 'Bitte Vor- UND Nachname angeben.',
+      };
+    });
+
     required(path.contact, {
       message: 'Bitte eine Kontaktangabe machen, z.B. E-Mail oder Telefon.',
+    });
+    validate(path.contact, ({ value }) => {
+      const trimmed = value().trim();
+
+      if (trimmed === '' || looksLikeEmail(trimmed) || looksLikePhone(trimmed)) {
+        return undefined;
+      }
+
+      return {
+        kind: 'contact',
+        message: 'Bitte eine gültige E-Mail-Adresse oder Telefonnummer angeben.',
+      };
     });
   });
 
@@ -798,6 +826,31 @@ const STANDALONE_WINDOW = 'blank';
  */
 function returnTarget(from: string | null): string {
   return from && from.startsWith('/') && !from.startsWith('//') ? from : '/';
+}
+
+/** Words separated by whitespace — a hyphenated surname still counts as one. */
+function wordCount(text: string): number {
+  return text.split(/\s+/).filter(Boolean).length;
+}
+
+/** Not RFC 5322, just enough to catch a missing `@` or domain. */
+function looksLikeEmail(text: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(text);
+}
+
+/**
+ * A plausible phone number: digits with the usual separators, an optional
+ * leading `+`, and between 7 and 15 digits — enough to weed out a name typed
+ * into the wrong field without turning away an unusual notation.
+ */
+function looksLikePhone(text: string): boolean {
+  if (!/^\+?[\d\s/().-]+$/.test(text)) {
+    return false;
+  }
+
+  const digits = text.replace(/\D/g, '').length;
+
+  return digits >= 7 && digits <= 15;
 }
 
 function isoDate(date: Date): string {
