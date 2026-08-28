@@ -253,6 +253,7 @@ export class MapView {
         workplace: workplace.id,
         start: toLocalIso(currentSlot(this.now())),
         // Do not pass a duration: the form sets its own default.
+        from: this.router.url,
       },
     });
   }

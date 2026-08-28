@@ -132,6 +132,16 @@ export class BookingForm {
   /** Set when an existing booking is being edited. */
   protected readonly editing = signal<Booking | null>(null);
 
+  /**
+   * Where saving, cancelling or deleting leads back to: the calendar view the
+   * form was opened from, carried in `?from=` so it also survives a reload. The
+   * day view stands in when there is no origin — a deep link, or the conflict
+   * link that opens in its own tab.
+   */
+  protected readonly returnTo = this.router.parseUrl(
+    returnTarget(this.route.snapshot.queryParamMap.get('from')),
+  );
+
   protected readonly validation = signal<BookingValidation | null>(null);
 
   constructor() {
@@ -691,7 +701,7 @@ export class BookingForm {
           writeBooker({ name: value.name, contact: value.contact });
         }
 
-        this.router.navigate(['/']);
+        this.router.navigateByUrl(this.returnTo);
       },
       error: (error: HttpErrorResponse) => {
         this.saving.set(false);
@@ -712,7 +722,7 @@ export class BookingForm {
     deleteBooking(this.http, this.rootUrl, { id: booking.id })
       .pipe(switchMap(() => of(null)))
       .subscribe({
-        next: () => this.router.navigate(['/']),
+        next: () => this.router.navigateByUrl(this.returnTo),
         error: (error: HttpErrorResponse) => {
           this.saving.set(false);
           this.saveError.set(this.describe(error));
@@ -732,6 +742,14 @@ export class BookingForm {
 
   protected readonly formatDuration = formatDuration;
   protected readonly formatMinutes = formatMinutes;
+}
+
+/**
+ * Only an in-app path is a valid return target: `?from=` is otherwise
+ * attacker-controlled and could carry an absolute or protocol-relative URL.
+ */
+function returnTarget(from: string | null): string {
+  return from && from.startsWith('/') && !from.startsWith('//') ? from : '/';
 }
 
 function isoDate(date: Date): string {

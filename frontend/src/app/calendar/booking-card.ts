@@ -63,7 +63,10 @@ export class BookingCard {
   /** The booking comes from the template rather than from the input: there it is
    *  already narrowed to non-null, here it would have to be asserted. */
   protected editBooking(booking: Booking): void {
-    this.router.navigate(['/buchen'], { queryParams: { booking: booking.id } });
+    // `from` so the form returns to this view rather than always to the day.
+    this.router.navigate(['/buchen'], {
+      queryParams: { booking: booking.id, from: this.router.url },
+    });
   }
 
   protected editSeries(seriesId: string): void {

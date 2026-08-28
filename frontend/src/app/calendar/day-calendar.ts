@@ -173,6 +173,7 @@ export class DayCalendar {
         workplace: workplace.id,
         start: toLocalIso(instantAt(this.store.date(), minutes)),
         // Do not pass a duration: the form sets its own default.
+        from: this.router.url,
       },
     });
   }

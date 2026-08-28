@@ -237,6 +237,7 @@ export class WorkplaceCalendar {
       queryParams: {
         workplace: selection.workplace.id,
         start: toLocalIso(instantAt(date, minutes)),
+        from: this.router.url,
       },
     });
   }

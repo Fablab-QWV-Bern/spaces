@@ -1,6 +1,6 @@
 <header class="toolbar">
   <h1>{{ editing() ? 'Buchung bearbeiten' : 'Buchung erstellen' }}</h1>
-  <a routerLink="/">Zurück zur Kalenderansicht</a>
+  <a [routerLink]="returnTo">Zurück zur Kalenderansicht</a>
 </header>
 
 @if (loadError(); as error) {
@@ -18,7 +18,7 @@
       }
     </p>
     <app-session-bar />
-    <p><a routerLink="/">Zurück zur Kalenderansicht</a></p>
+    <p><a [routerLink]="returnTo">Zurück zur Kalenderansicht</a></p>
   </div>
 } @else {
   <!-- Native submit event: (ngSubmit) comes from FormsModule, which Signal
@@ -271,7 +271,7 @@
         </button>
       }
 
-      <a routerLink="/" class="cancel">Abbrechen</a>
+      <a [routerLink]="returnTo" class="cancel">Abbrechen</a>
     </div>
   </form>
 }
