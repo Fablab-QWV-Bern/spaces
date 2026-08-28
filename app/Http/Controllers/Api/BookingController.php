@@ -92,8 +92,10 @@ class BookingController extends Controller
 
         // The field is optional in the contract. When changing, however,
         // "omitted" does not mean "revoked" — otherwise a call without the field
-        // would withdraw the acknowledgement without anyone intending it.
+        // would withdraw the acknowledgement without anyone intending it. Same for
+        // the blocking switch.
         $data['usageRulesAcknowledged'] ??= $booking->usage_rules_acknowledged;
+        $data['skipAutomaticBlocking'] ??= $booking->skip_automatic_blocking;
 
         try {
             $updated = $this->writer->update(
@@ -151,6 +153,7 @@ class BookingController extends Controller
             'name' => ['required', 'string', 'max:150'],
             'contact' => ['required', 'string', 'max:150'],
             'usageRulesAcknowledged' => ['sometimes', 'boolean'],
+            'skipAutomaticBlocking' => ['sometimes', 'boolean'],
         ]);
     }
 
@@ -162,6 +165,7 @@ class BookingController extends Controller
             CarbonImmutable::parse($data['startTime'])->utc(),
             CarbonImmutable::parse($data['endTime'])->utc(),
             (bool) ($data['usageRulesAcknowledged'] ?? false),
+            (bool) ($data['skipAutomaticBlocking'] ?? false),
             $excludeBookingId,
         );
     }

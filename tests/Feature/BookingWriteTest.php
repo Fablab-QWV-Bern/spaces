@@ -60,6 +60,81 @@ it('records the blocking snapshot on creation', function () {
         ->toBe(['holz-1', 'holz-2', 'holz-3', 'holz-4', 'holz-5']);
 });
 
+it('a course collides with a booking on a swept-in workplace by default', function () {
+    existingBooking('holz-2');
+
+    $this->actingAs($this->member)
+        ->postJson('/api/bookings', payload(['workplaceId' => 'kurse-holz']))
+        ->assertValidResponse(409);
+});
+
+it('leaves the swept-in workplaces free when automatic blocking is switched off', function () {
+    // Somebody is already on holz-2 for the window.
+    existingBooking('holz-2');
+
+    // A course on kurse-holz would normally take holz-1..5 with it and collide;
+    // with the switch on it occupies only kurse-holz itself.
+    $this->actingAs($this->member)
+        ->postJson('/api/bookings', payload([
+            'workplaceId' => 'kurse-holz',
+            'skipAutomaticBlocking' => true,
+        ]))
+        ->assertValidRequest()
+        ->assertValidResponse(201)
+        ->assertJsonPath('skipAutomaticBlocking', true)
+        ->assertJsonPath('blockedWorkplaceIds', []);
+
+    expect(Booking::count())->toBe(2);
+});
+
+it('still collides with a booking that blocks this workplace, switch or not', function () {
+    // A course on kurse-holz occupies holz-1..5 for the window.
+    $this->actingAs($this->member)
+        ->postJson('/api/bookings', payload(['workplaceId' => 'kurse-holz']))
+        ->assertStatus(201);
+
+    // Booking holz-2 with automatic blocking off must still fail — the switch
+    // only drops what this booking would sweep in, not the course that already
+    // covers holz-2.
+    $this->actingAs($this->member)
+        ->postJson('/api/bookings', payload([
+            'workplaceId' => 'holz-2',
+            'skipAutomaticBlocking' => true,
+        ]))
+        ->assertValidResponse(409);
+});
+
+it('keeps the blocking switch across an update that omits it', function () {
+    $this->actingAs($this->member)
+        ->postJson('/api/bookings', payload([
+            'workplaceId' => 'kurse-holz',
+            'skipAutomaticBlocking' => true,
+        ]))
+        ->assertStatus(201);
+
+    $booking = Booking::firstOrFail();
+
+    // PUT without the field: the switch stays on, the snapshot stays empty.
+    $this->actingAs($this->member)
+        ->putJson("/api/bookings/{$booking->id}", payload([
+            'workplaceId' => 'kurse-holz',
+            'name' => 'Geändert',
+        ]))
+        ->assertValidResponse(200)
+        ->assertJsonPath('skipAutomaticBlocking', true)
+        ->assertJsonPath('blockedWorkplaceIds', []);
+
+    // PUT with it off: the snapshot fills again from the current rules.
+    $this->actingAs($this->member)
+        ->putJson("/api/bookings/{$booking->id}", payload([
+            'workplaceId' => 'kurse-holz',
+            'skipAutomaticBlocking' => false,
+        ]))
+        ->assertValidResponse(200)
+        ->assertJsonPath('skipAutomaticBlocking', false)
+        ->assertJsonPath('blockedWorkplaceIds', ['holz-1', 'holz-2', 'holz-3', 'holz-4', 'holz-5']);
+});
+
 it('reports a collision with 409 and names the booking', function () {
     $existing = existingBooking();
 

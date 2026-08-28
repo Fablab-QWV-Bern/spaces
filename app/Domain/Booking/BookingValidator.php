@@ -94,7 +94,14 @@ final class BookingValidator
 
         // --- Collisions ------------------------------------------------------
 
-        $blocked = $this->resolver->resolve($candidate->workplaceId);
+        // With automatic blocking switched off the booking sweeps in nothing:
+        // the snapshot stays empty and the collision query drops its third arm
+        // (this booking blocks an existing one's workplace). The other two —
+        // same workplace, and an existing booking that blocks this one — still
+        // apply, so the switch cannot be used to slip past someone else's course.
+        $blocked = $candidate->skipAutomaticBlocking
+            ? []
+            : $this->resolver->resolve($candidate->workplaceId);
 
         $conflicts = $lockForUpdate
             ? $this->collisions->conflictingBookingIdsForUpdate(

@@ -14,6 +14,11 @@ final readonly class BookingCandidate
         /** UTC */
         public CarbonImmutable $endTime,
         public bool $usageRulesAcknowledged = false,
+        /**
+         * When true the booking blocks only its own workplace — the workplaces it
+         * would otherwise sweep in (by ID or tag) are left free.
+         */
+        public bool $skipAutomaticBlocking = false,
         /** Set when changing, so that the booking does not collide with itself. */
         public ?string $excludeBookingId = null,
     ) {}
