@@ -4,6 +4,7 @@ import { AdminRouteData, AdminShell } from './admin/admin-shell';
 import { AreaForm } from './admin/area-form';
 import { AreaList } from './admin/area-list';
 import { ConfigForm } from './admin/config-form';
+import { Interfaces } from './admin/interfaces';
 import { MapAdmin } from './admin/map-admin';
 import { RoleForm } from './admin/role-form';
 import { RoleList } from './admin/role-list';
@@ -155,6 +156,19 @@ export const routes: Routes = [
           ...roles,
           heading: 'Konfiguration',
           needs: 'Zum Ändern der globalen Konfiguration',
+        } satisfies AdminRouteData,
+      },
+      {
+        // A page of links, not of data — but it lists every workplace for the
+        // widget builder and points at the feed, so it sits behind a permission
+        // like the rest. The roles' one, next to the configuration.
+        path: 'schnittstellen',
+        component: Interfaces,
+        title: 'Schnittstellen',
+        data: {
+          ...roles,
+          heading: 'Schnittstellen',
+          needs: 'Zum Ansehen der Schnittstellen',
         } satisfies AdminRouteData,
       },
     ],

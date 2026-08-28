@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\Area;
 use App\Models\Booking;
 use App\Models\Role;
 use Carbon\CarbonImmutable;
@@ -85,26 +84,8 @@ it('narrows to one workplace', function () {
         ->assertDontSee('Woanders');
 });
 
-it('narrows to one area', function () {
-    Booking::create([
-        'workplace_id' => 'metall-vorne',
-        'name' => 'Im Metall',
-        'contact' => 'x@example.org',
-        'start_time' => CarbonImmutable::parse('2026-09-01 07:00:00', 'UTC'),
-        'end_time' => CarbonImmutable::parse('2026-09-01 09:00:00', 'UTC'),
-        'chargeable_duration_minutes' => 120,
-    ]);
-
-    $metall = Area::where('name', 'Metall')->firstOrFail();
-
-    $this->get(agenda(['bereich' => $metall->id]))
-        ->assertSee('Im Metall')
-        ->assertDontSee('Am Morgen');
-});
-
-it('answers an unknown filter with 404 rather than an empty agenda', function () {
+it('answers an unknown workplace with 404 rather than an empty agenda', function () {
     $this->get(agenda(['arbeitsplatz' => 'gibt-es-nicht']))->assertNotFound();
-    $this->get(agenda(['bereich' => 'gibt-es-nicht']))->assertNotFound();
 });
 
 it('says so when nothing is left for today', function () {

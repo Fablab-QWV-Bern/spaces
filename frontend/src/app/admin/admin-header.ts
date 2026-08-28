@@ -9,7 +9,8 @@ import { SessionService } from '../shared/session-service';
  * into the calendar, login.
  *
  * A tab only appears when the logged-in role may actually use it — a link that
- * reliably leads to a notice is not a link.
+ * reliably leads to a notice is not a link. The feeds and embeddable views used
+ * to hang here too; they have moved into their own "Schnittstellen" section.
  */
 @Component({
   selector: 'app-admin-header',
@@ -34,19 +35,10 @@ import { SessionService } from '../shared/session-service';
       @if (session.canManageRoles()) {
         <a routerLink="/verwaltung/rollen" routerLinkActive="active">Rollen</a>
         <a routerLink="/verwaltung/konfiguration" routerLinkActive="active">Konfiguration</a>
+        <!-- Feeds, embeddable views and the API contract all live on one page. -->
+        <a routerLink="/verwaltung/schnittstellen" routerLinkActive="active">Schnittstellen</a>
       }
-      <!-- A backend-rendered page outside the SPA, hence a plain href in a new
-           tab. First of the group that the auto margin pushes to the right. -->
-      <a
-        class="aside"
-        href="/agenda"
-        target="_blank"
-        rel="noopener"
-        title="Heutige Belegungen als einbettbare Seite"
-        >Agenda</a
-      >
-      <a [href]="feedUrl" [title]="feedHint">iCal-Feed</a>
-      <a routerLink="/tag">Zurück zum Kalender</a>
+      <a class="back" routerLink="/tag">Zurück zum Kalender</a>
     </nav>
   `,
   styles: `
@@ -95,9 +87,8 @@ import { SessionService } from '../shared/session-service';
         }
       }
 
-      // Everything from here on is a utility link, not a section — pushed to the
-      // far side, away from the tabs.
-      .aside {
+      // The way out, not a section — pushed to the far side, away from the tabs.
+      .back {
         margin-left: auto;
       }
     }
@@ -107,15 +98,4 @@ export class AdminHeader {
   readonly heading = input.required<string>();
 
   protected readonly session = inject(SessionService);
-
-  /**
-   * `webcal:` rather than `https:`, so that a click subscribes to the calendar
-   * instead of downloading a one-off file — the scheme is the entire difference
-   * between a subscription and a snapshot. Anyone who needs the address for
-   * pasting finds it in the link's title.
-   */
-  protected readonly feedUrl = `webcal://${location.host}/api/calendar.ics`;
-
-  protected readonly feedHint =
-    `Buchungen im eigenen Kalender abonnieren: ` + `${location.origin}/api/calendar.ics`;
 }

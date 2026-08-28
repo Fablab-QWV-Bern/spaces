@@ -1,0 +1,138 @@
+@if (loading()) {
+  <p class="hint">Wird geladen …</p>
+} @else {
+  @if (error(); as message) {
+    <p class="error" role="alert">{{ message }}</p>
+  }
+
+  <div class="content">
+    <section class="panel">
+      <h2>Kalender-Abo (iCal)</h2>
+      <p class="lead">
+        Die Buchungen im eigenen Kalenderprogramm mitlesen. Das Abo aktualisiert sich von selbst und
+        zeigt ein gleitendes Fenster von drei Monaten. Ohne Filter umfasst es alle Arbeitsplätze.
+      </p>
+
+      <div class="row">
+        <label class="field">
+          <span>Arbeitsplatz (optional)</span>
+          <select [value]="feedWorkplace()" (change)="feedWorkplace.set($any($event.target).value)">
+            <option value="">— alle —</option>
+            @for (group of groups(); track group.area.id) {
+              <optgroup [label]="group.area.name">
+                @for (place of group.workplaces; track place.id) {
+                  <option [value]="place.id">{{ place.name }}</option>
+                }
+              </optgroup>
+            }
+          </select>
+        </label>
+      </div>
+
+      <p class="actions">
+        <a class="button primary" [href]="feedSubscribeUrl()">Abonnieren</a>
+      </p>
+      <p class="url">
+        <code>{{ origin }}{{ feedPath() }}</code>
+      </p>
+    </section>
+
+    <section class="panel">
+      <h2>Agenda zum Einbetten</h2>
+      <p class="lead">
+        „Belegungen heute“ als eigene Seite, gedacht für ein <code>&lt;iframe&gt;</code> auf der
+        Website. Ohne Karte, sonst wie die Spalte neben der Übersichtskarte.
+      </p>
+
+      <div class="row">
+        <label class="field">
+          <span>Arbeitsplatz (optional)</span>
+          <select
+            [value]="agendaWorkplace()"
+            (change)="agendaWorkplace.set($any($event.target).value)"
+          >
+            <option value="">— alle —</option>
+            @for (group of groups(); track group.area.id) {
+              <optgroup [label]="group.area.name">
+                @for (place of group.workplaces; track place.id) {
+                  <option [value]="place.id">{{ place.name }}</option>
+                }
+              </optgroup>
+            }
+          </select>
+        </label>
+      </div>
+
+      <p class="actions">
+        <a class="button" [href]="agendaPath()" target="_blank" rel="noopener">Vorschau öffnen</a>
+      </p>
+      <p class="url">
+        <code>{{ origin }}{{ agendaPath() }}</code>
+      </p>
+    </section>
+
+    <section class="panel">
+      <h2>Buchungsliste eines Arbeitsplatzes</h2>
+      <p class="lead">
+        Die nächsten Buchungen eines Arbeitsplatzes als einbettbare Liste. Arbeitsplatz wählen,
+        optional die Anzahl Einträge begrenzen.
+      </p>
+
+      <div class="row">
+        <label class="field">
+          <span>Arbeitsplatz</span>
+          <select [value]="listWorkplace()" (change)="listWorkplace.set($any($event.target).value)">
+            <option value="">— wählen —</option>
+            @for (group of groups(); track group.area.id) {
+              <optgroup [label]="group.area.name">
+                @for (place of group.workplaces; track place.id) {
+                  <option [value]="place.id">{{ place.name }}</option>
+                }
+              </optgroup>
+            }
+          </select>
+        </label>
+
+        <label class="field max">
+          <span>Max. Einträge (optional)</span>
+          <input
+            type="number"
+            min="1"
+            step="1"
+            inputmode="numeric"
+            placeholder="5"
+            [value]="listMax()"
+            (input)="listMax.set($any($event.target).value)"
+          />
+        </label>
+      </div>
+
+      @if (listPath(); as path) {
+        <p class="actions">
+          <a class="button" [href]="path" target="_blank" rel="noopener">Vorschau öffnen</a>
+        </p>
+        <p class="url">
+          <code>{{ origin }}{{ path }}</code>
+        </p>
+      } @else {
+        <p class="note">Sobald ein Arbeitsplatz gewählt ist, erscheint hier der Link.</p>
+      }
+    </section>
+
+    <section class="panel">
+      <h2>API-Spezifikation (OpenAPI)</h2>
+      <p class="lead">
+        Der Vertrag der REST-Schnittstelle unter <code>/api</code> — für alle, die selbst etwas
+        daran bauen wollen.
+      </p>
+      <p class="actions">
+        <a class="button" href="/reservation-api.yml" target="_blank" rel="noopener"
+          >Spezifikation öffnen</a
+        >
+      </p>
+      <p class="url">
+        <code>{{ origin }}/reservation-api.yml</code>
+      </p>
+    </section>
+  </div>
+}

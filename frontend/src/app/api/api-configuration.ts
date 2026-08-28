@@ -22,5 +22,5 @@ export function provideApiConfiguration(rootUrl: string) {
   providedIn: 'root',
 })
 export class ApiConfiguration {
-  rootUrl: string = 'https://api.example.com';
+  rootUrl: string = 'https://reservation.quartierwerkstatt-viktoria.ch/api';
 }

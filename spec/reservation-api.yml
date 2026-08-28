@@ -13,7 +13,7 @@ info:
   version: 2.0.0
 
 servers:
-  - url: https://api.example.com
+  - url: https://reservation.quartierwerkstatt-viktoria.ch/api
 
 tags:
   - name: Session
@@ -1672,13 +1672,9 @@ paths:
         UID — no RRULE. The feed does not need to know that series exist, and editing a series
         (which drops and recreates its future instances) simply yields new events.
       parameters:
-        - name: areaId
-          in: query
-          description: Unknown id is a 404, so a typo in a subscription URL surfaces at once.
-          schema:
-            type: string
         - name: workplaceId
           in: query
+          description: Unknown id is a 404, so a typo in a subscription URL surfaces at once.
           schema:
             type: string
       responses:

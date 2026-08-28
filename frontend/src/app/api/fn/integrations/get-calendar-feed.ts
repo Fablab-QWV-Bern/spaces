@@ -11,7 +11,6 @@ export interface GetCalendarFeed$Params {
   /**
    * Unknown id is a 404, so a typo in a subscription URL surfaces at once.
    */
-  areaId?: string;
   workplaceId?: string;
 }
 
@@ -23,7 +22,6 @@ export function getCalendarFeed(
 ): Observable<StrictHttpResponse<string>> {
   const rb = new RequestBuilder(rootUrl, getCalendarFeed.PATH, 'get');
   if (params) {
-    rb.query('areaId', params.areaId, {});
     rb.query('workplaceId', params.workplaceId, {});
   }
 

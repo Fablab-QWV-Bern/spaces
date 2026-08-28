@@ -87,18 +87,6 @@
               </div>
 
               <div class="row-actions">
-                <!-- The embeddable list of upcoming bookings — a backend-rendered
-                     page outside the SPA, hence a plain href in a new tab. -->
-                <a
-                  class="button icon-only"
-                  [href]="'/liste?arbeitsplatz=' + workplace.id"
-                  target="_blank"
-                  rel="noopener"
-                  title="Öffentliche Liste der nächsten Buchungen (zum Einbetten)"
-                  [attr.aria-label]="'Buchungsliste von ' + workplace.name + ' (zum Einbetten)'"
-                >
-                  <app-icon name="list" />
-                </a>
                 <a class="button" [routerLink]="['/verwaltung/arbeitsplaetze', workplace.id]"
                   >Bearbeiten</a
                 >

@@ -560,5 +560,8 @@ hand once; deployment does not touch them. What is uploaded lives under
 - Is `mysqldump` on the `PATH` of a Plesk scheduled task, or does `backup:db`
   need `MYSQLDUMP_PATH` set in `.env`? Untested, like `composer` and `symlink()`
   above.
-- Subscription link in the admin area with filters (area, workplace) — the feed
-  supports it, the interface so far only offers the unfiltered calendar
+- `frontend/public/reservation-api.yml` is a symlink into `spec/` so the
+  Schnittstellen page can serve the contract without a second copy that drifts.
+  `ng build` resolves it to a file; the deploy workflow copies with `cp -RL` so
+  the server gets that file and not a dangling link. Untested on the real
+  hosttech deployment, like the rest of "Open".

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Area;
 use App\Models\Booking;
 use App\Models\Role;
 use App\Models\Workplace;
@@ -35,13 +34,11 @@ class CalendarFeedController extends Controller
         abort_unless($role->can('viewBookings'), 403, 'Die aktuelle Rolle darf das nicht (viewBookings).');
 
         $filters = $request->validate([
-            'areaId' => ['sometimes', 'string'],
             'workplaceId' => ['sometimes', 'string'],
         ]);
 
         // A typo in the subscription link should stand out rather than pass as an
         // empty calendar — one would only notice that weeks later.
-        $area = isset($filters['areaId']) ? Area::findOrFail($filters['areaId']) : null;
         $workplace = isset($filters['workplaceId']) ? Workplace::findOrFail($filters['workplaceId']) : null;
 
         $now = CarbonImmutable::now()->utc();
@@ -51,16 +48,12 @@ class CalendarFeedController extends Controller
             ->where('start_time', '<', $now->addMonths(self::WINDOW_MONTHS))
             ->where('end_time', '>', $now->subMonths(self::WINDOW_MONTHS))
             ->when($workplace, fn ($query) => $query->where('workplace_id', $workplace->id))
-            ->when($area, fn ($query) => $query->whereIn(
-                'workplace_id',
-                fn ($sub) => $sub->select('id')->from('workplaces')->where('area_id', $area->id),
-            ))
             ->orderBy('start_time')
             ->get();
 
         $body = $this->feed->render(
             $bookings,
-            $this->title($workplace, $area),
+            $this->title($workplace),
             $request->getHost(),
             $role->can('viewBookingsDetails'),
         );
@@ -68,14 +61,10 @@ class CalendarFeedController extends Controller
         return response($body, 200, ['Content-Type' => 'text/calendar; charset=utf-8']);
     }
 
-    private function title(?Workplace $workplace, ?Area $area): string
+    private function title(?Workplace $workplace): string
     {
         $name = config('app.name');
 
-        return match (true) {
-            $workplace !== null => "{$name} – {$workplace->name}",
-            $area !== null => "{$name} – {$area->name}",
-            default => $name,
-        };
+        return $workplace !== null ? "{$name} – {$workplace->name}" : $name;
     }
 }

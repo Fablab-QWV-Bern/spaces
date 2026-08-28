@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Area;
 use App\Models\Booking;
 use App\Models\GlobalSetting;
 use App\Models\Role;
@@ -24,8 +23,8 @@ use Illuminate\Http\Request;
  *
  * Like `/liste` and the iCal feed it always renders as the anonymous role, even
  * with a session cookie, and checks `viewBookings` itself — so the embed is the
- * same document for everyone. Optional `?arbeitsplatz=` or `?bereich=` narrows
- * it; an unknown id is a 404, so a typo in an embed URL surfaces at once.
+ * same document for everyone. Optional `?arbeitsplatz=` narrows it to one
+ * workplace; an unknown id is a 404, so a typo in an embed URL surfaces at once.
  *
  * Not in `spec/reservation-api.yml`: that governs the JSON API under `/api`.
  * This is a rendered page at the web root, a sibling of the SPA.
@@ -52,13 +51,9 @@ class AgendaWidgetController extends Controller
         );
 
         $workplaceId = $request->query('arbeitsplatz');
-        $areaId = $request->query('bereich');
 
         $workplace = is_string($workplaceId) && $workplaceId !== ''
             ? Workplace::findOrFail($workplaceId)
-            : null;
-        $area = is_string($areaId) && $areaId !== ''
-            ? Area::findOrFail($areaId)
             : null;
 
         $timezone = GlobalSetting::current()->timezone;
@@ -70,10 +65,6 @@ class AgendaWidgetController extends Controller
             ->where('end_time', '>', $now)
             ->where('start_time', '<=', $endOfToday)
             ->when($workplace, fn ($query) => $query->where('workplace_id', $workplace->id))
-            ->when($area, fn ($query) => $query->whereIn(
-                'workplace_id',
-                fn ($sub) => $sub->select('id')->from('workplaces')->where('area_id', $area->id),
-            ))
             ->orderBy('start_time')
             ->get();
 

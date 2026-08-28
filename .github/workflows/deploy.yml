@@ -53,7 +53,10 @@ jobs:
           # repository.
           tree="$(mktemp -d)"
           cp -R backend/. "$tree"/
-          cp -R frontend/dist/frontend/browser/. "$tree"/public/
+          # -L: the build leaves reservation-api.yml as a symlink into spec/ (one
+          # source of truth, no drift). It has to become a real file here — Plesk
+          # gets only this tree, not spec/.
+          cp -RL frontend/dist/frontend/browser/. "$tree"/public/
 
           # A continuous history rather than a force push: Plesk keeps a clone of
           # its own and pulls with `git pull` — a rewritten branch would get stuck

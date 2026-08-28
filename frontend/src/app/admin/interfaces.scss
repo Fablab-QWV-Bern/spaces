@@ -1,0 +1,52 @@
+@use './admin';
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 0 1.5rem 2rem;
+  max-width: 52rem;
+}
+
+.panel {
+  gap: 0.6rem;
+
+  h2 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+}
+
+.lead {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.actions {
+  margin: 0.25rem 0 0;
+}
+
+// The URL to copy: set apart so it does not read as prose, and allowed to break
+// mid-string rather than widen the column.
+.url {
+  margin: 0;
+
+  code {
+    display: inline-block;
+    padding: 0.2rem 0.4rem;
+    background: var(--surface-sunken);
+    border: 1px solid var(--line);
+    border-radius: 0.25rem;
+    font-size: 0.8rem;
+    word-break: break-all;
+  }
+}
+
+.note code {
+  font-size: 0.72rem;
+}
+
+.max {
+  flex: 0 1 12rem;
+}

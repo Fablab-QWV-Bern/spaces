@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\Area;
 use App\Models\Booking;
 use App\Models\Role;
 use Carbon\CarbonImmutable;
@@ -105,7 +104,7 @@ it('refuses the feed when the anonymous role may not see bookings', function () 
     $this->get(feed())->assertForbidden();
 });
 
-it('filters by workplace and area', function () {
+it('filters by workplace', function () {
     Booking::create([
         'workplace_id' => 'metall-vorne',
         'name' => 'Ida Roth',
@@ -119,16 +118,13 @@ it('filters by workplace and area', function () {
         ->toContain('Hans Cramer')
         ->not->toContain('Ida Roth');
 
-    $metall = Area::where('name', 'Metall')->firstOrFail();
-
-    expect($this->get(feed(['areaId' => $metall->id]))->getContent())
+    expect($this->get(feed(['workplaceId' => 'metall-vorne']))->getContent())
         ->toContain('Ida Roth')
         ->not->toContain('Hans Cramer');
 });
 
 it('answers an unknown filter with 404 rather than an empty calendar', function () {
     $this->get(feed(['workplaceId' => 'gibt-es-nicht']))->assertNotFound();
-    $this->get(feed(['areaId' => 'gibt-es-nicht']))->assertNotFound();
 });
 
 it('covers three months in both directions', function () {
