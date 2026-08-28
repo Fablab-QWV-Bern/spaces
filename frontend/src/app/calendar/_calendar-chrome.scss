@@ -81,6 +81,7 @@
   font-size: 0.85rem;
   text-align: right;
   margin-right: -1px;
+  direction: rtl;
 }
 
 // The label column sticks to the left, the header row to the top; their corner
@@ -192,7 +193,7 @@
 // up to an ellipsis regardless.
 @media (width < 48rem) {
   :host {
-    --label-width: 8rem;
+    --label-width: max(25vw, 7rem);
     --gutter: 0.75rem;
   }
 

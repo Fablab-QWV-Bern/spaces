@@ -79,6 +79,12 @@ import { CalendarStore } from './calendar-store';
       color: var(--text-soft);
       text-decoration: none;
     }
+
+    @media (width < 48rem) {
+      a.wiki {
+        display: none;
+      }
+    }
   `,
 })
 export class WorkplaceLabel {
