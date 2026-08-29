@@ -1,7 +1,6 @@
 <button
   type="button"
   class="bar"
-  [attr.popovertarget]="cardId"
   [attr.aria-label]="block().title"
   [class.blockage]="block().isBlockage"
   [class.booking]="!block().isBlockage"
@@ -9,6 +8,7 @@
   [class.clipped-end]="block().clippedEnd"
   [style.grid-column]="block().gridColumn"
   [style.background]="block().color"
+  (click)="openCard()"
 >
   @if (block().isSeries) {
     <app-icon class="series" name="series" label="Teil einer Serie" />
@@ -16,4 +16,4 @@
   <span class="text">{{ block().label }}</span>
 </button>
 
-<app-booking-card [id]="cardId" [details]="block().card" />
+<app-booking-card #card [details]="block().card" />

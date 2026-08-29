@@ -42,9 +42,9 @@ export class BookingCard {
   /** The heading for that case: the workplace whose free space was clicked. */
   readonly heading = input<string | null>(null);
 
-  /** The popover has to be in the DOM for `popovertarget` to find it — its
-   *  content does not. `beforetoggle` rather than `toggle`, so that the content
-   *  is there before the popover is first painted. */
+  /** The popover host has to be in the DOM so its opener can call `showPopover()`
+   *  on it — its content does not. `beforetoggle` rather than `toggle`, so that
+   *  the content is there before the popover is first painted. */
   protected readonly visible = signal(false);
 
   protected readonly store = inject(CalendarStore);

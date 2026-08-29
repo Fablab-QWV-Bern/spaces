@@ -114,16 +114,20 @@ changing the spec first.
   The way back is a button that only this view shows in the header. So that
   paging does not clear the workplace, `date-in-url.ts` writes with
   `queryParamsHandling: 'merge'`.
-- **The detail card is opened by the platform, not by us.** The bar is a
-  `<button popovertarget>`, the card the named popover — toggling, Escape, click
-  outside and keyboard handling all come from the browser. Two things follow that
-  would otherwise look like detours: the card sits _next to_ the bar rather than
-  inside it (a `<button>` may not contain a button, and the card has one), and
-  `CalendarBlock` carries `display: contents` so that the bar remains the cell's
-  grid item. Positioning uses CSS Anchor Positioning; the implicit anchor from
-  `popovertarget` does not take effect in Chrome, hence the explicit
-  `anchor-name: --block`. No reimplementation with custom pointer handlers — that
-  was there once and is deliberately gone.
+- **The detail card is a native popover; only opening it is ours.** The bar's
+  click calls `showPopover()`; toggling shut, Escape, click outside and keyboard
+  handling all come from the browser. `popovertarget` on the bar was the
+  declarative route and is gone: Safari's invoker bookkeeping is unreliable when
+  the button carries child nodes inside a `display: contents` host — the card
+  opened and light-dismissed itself in the same click, and nothing appeared. So
+  the calendar now opens the card the same way the map does, `showPopover()`
+  behind a `:popover-open` guard. Two things still follow that would otherwise
+  look like detours: the card sits _next to_ the bar rather than inside it (a
+  `<button>` may not contain a button, and the card has one), and `CalendarBlock`
+  carries `display: contents` so that the bar remains the cell's grid item.
+  Positioning uses CSS Anchor Positioning, with `anchor-name: --block` on the bar.
+  No reimplementation with custom pointer handlers — that was there once and is
+  deliberately gone.
 - **The anonymous role must not be given `manageRoles`.** The spec does not
   require this, but with that permission anyone could make themselves an
   administrator without logging in. The invariant "at least one role has
