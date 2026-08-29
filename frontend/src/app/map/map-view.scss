@@ -274,14 +274,11 @@ app-booking-card {
     stroke-dasharray: 14 8;
   }
 
-  // The standing figures, hung in by `stand()`, carry a hard drop-shadow so a
-  // person over a pale bench still reads as standing on it — the half-lit ones
-  // (a booking still ahead) keep it too. It is not set here: Safari applies the
-  // CSS filter functions to HTML boxes only, so the shadow is an SVG `<filter>`
-  // (`installFigureShadow`) referenced from the `<use>` by attribute. They take
-  // no clicks either: `.drawing` switched pointer events off and only
-  // `.workplace` turns them back on, so a click on a figure reaches the bench
-  // beneath it.
+  // The figure needs no rule of its own. It is drawn where the plan drew it, in
+  // the plan's colour and at its scale — a shadow, if it wants one, comes baked
+  // into the drawing. It takes no clicks: `.drawing` has switched those off and
+  // only `.workplace` turns them back on, so a click on a figure reaches the
+  // bench beneath it.
 }
 
 // ---- The free workplace's card ----
