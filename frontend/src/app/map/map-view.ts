@@ -33,6 +33,13 @@ const REFRESH_MS = 60_000;
  */
 const FIGURE_ID = 'figur';
 
+/**
+ * The id of the drop-shadow filter injected into the plan's `defs`. It is an
+ * SVG `<filter>` and not a CSS `drop-shadow()`: Safari does not apply the CSS
+ * filter functions to SVG elements — only a real filter element reaches them.
+ */
+const FIGURE_SHADOW_ID = 'figure-shadow';
+
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 
 /**
@@ -351,7 +358,9 @@ export class MapView {
     this.figureBox.set(boxOf(figure));
 
     const layer = figure.parentElement;
-    defsOf(plan).append(figure);
+    const defs = defsOf(plan);
+    defs.append(figure);
+    installFigureShadow(defs);
 
     if (layer) {
       layer.parentElement?.append(layer);
@@ -515,6 +524,10 @@ export class MapView {
       use.classList.add('figure');
       use.setAttribute('href', `#${FIGURE_ID}`);
       use.setAttribute('transform', standingOn(boxOf(element), figure));
+      // A hard drop-shadow lifts the figure off a pale bench. Set as an
+      // attribute pointing at an injected `<filter>`, not as a CSS
+      // `drop-shadow()` — Safari does not apply CSS filters to SVG elements.
+      use.setAttribute('filter', `url(#${FIGURE_SHADOW_ID})`);
       layer.append(use);
       this.figures.set(workplaceId, use);
     }
@@ -550,6 +563,38 @@ function defsOf(plan: SVGSVGElement): SVGDefsElement {
   plan.prepend(defs);
 
   return defs;
+}
+
+/**
+ * Puts the figures' drop-shadow into the plan's `defs`, once.
+ *
+ * A hard shadow — no blur, offset straight down — the same thing a CSS
+ * `drop-shadow(0 4px 0 …)` would draw. It has to be an SVG `<filter>` because
+ * Safari applies the CSS filter functions to HTML boxes only, not to SVG
+ * elements; Firefox and Chrome take either. The region is widened so the offset
+ * copy is not clipped at the bounding box.
+ */
+function installFigureShadow(defs: SVGDefsElement): void {
+  if (defs.querySelector(`#${CSS.escape(FIGURE_SHADOW_ID)}`)) {
+    return;
+  }
+
+  const filter = document.createElementNS(SVG_NAMESPACE, 'filter');
+  filter.setAttribute('id', FIGURE_SHADOW_ID);
+  filter.setAttribute('x', '-20%');
+  filter.setAttribute('y', '-20%');
+  filter.setAttribute('width', '140%');
+  filter.setAttribute('height', '140%');
+
+  const shadow = document.createElementNS(SVG_NAMESPACE, 'feDropShadow');
+  shadow.setAttribute('dx', '0');
+  shadow.setAttribute('dy', '4');
+  shadow.setAttribute('stdDeviation', '0');
+  shadow.setAttribute('flood-color', 'black');
+  shadow.setAttribute('flood-opacity', '1');
+
+  filter.append(shadow);
+  defs.append(filter);
 }
 
 /** What a screen reader gets to hear instead of the colour. */
