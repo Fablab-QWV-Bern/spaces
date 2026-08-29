@@ -275,10 +275,13 @@ changing the spec first.
   measured in one layer and placed in another, so the two have to share a user
   space: in `karte.svg` none of the layers carries a transform. A plan that
   transformed them would need the shape's box mapped between the two.
-- **A figure means presence, not occupancy.** It appears only where somebody is
-  actually standing — not for what is merely imminent, and not for a blockage,
-  where the bench is unusable because somebody is at _another_ one. Both of those
-  keep their outline. Marking them with a figure would put a person where none is.
+- **A figure means presence.** It appears where somebody is standing — full
+  strength while a booking runs, half-lit while one is still within the half hour
+  (`stand()` in `map-view.ts`), where the dashed outline used to carry the "not
+  yet" on its own. Never for a blockage, at either strength: there the bench is
+  unusable because somebody is at _another_ one, and a figure would put a person
+  where none is. A blockage keeps its outline instead — `soon-busy` now reaches
+  only that case.
 - **The colour of a bench comes from its area, not from the plan.** The file
   draws them in colours of its own; `MapView` writes the area's `color` over
   them, so the map says the same thing as the calendar's blocks and follows a
@@ -349,9 +352,9 @@ x)` hands back any CSS colour as `oklch(…)`, so a value stored as `rgb(…)`
   leaves the shapes as drawn.
 - **The state shows in the outline, not in the fill.** The fill is already spoken
   for by the area — a state in it would be two facts on one surface, of which
-  only the newer would be legible. `soon-busy` is additionally dashed, so the two do not depend
-  on colour alone. What counts as soon is half an hour — `SOON_MINUTES` in
-  `occupancy.ts`. The pointer does reach the fill, but through
+  only the newer would be legible. A blockage that is still ahead is dashed, so it
+  does not depend on colour alone; presence that is still ahead is a half-lit
+  figure. What counts as soon is half an hour — `SOON_MINUTES` in `occupancy.ts`. The pointer does reach the fill, but through
   `filter: brightness()` rather than a colour: a filter works on whatever it
   finds — the area's colour, the strays' grey — and brings no shade the palette
   would have to know about. It stays a choice now that the fill is reachable

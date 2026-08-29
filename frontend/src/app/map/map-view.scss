@@ -264,18 +264,24 @@ app-booking-card {
     //stroke-width: 6;
   }
 
+  // Only a blockage reaches this now — "soon" where somebody will actually be is
+  // carried by the half-lit figure `stand()` hangs in. A blockage has no figure
+  // (nobody is at this bench), so it keeps the outline, dashed because it is not
+  // yet in force.
   .soon-busy {
     stroke: var(--warning);
     stroke-width: 6;
-    // Dashed, so that the two states stay apart without relying on colour — and
-    // because something not yet in force reads as a dotted line.
     stroke-dasharray: 14 8;
   }
 
-  // The figure needs no rule of its own. It is drawn where the plan drew it, in
-  // the plan's colour and at its scale, and it takes no clicks — `.drawing` has
-  // switched those off and only `.workplace` turns them back on, so a click on a
-  // figure reaches the bench beneath it.
+  // The standing figures, hung in by `stand()`. A hard drop-shadow lifts them
+  // off the plan, so a person over a pale bench still reads as standing on it —
+  // and the half-lit ones (a booking still ahead) keep it too. They take no
+  // clicks: `.drawing` switched pointer events off and only `.workplace` turns
+  // them back on, so a click on a figure reaches the bench beneath it.
+  .figure {
+    filter: drop-shadow(0px 4px 0px rgb(0, 0, 0));
+  }
 }
 
 // ---- The free workplace's card ----

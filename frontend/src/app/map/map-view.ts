@@ -413,7 +413,10 @@ export class MapView {
       // the plan groups its layers.
       element.classList.add('workplace');
       element.classList.toggle('busy', state?.state === 'busy');
-      element.classList.toggle('soon-busy', state?.state === 'soon');
+      // Only a blockage still reaches the dashed outline for "soon". Where
+      // somebody will actually be, the half-lit figure from `stand()` carries
+      // it, and a figure plus an outline would state the same thing twice.
+      element.classList.toggle('soon-busy', state?.state === 'soon' && state.details.isBlockage);
 
       element.setAttribute('role', 'button');
       element.setAttribute('tabindex', '0');
@@ -466,10 +469,12 @@ export class MapView {
   /**
    * Puts a figure on the workplace, or takes it away again.
    *
-   * Only where somebody is actually standing: not for what is merely coming, and
-   * not for a blockage either — there the bench is unusable because somebody is
-   * at another one. A figure there would place a person where none is. Both cases
-   * keep their outline; only the figure is reserved for presence.
+   * A figure marks a person at the bench: at full strength while a booking runs,
+   * half-lit while one is still within the half hour — the "not yet in force"
+   * the dashed outline used to carry there. Never for a blockage, at either
+   * strength: there the bench is unusable because somebody is at *another* one,
+   * and a figure would put a person where none stands. That case keeps the
+   * outline instead.
    *
    * The `<use>` goes into the figures' layer, on top of everything, and not
    * beside the shape it belongs to: beside it, the layers the plan draws
@@ -485,20 +490,37 @@ export class MapView {
     state: Occupancy | undefined,
   ): void {
     const figure = this.figureBox();
-    const wanted = figure !== null && state?.state === 'busy' && !state.details.isBlockage;
+    const layer = this.layer;
     const standing = this.figures.get(workplaceId);
 
-    if (wanted && !standing && this.layer) {
-      const use = document.createElementNS(SVG_NAMESPACE, 'use');
+    const wanted =
+      figure !== null &&
+      layer !== null &&
+      state !== undefined &&
+      !state.details.isBlockage &&
+      (state.state === 'busy' || state.state === 'soon');
 
+    if (!wanted) {
+      if (standing) {
+        standing.remove();
+        this.figures.delete(workplaceId);
+      }
+
+      return;
+    }
+
+    const use = standing ?? document.createElementNS(SVG_NAMESPACE, 'use');
+
+    if (!standing) {
+      use.classList.add('figure');
       use.setAttribute('href', `#${FIGURE_ID}`);
       use.setAttribute('transform', standingOn(boxOf(element), figure));
-      this.layer.append(use);
+      layer.append(use);
       this.figures.set(workplaceId, use);
-    } else if (!wanted && standing) {
-      standing.remove();
-      this.figures.delete(workplaceId);
     }
+
+    // Half strength while the booking is still ahead, full once it is running.
+    use.setAttribute('opacity', state.state === 'soon' ? '0.5' : '1');
   }
 }
 
