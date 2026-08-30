@@ -23,7 +23,7 @@ export interface Box {
  * bench; a few units in and it stands at it. Small enough that it makes no
  * difference on the smallest workplace.
  */
-const FOOT_OVERLAP = 10;
+const FOOT_OVERLAP = 15;
 
 /**
  * The transform that stands the figure on a workplace, at its natural size.

@@ -12,9 +12,9 @@ describe('standingOn', () => {
   });
 
   it('puts the feet on the middle, not the waist', () => {
-    // Workplace middle 150, figure sole 240 less the overlap — so 80 up, one
+    // Workplace middle 150, figure sole 240 less the overlap — so 75 up, one
     // half-figure further than centring would move it.
-    expect(standingOn(workplace, figure)).toBe('translate(40 -80)');
+    expect(standingOn(workplace, figure)).toBe('translate(40 -75)');
   });
 
   it('does not scale the figure to the workplace', () => {
@@ -30,7 +30,7 @@ describe('standingOn', () => {
 
   it('keeps the numbers short', () => {
     expect(standingOn({ x: 0, y: 0, width: 1 / 3, height: 1 / 3 }, figure)).toBe(
-      'translate(-109.833 -229.833)',
+      'translate(-109.833 -224.833)',
     );
   });
 });
