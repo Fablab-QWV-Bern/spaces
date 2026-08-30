@@ -132,3 +132,35 @@
   display: flex;
   gap: 0.4rem;
 }
+
+// On a phone the row runs out of width: handle, the whole `.about` block (name,
+// Kennung, tags, the "Blockiert …" list) and two buttons cannot sit side by
+// side without the text wrapping a character at a time. Below the threshold the
+// buttons drop onto their own line and split the full width, so each is a real
+// tap target. 40rem counts from the browser's initial 16px here, not the 115%
+// on `html` — 640px.
+@media (width < 40rem) {
+  .place {
+    flex-wrap: wrap;
+    row-gap: 0.6rem;
+    // The grip lines up with the first line of text, not the middle of a card
+    // that is now several lines tall.
+    align-items: flex-start;
+  }
+
+  // A zero basis, so it is laid out beside the handle and only then shrinks to
+  // fit. With the default `auto` basis its wide content (the name, the
+  // "Blockiert …" line) breaks it onto its own row before shrinking ever runs.
+  .about {
+    flex-basis: 0;
+  }
+
+  .row-actions {
+    width: 100%;
+
+    > * {
+      flex: 1;
+      text-align: center;
+    }
+  }
+}
