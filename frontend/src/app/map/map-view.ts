@@ -53,11 +53,12 @@ const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
  * strips `id` attributes, and those are the whole point here — the mapping to the
  * workplaces hangs off them.
  *
- * The state sits on the workplace's own shape as a class, so the marking is a
- * matter for `map-view.scss` and not for the code. On top of that comes the
- * figure, and it is the only thing here that needs arithmetic — one translation,
- * within the plan's own coordinate system, so nothing has to be recomputed when
- * the window changes size.
+ * A taken bench — occupied by its own booking or blocked by one on another —
+ * is marked by a figure standing on it, half-lit while the booking is still
+ * ahead. That figure is the only thing here that needs arithmetic: one
+ * translation, within the plan's own coordinate system, so nothing has to be
+ * recomputed when the window changes size. The area's colour still gets written
+ * onto the shape, but that is all the shape itself carries.
  */
 @Component({
   selector: 'app-map-view',
@@ -409,14 +410,10 @@ export class MapView {
       const state = occupancy.get(workplace.id);
 
       // The mark that this shape is one of ours — the stylesheet hangs the
-      // pointer and the outline off it, and so needs to know nothing about how
-      // the plan groups its layers.
+      // pointer off it, and so needs to know nothing about how the plan groups
+      // its layers. The state itself is not a class here: a taken bench is said
+      // by the figure `stand()` puts on it, occupied and blocked alike.
       element.classList.add('workplace');
-      element.classList.toggle('busy', state?.state === 'busy');
-      // Only a blockage still reaches the dashed outline for "soon". Where
-      // somebody will actually be, the half-lit figure from `stand()` carries
-      // it, and a figure plus an outline would state the same thing twice.
-      element.classList.toggle('soon-busy', state?.state === 'soon' && state.details.isBlockage);
 
       element.setAttribute('role', 'button');
       element.setAttribute('tabindex', '0');
@@ -469,12 +466,11 @@ export class MapView {
   /**
    * Puts a figure on the workplace, or takes it away again.
    *
-   * A figure marks a person at the bench: at full strength while a booking runs,
-   * half-lit while one is still within the half hour — the "not yet in force"
-   * the dashed outline used to carry there. Never for a blockage, at either
-   * strength: there the bench is unusable because somebody is at *another* one,
-   * and a figure would put a person where none stands. That case keeps the
-   * outline instead.
+   * A figure marks a bench you cannot walk up to — taken by its own booking or
+   * blocked by one on another bench, the two alike here. Full strength while
+   * that booking runs, half-lit while it is still within the half hour; a free
+   * bench carries nothing. The difference between "someone is here" and
+   * "someone elsewhere blocks this" is left to the detail card.
    *
    * The `<use>` goes into the figures' layer, on top of everything, and not
    * beside the shape it belongs to: beside it, the layers the plan draws
@@ -497,7 +493,6 @@ export class MapView {
       figure !== null &&
       layer !== null &&
       state !== undefined &&
-      !state.details.isBlockage &&
       (state.state === 'busy' || state.state === 'soon');
 
     if (!wanted) {

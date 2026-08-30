@@ -193,13 +193,13 @@ app-booking-card {
 // ---- The marking on the workplaces ----
 //
 // The grafted plan belongs to no template and therefore carries none of Angular's
-// encapsulation attributes; a plain `.busy` here would match nothing. `::ng-deep`
-// under `:host` keeps the rule bound to this view all the same.
+// encapsulation attributes; a plain `.workplace` here would match nothing.
+// `::ng-deep` under `:host` keeps the rule bound to this view all the same.
 //
-// The state shows in the outline, not in the fill: the fill is already spoken
-// for. It carries the area's colour, so a bench says which area it belongs to —
-// a state on top of that would be two facts on one surface, of which only the
-// newer would be legible.
+// The state is not said here at all: a taken bench gets a standing figure
+// (`stand()` in `MapView`), and the fill stays the area's colour. A state in the
+// fill would be two facts on one surface, of which only the newer would be
+// legible; an outline was tried and dropped for the figure.
 //
 // The fill is set here and not in `MapView`, although only the code knows the
 // colour: it arrives as a variable, and what is done with it is decided in this
@@ -214,11 +214,7 @@ app-booking-card {
   .workplace {
     pointer-events: auto;
     cursor: pointer;
-    // The plan draws its shapes without an outline; the two below are ours.
-    stroke-width: 0;
-    transition:
-      stroke-width 0.15s ease,
-      filter 0.12s ease;
+    transition: filter 0.12s ease;
 
     // Under the pointer the fill answers. Darkened rather than replaced: the
     // bench would otherwise lose the colour of its area for as long as the
@@ -229,8 +225,8 @@ app-booking-card {
     }
 
     // The browser draws a ring of its own around a focused shape, and it happens
-    // to be amber — next to `soon-busy` that reads as a third state. Ours
-    // appears only where a focus ring is meant to: under the keyboard.
+    // to be amber, which reads as a state of its own. Ours appears only where a
+    // focus ring is meant to: under the keyboard.
     &:focus {
       outline: none;
     }
@@ -259,26 +255,12 @@ app-booking-card {
     fill: var(--obstacle-fill) !important;
   }
 
-  .busy {
-    //stroke: var(--danger);
-    //stroke-width: 6;
-  }
-
-  // Only a blockage reaches this now — "soon" where somebody will actually be is
-  // carried by the half-lit figure `stand()` hangs in. A blockage has no figure
-  // (nobody is at this bench), so it keeps the outline, dashed because it is not
-  // yet in force.
-  .soon-busy {
-    stroke: var(--warning);
-    stroke-width: 6;
-    stroke-dasharray: 14 8;
-  }
-
   // The figure needs no rule of its own. It is drawn where the plan drew it, in
   // the plan's colour and at its scale — a shadow, if it wants one, comes baked
-  // into the drawing. It takes no clicks: `.drawing` has switched those off and
-  // only `.workplace` turns them back on, so a click on a figure reaches the
-  // bench beneath it.
+  // into the drawing; `stand()` sets its opacity, half while the booking is
+  // still ahead. It takes no clicks: `.drawing` has switched those off and only
+  // `.workplace` turns them back on, so a click on a figure reaches the bench
+  // beneath it.
 }
 
 // ---- The free workplace's card ----

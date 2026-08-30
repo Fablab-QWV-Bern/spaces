@@ -257,11 +257,12 @@ changing the spec first.
   the plan in use and — before saving — for the file about to replace it.
   Neither side is the authority: the plan legitimately draws more than the
   workshop rents out, and a workplace may exist before anyone has drawn it.
-- **The state sits on the workplace's own shape** as a class — `.busy`,
-  `.soon-busy`, and nothing at all for free. So the map needs no geometry for it:
-  no `viewBox` arithmetic, no placement in percentages. It takes the full width
-  and gets its height from its own aspect ratio, so for the portrait floor plan it
-  scrolls — better large and scrolled than fully visible and illegible.
+- **The shape carries only its area's colour**, no state class. A taken bench is
+  said by a figure standing on it, not by an outline or a fill — so the shape
+  needs no geometry: no `viewBox` arithmetic, no placement in percentages. The
+  plan takes the full width and gets its height from its own aspect ratio, so for
+  the portrait floor plan it scrolls — better large and scrolled than fully
+  visible and illegible.
 - **The figure is not drawn but borrowed.** The plan brings one along under
   `#figur`, at the map's scale and in its colour; a hand-written path would be a
   second source of truth and would not travel along the next time the file is
@@ -269,8 +270,8 @@ changing the spec first.
   stays reachable for `<use>` — and then hung in once per occupied workplace.
   Measure first, then stow: what is not drawn has no bounding box either. One
   translation settles each figure for good — nothing to recompute when the window
-  changes size. A plan without a figure is not an error; the outline then carries
-  the state alone.
+  changes size. A plan without a figure is not an error; then a taken bench is
+  distinguished only by the pointer, which is thin.
 - **The figures stand in the top layer**, the one the plan drew its figure in,
   moved to the end of the document — SVG knows no `z-index`, so being drawn over
   everything means standing last. Beside the shape they would be run across by
@@ -279,13 +280,14 @@ changing the spec first.
   measured in one layer and placed in another, so the two have to share a user
   space: in `karte.svg` none of the layers carries a transform. A plan that
   transformed them would need the shape's box mapped between the two.
-- **A figure means presence.** It appears where somebody is standing — full
-  strength while a booking runs, half-lit while one is still within the half hour
-  (`stand()` in `map-view.ts`), where the dashed outline used to carry the "not
-  yet" on its own. Never for a blockage, at either strength: there the bench is
-  unusable because somebody is at _another_ one, and a figure would put a person
-  where none is. A blockage keeps its outline instead — `soon-busy` now reaches
-  only that case.
+- **A figure marks a bench you cannot walk up to.** Occupied by its own booking
+  or blocked by one on another bench — the two are alike on the map, full
+  strength while that booking runs and half-lit while it is still within the half
+  hour (`stand()` in `map-view.ts`). An earlier rule kept blockages to a dashed
+  outline instead, on the reasoning that a figure there puts a person where none
+  stands; it was dropped because a running blockage then showed nothing at all,
+  and because "not now" is the useful half either way. Which of the two it is
+  stays on the detail card.
 - **The colour of a bench comes from its area, not from the plan.** The file
   draws them in colours of its own; `MapView` writes the area's `color` over
   them, so the map says the same thing as the calendar's blocks and follows a
@@ -354,15 +356,15 @@ x)` hands back any CSS colour as `oklch(…)`, so a value stored as `rgb(…)`
   besides the workplace identifiers: `Arbeitsplätze` says which shapes were meant
   as benches, `Hindernisse` where their colour comes from. A plan carrying neither
   leaves the shapes as drawn.
-- **The state shows in the outline, not in the fill.** The fill is already spoken
+- **The state shows in a figure, not in the fill.** The fill is already spoken
   for by the area — a state in it would be two facts on one surface, of which
-  only the newer would be legible. A blockage that is still ahead is dashed, so it
-  does not depend on colour alone; presence that is still ahead is a half-lit
-  figure. What counts as soon is half an hour — `SOON_MINUTES` in `occupancy.ts`. The pointer does reach the fill, but through
-  `filter: brightness()` rather than a colour: a filter works on whatever it
-  finds — the area's colour, the strays' grey — and brings no shade the palette
-  would have to know about. It stays a choice now that the fill is reachable
-  from the stylesheet, not a workaround.
+  only the newer would be legible. So a taken bench carries a standing figure
+  instead, at half strength while its booking is still ahead. What counts as
+  ahead is half an hour — `SOON_MINUTES` in `occupancy.ts`. The pointer does
+  reach the fill, but through `filter: brightness()` rather than a colour: a
+  filter works on whatever it finds — the area's colour, the strays' grey — and
+  brings no shade the palette would have to know about. It stays a choice now
+  that the fill is reachable from the stylesheet, not a workaround.
 - **The plan takes no clicks, only the workplaces do.** `.drawing` is
   `pointer-events: none` and `.workplace` switches it back on. Without that a
   click on a workplace's own label would go nowhere: the names are drawn in a
