@@ -92,6 +92,30 @@ import { SessionService } from '../shared/session-service';
         margin-left: auto;
       }
     }
+
+    // The full set of sections does not fit a phone. Rather than let every label
+    // wrap onto two or three lines, the row scrolls sideways as one strip. The
+    // 40rem counts from the browser's initial 16px, not the 115% on the root —
+    // 640px.
+    @media (width < 40rem) {
+      .tabs {
+        overflow-x: auto;
+        // A thin strip; the scrollbar would otherwise sit on top of the labels.
+        scrollbar-width: none;
+
+        a {
+          // Whole labels, in order — the row scrolls, the links do not squeeze.
+          flex: none;
+          white-space: nowrap;
+        }
+
+        // With the row overflowing there is no free space for it to eat, so it
+        // trails the last tab and is reached by scrolling like any other.
+        .back {
+          margin-left: 0;
+        }
+      }
+    }
   `,
 })
 export class AdminHeader {
