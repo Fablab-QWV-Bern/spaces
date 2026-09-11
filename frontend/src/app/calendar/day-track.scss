@@ -47,10 +47,7 @@
   margin: 0;
 }
 
-// Hover shows what the row is; only the notice that answers an attempt waits
-// for the click (`.notice-on-click`).
-:host(:hover:not(.notice-on-click)) .notice,
-:host(.notice-revealed) .notice {
+:host(:hover) .notice {
   opacity: 1;
 }
 

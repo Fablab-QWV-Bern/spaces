@@ -5,13 +5,6 @@ import { CalendarBlock } from './calendar-block';
 import { GRID_MINUTES, TimeAxis, gridTemplateColumns, lineName, slotAtOffset } from './time-axis';
 
 /**
- * The notice for the anonymous role that appears where the preview would be. It
- * lives here with the cell because every view in which booking happens shows it —
- * as a second copy it would get lost when reworded in one of them.
- */
-export const SIGN_IN_NOTICE = 'Melde dich an, um eine Buchung zu erstellen';
-
-/**
  * A timeline across the opening hours of one day, with the bars on it.
  *
  * This is the cell every zoom level is made of: the day view has one per row, the
@@ -28,8 +21,6 @@ export const SIGN_IN_NOTICE = 'Melde dich an, um eine Buchung zu erstellen';
     '[style.grid-template-columns]': 'template()',
     '[style.--quarter]': 'quarterPercent()',
     '[class.clickable]': 'clickable()',
-    '[class.notice-on-click]': 'noticeOnClick()',
-    '[class.notice-revealed]': 'noticeRevealed()',
     '(click)': 'onClick($event)',
     '(mousemove)': 'onMove($event)',
     '(mouseleave)': 'onLeave()',
@@ -54,24 +45,12 @@ export class DayTrack {
    * addressed; across all rows it would stand there dozens of times.
    */
   readonly notice = input<string | null>(null);
-  /**
-   * Whether the notice waits for a click instead of appearing on hover.
-   *
-   * The horizon notice describes the row itself, so it belongs to the pointer
-   * being there. The sign-in notice answers an attempt: whoever moves across the
-   * calendar is not asking to be told in every row that they are not logged in —
-   * whoever clicks on empty space is.
-   */
-  readonly noticeOnClick = input(false);
 
   /** The clicked time slot, in minutes since midnight. */
   readonly slotClick = output<number>();
 
   /** The time slot under the pointer, or null outside empty space. */
   protected readonly hoveredSlot = signal<number | null>(null);
-
-  /** Whether the click that a `noticeOnClick` notice waits for has happened. */
-  protected readonly noticeRevealed = signal(false);
 
   protected readonly template = computed(() => gridTemplateColumns(this.axis()));
 
@@ -104,12 +83,6 @@ export class DayTrack {
   });
 
   protected onClick(event: MouseEvent): void {
-    // Only over empty space, as with the preview: a click on a bar opens its
-    // detail card and asks something else.
-    if (this.noticeOnClick() && event.target === event.currentTarget) {
-      this.noticeRevealed.set(true);
-    }
-
     if (!this.clickable()) {
       return;
     }
@@ -131,10 +104,9 @@ export class DayTrack {
     this.hoveredSlot.set(this.slotUnder(event));
   }
 
-  /** Leaving the row takes the answer with it — it belonged to that one click. */
+  /** Leaving the row takes the preview with it. */
   protected onLeave(): void {
     this.hoveredSlot.set(null);
-    this.noticeRevealed.set(false);
   }
 
   private slotUnder(event: MouseEvent): number {

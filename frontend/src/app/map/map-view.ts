@@ -14,7 +14,6 @@ import { Workplace } from '../api/models';
 import { BookingCard } from '../calendar/booking-card';
 import { CalendarStore } from '../calendar/calendar-store';
 import { CalendarToolbar } from '../calendar/calendar-toolbar';
-import { SIGN_IN_NOTICE } from '../calendar/day-track';
 import { GRID_MINUTES, formatTime, toLocalIso } from '../calendar/time-axis';
 import { Icon } from '../shared/icon';
 import { agendaFor } from './agenda';

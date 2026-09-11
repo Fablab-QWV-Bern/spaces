@@ -9,7 +9,7 @@ import { CalendarStore, isoDate } from './calendar-store';
 import { CalendarToolbar } from './calendar-toolbar';
 import { pageWithArrowKeys } from './arrow-key-paging';
 import { syncDateWithUrl } from './date-in-url';
-import { DayTrack, SIGN_IN_NOTICE } from './day-track';
+import { DayTrack } from './day-track';
 import { HourHeader } from './hour-header';
 import { DEFAULT_DURATION_MINUTES, instantAt, percentOfAxis, toLocalIso } from './time-axis';
 import { WorkplaceLabel } from './workplace-label';
@@ -129,38 +129,29 @@ export class DayCalendar {
     return map;
   });
 
+  /**
+   * Whether this role could go on to create a booking here at all — everyone
+   * except a logged-in role without booking rights. The anonymous role counts as
+   * eligible: clicking still leads to the form, which is where it meets the
+   * actual login requirement, overlaid on the page it would otherwise fill in.
+   */
+  private eligible(): boolean {
+    return this.store.canManageBookings() || this.store.isAnonymous();
+  }
+
   /** Only where booking is actually possible is the area clickable. */
   protected isBookable(workplace: Workplace, area: Area): boolean {
-    return (
-      workplace.status === 'OK' &&
-      this.store.canManageBookings() &&
-      !this.noticeByArea().get(area.id)
-    );
+    return workplace.status === 'OK' && this.eligible() && !this.noticeByArea().get(area.id);
   }
 
   /**
    * Why a click here creates nothing — shown where the preview would otherwise
-   * be.
-   *
-   * For the anonymous role the answer is always the same and it comes before the
-   * horizon: someone who has to log in first can do nothing with the information
-   * about when this day would be released. It is only stated where logging in
-   * would actually lead to booking — on a broken workplace it would be a false
-   * promise.
-   *
-   * Otherwise: only in rows that would be bookable anyway. Where nothing can be
-   * created, information about the horizon would answer a question nobody asked.
+   * be. Only in rows that would be bookable anyway: where nothing can be
+   * created, information about the horizon would answer a question nobody
+   * asked.
    */
   protected notice(workplace: Workplace, area: Area): string | null {
-    if (workplace.status !== 'OK') {
-      return null;
-    }
-
-    if (this.store.isAnonymous()) {
-      return SIGN_IN_NOTICE;
-    }
-
-    if (!this.store.canManageBookings()) {
+    if (workplace.status !== 'OK' || !this.eligible()) {
       return null;
     }
 

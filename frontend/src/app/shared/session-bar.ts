@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, ElementRef, inject, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, effect, inject, input, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 // Renamed so that the generated model does not shadow the global Error.
@@ -29,12 +29,28 @@ export class SessionBar {
   private readonly dialogRef = viewChild<ElementRef<HTMLDialogElement>>('dialog');
   private readonly passwordFieldRef = viewChild<ElementRef<HTMLInputElement>>('passwordField');
 
+  /**
+   * Open the dialog as soon as this bar appears, instead of waiting for a click
+   * on "Anmelden" — for the booking form, which an anonymous role reaches by
+   * clicking a preview it now sees just like anyone else. The login it still
+   * needs then arrives overlaid on that page rather than as a second click.
+   */
+  readonly autoOpen = input(false);
+
   protected readonly roles = signal<string[]>([]);
   protected readonly loadingRoles = signal(false);
   protected readonly selectedRole = signal<string | null>(null);
   protected readonly password = signal('');
   protected readonly error = signal<string | null>(null);
   protected readonly busy = signal(false);
+
+  constructor() {
+    effect(() => {
+      if (this.autoOpen()) {
+        this.open();
+      }
+    });
+  }
 
   protected open(): void {
     this.selectedRole.set(null);

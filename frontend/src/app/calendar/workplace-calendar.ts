@@ -9,7 +9,7 @@ import { CalendarStore, IsoDate, isoDate } from './calendar-store';
 import { CalendarToolbar } from './calendar-toolbar';
 import { pageWithArrowKeys } from './arrow-key-paging';
 import { syncDateWithUrl } from './date-in-url';
-import { DayTrack, SIGN_IN_NOTICE } from './day-track';
+import { DayTrack } from './day-track';
 import { HourHeader } from './hour-header';
 import { DEFAULT_DURATION_MINUTES, instantAt, percentOfAxis, toLocalIso } from './time-axis';
 
@@ -169,10 +169,19 @@ export class WorkplaceCalendar {
     return axis ? percentOfAxis(axis, now.getHours() * 60 + now.getMinutes()) : null;
   });
 
+  /**
+   * Whether this role could go on to create a booking here at all — everyone
+   * except a logged-in role without booking rights. The anonymous role counts
+   * as eligible: clicking still leads to the form, which is where it meets the
+   * actual login requirement, overlaid on the page it would otherwise fill in.
+   */
   protected readonly isBookable = computed(() => {
     const selection = this.selection();
 
-    return selection?.workplace.status === 'OK' && this.store.canManageBookings();
+    return (
+      selection?.workplace.status === 'OK' &&
+      (this.store.canManageBookings() || this.store.isAnonymous())
+    );
   });
 
   /**
@@ -202,21 +211,10 @@ export class WorkplaceCalendar {
     return map;
   });
 
-  /**
-   * Why a click in this row creates nothing — as in the day view.
-   *
-   * The anonymous role sees the login instead of the horizon: when this day would
-   * be released helps nobody who needs a password first. It is only stated on a
-   * workplace with status OK — otherwise it would be a promise the login does not
-   * keep.
-   */
+  /** Why a click in this row creates nothing — as in the day view. */
   protected notice(date: IsoDate): string | null {
     if (this.selection()?.workplace.status !== 'OK') {
       return null;
-    }
-
-    if (this.store.isAnonymous()) {
-      return SIGN_IN_NOTICE;
     }
 
     return this.noticeByDay().get(date) ?? null;

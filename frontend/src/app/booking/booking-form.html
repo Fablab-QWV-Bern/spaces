@@ -17,7 +17,7 @@
         als <strong>{{ session.roleName() }}</strong> angemeldet, diese Rolle darf nicht buchen.
       }
     </p>
-    <app-session-bar />
+    <app-session-bar [autoOpen]="session.isAnonymous()" />
     <p><a [routerLink]="returnTo">Zurück zur Kalenderansicht</a></p>
   </div>
 } @else {
