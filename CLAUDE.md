@@ -60,6 +60,14 @@ changing the spec first.
   therefore, only what actually ends on the following day counts as "overnight".
 - **There are no users, only user roles.** Authentication happens as a role whose
   password is shared by several people. `Role` is the Authenticatable.
+- **The session lasts four weeks** (`SESSION_LIFETIME` in `.env`) — nobody should
+  have to retype a shared password on every visit. The cost of that is that
+  rotating a role's password does not revoke sessions already issued from it:
+  only clearing the `sessions` table does, which today happens as a side effect
+  of `migrate:fresh` and nowhere else. So a leaked password stays exploitable
+  from an already-logged-in device for up to four weeks after it is changed.
+  Accepted deliberately for `Mitglied`; worth revisiting if `Admin` sessions ever
+  need to be revocable sooner.
 - **Blocking is a snapshot.** When a booking is created, `blocksWorkplaceIds` and
   the workplaces matched by tag are resolved and recorded on the booking. Later
   configuration changes do not touch existing bookings.
