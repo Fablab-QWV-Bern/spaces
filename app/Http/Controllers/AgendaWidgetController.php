@@ -30,7 +30,8 @@ use Illuminate\Http\Request;
  * - `?datum=` shows another day. Today leaves out what has ended; any other day
  *   shows all of it, since "still coming" means nothing there. The footer pages
  *   by day and leads back to today through the date itself — plain links, as
- *   the page has no script, each carrying the other parameters along.
+ *   the page has no script, each carrying the other parameters along. The
+ *   minutely reload goes back to today, so paging is only ever a look.
  * - `?mode=dark` or `light` fixes the colours for a host page whose setting the
  *   widget cannot see; without it they follow `prefers-color-scheme`.
  *

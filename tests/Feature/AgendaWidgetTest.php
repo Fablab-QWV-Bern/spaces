@@ -172,3 +172,8 @@ it('answers an unknown mode or a date that does not exist with 404', function ()
     $this->get(agenda(['datum' => '2026-02-30']))->assertNotFound();
     $this->get(agenda(['datum' => 'morgen']))->assertNotFound();
 });
+
+it('reloads onto today, keeping the other parameters', function () {
+    $this->get(agenda(['datum' => '2026-09-02', 'arbeitsplatz' => 'holz-1', 'mode' => 'dark']))
+        ->assertSee('<meta http-equiv="refresh" content="60; url=?arbeitsplatz=holz-1&amp;mode=dark">', false);
+});

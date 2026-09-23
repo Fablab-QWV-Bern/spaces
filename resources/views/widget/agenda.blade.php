@@ -4,8 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   {{-- Reloads once a minute so an embed stays current without scripting — the
-       same cadence the overview map refreshes itself at. --}}
-  <meta http-equiv="refresh" content="60">
+       same cadence the overview map refreshes itself at. The reload always lands
+       on today: whoever paged away comes back on their own, and an embed nobody
+       touches cannot get stuck on the day someone last looked at. --}}
+  <meta http-equiv="refresh" content="60; url={{ $today }}">
   <title>{{ $isToday ? 'Belegungen heute' : "Belegungen · {$date}" }}</title>
   {{-- The agenda column from the overview map, on its own for embedding. Self-
        contained and deliberately old-browser friendly: a float layout instead of
