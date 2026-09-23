@@ -90,11 +90,14 @@ export class Interfaces {
    */
   protected readonly feedSubscribeUrl = computed(() => `webcal://${this.host}${this.feedPath()}`);
 
-  // The embeddable agenda: same idea, German `arbeitsplatz`.
+  // The embeddable agenda: same idea, German `arbeitsplatz`. `mode` fixes light
+  // or dark for a host page whose setting the widget cannot see; empty follows
+  // the visitor's system.
   protected readonly agendaWorkplace = signal('');
+  protected readonly agendaMode = signal('');
 
   protected readonly agendaPath = computed(() =>
-    query('/agenda', { arbeitsplatz: this.agendaWorkplace() }),
+    query('/agenda', { arbeitsplatz: this.agendaWorkplace(), mode: this.agendaMode() }),
   );
 
   // The per-workplace booking list: one workplace (required) and a row cap.

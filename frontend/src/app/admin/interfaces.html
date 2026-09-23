@@ -60,7 +60,8 @@
       <h2>Agenda zum Einbetten</h2>
       <p class="lead">
         „Belegungen heute“ als eigene Seite, gedacht für ein <code>&lt;iframe&gt;</code> auf der
-        Website. Ohne Karte, sonst wie die Spalte neben der Übersichtskarte.
+        Website. Ohne Karte, sonst wie die Spalte neben der Übersichtskarte; unten lässt sich
+        tageweise blättern.
       </p>
 
       <div class="row">
@@ -78,6 +79,14 @@
                 }
               </optgroup>
             }
+          </select>
+        </label>
+        <label class="field">
+          <span>Darstellung</span>
+          <select [value]="agendaMode()" (change)="agendaMode.set($any($event.target).value)">
+            <option value="">wie das System</option>
+            <option value="light">hell</option>
+            <option value="dark">dunkel</option>
           </select>
         </label>
       </div>

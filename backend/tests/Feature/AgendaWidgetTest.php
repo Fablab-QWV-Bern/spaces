@@ -109,3 +109,66 @@ it('shows a logged-in admin nothing other than a visitor sees', function () {
     expect($asAdmin)->toBe($asVisitor)
         ->and($asAdmin)->not->toContain('x@example.org');
 });
+
+it('shows all of another day, without Aktuell', function () {
+    $body = $this->get(agenda(['datum' => '2026-09-02']))->getContent();
+
+    expect($body)->toContain('Erst morgen')
+        ->and($body)->not->toContain('Am Morgen')
+        ->and($body)->not->toContain('<h2>Aktuell</h2>');
+});
+
+it('keeps what has ended on a past day', function () {
+    CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-09-02 06:00:00', 'UTC'));
+
+    $body = $this->get(agenda(['datum' => '2026-09-01']))->getContent();
+
+    expect($body)->toContain('Schon vorbei')
+        ->and($body)->toContain('Am Abend')
+        ->and($body)->not->toContain('<h2>Aktuell</h2>');
+});
+
+it('files a booking carried over from the night before under Vormittag', function () {
+    Booking::create([
+        'workplace_id' => 'metall-vorne',
+        'name' => 'Ueber Nacht',
+        'contact' => 'x@example.org',
+        'start_time' => CarbonImmutable::parse('2026-09-02 17:00:00', 'UTC'),
+        'end_time' => CarbonImmutable::parse('2026-09-03 07:00:00', 'UTC'),
+        'chargeable_duration_minutes' => 120,
+    ]);
+
+    $body = $this->get(agenda(['datum' => '2026-09-03']))->getContent();
+
+    expect($body)->toContain('<h2>Vormittag</h2>')
+        ->and($body)->not->toContain('<h2>Abend</h2>')
+        ->and($body)->toContain('Ueber Nacht');
+});
+
+it('pages by day in the footer and keeps the other parameters', function () {
+    $body = $this->get(agenda(['datum' => '2026-09-01', 'arbeitsplatz' => 'holz-1', 'mode' => 'dark']))
+        ->getContent();
+
+    expect($body)->toContain('href="?datum=2026-08-31&amp;arbeitsplatz=holz-1&amp;mode=dark"')
+        ->and($body)->toContain('href="?datum=2026-09-02&amp;arbeitsplatz=holz-1&amp;mode=dark"')
+        ->and($body)->toContain('href="?arbeitsplatz=holz-1&amp;mode=dark"')
+        ->and($body)->toContain('Di, 1. September 2026');
+});
+
+it('forces dark or light when asked, and follows the system otherwise', function () {
+    $auto = $this->get(agenda())->getContent();
+    $dark = $this->get(agenda(['mode' => 'dark']))->getContent();
+    $light = $this->get(agenda(['mode' => 'light']))->getContent();
+
+    expect($auto)->toContain('prefers-color-scheme: dark')
+        ->and($dark)->not->toContain('prefers-color-scheme: dark')
+        ->and($dark)->toContain('color-scheme: dark;')
+        ->and($light)->not->toContain('#1a1a1c')
+        ->and($light)->toContain('color-scheme: light;');
+});
+
+it('answers an unknown mode or a date that does not exist with 404', function () {
+    $this->get(agenda(['mode' => 'dunkel']))->assertNotFound();
+    $this->get(agenda(['datum' => '2026-02-30']))->assertNotFound();
+    $this->get(agenda(['datum' => 'morgen']))->assertNotFound();
+});
