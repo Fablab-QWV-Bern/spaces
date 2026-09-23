@@ -508,6 +508,13 @@ every push to `main` and writes `backend/` together with the SPA in `public/` on
 points at its `public/`. The branch is appended to and never rewritten, because
 Plesk's clone cannot stomach a force push.
 
+**A push to `main` is a deployment.** Once the branch is written, the workflow
+POSTs to Plesk's deployment webhook (secret `PLESK_DEPLOY_HOOK`), and Plesk pulls
+and runs `deploy.sh` without anyone pressing a button. There is no step between
+a green commit and the live site, so what is not meant to go out does not go
+onto `main`. Without the secret the run stays green and only prints a notice;
+Plesk then waits to be told by hand.
+
 `vendor/` does not travel along: `composer install` runs on the server. As a
 deployment action, Plesk holds only one line:
 
