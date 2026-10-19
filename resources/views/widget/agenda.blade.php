@@ -8,11 +8,22 @@
        on today: whoever paged away comes back on their own, and an embed nobody
        touches cannot get stuck on the day someone last looked at. --}}
   <meta http-equiv="refresh" content="60; url={{ $today }}">
+  {{-- On a home screen as an app of its own, for a tablet in kiosk mode. The
+       manifest is for Safari from 16.4 and everything else; an older iPad never
+       reads it and goes by the apple- tags alone, which is why they stay even
+       though newer Safari no longer needs them. The status bar cannot follow
+       the system, so it is dark only when the page is told to be. --}}
+  <link rel="manifest" href="{{ $manifest }}">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Belegungen">
+  <meta name="apple-mobile-web-app-status-bar-style" content="{{ $mode === 'dark' ? 'black' : 'default' }}">
   <title>{{ $isToday ? 'Belegungen heute' : "Belegungen · {$date}" }}</title>
   {{-- The agenda column from the overview map, on its own for embedding. Self-
        contained and deliberately old-browser friendly: a float layout instead of
        grid, and literal colours instead of `color-mix()` — an embed can end up in
-       a very old Safari, and this page has no script to fall back on. One ink
+       a very old Safari, and the page does not rely on script to fall back on. One ink
        (black, white in the dark), everything else an alpha of it, which keeps the
        "CanvasText at N%" idea without the function. Dark mode follows the host
        through `prefers-color-scheme`; a browser without it stays on the light
@@ -171,5 +182,26 @@
     </a>
     <a class="date" href="{{ $today }}" title="Zurück zu heute">{{ $date }}</a>
   </footer>
+
+  {{-- The one script on the page, and only for the home-screen app: an older
+       iOS opens every followed link in Safari, so paging would leave the full
+       screen. Setting the location instead keeps it in place. Written for the
+       oldest Safari this might meet — no arrow functions, no closest(). --}}
+  <script>
+    if (window.navigator.standalone) {
+      document.addEventListener('click', function (event) {
+        var link = event.target;
+
+        while (link && link.nodeName !== 'A') {
+          link = link.parentNode;
+        }
+
+        if (link && link.href) {
+          event.preventDefault();
+          window.location.href = link.href;
+        }
+      }, false);
+    }
+  </script>
 </body>
 </html>
