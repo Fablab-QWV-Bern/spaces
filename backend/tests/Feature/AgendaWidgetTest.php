@@ -177,3 +177,33 @@ it('reloads onto today, keeping the other parameters', function () {
     $this->get(agenda(['datum' => '2026-09-02', 'arbeitsplatz' => 'holz-1', 'mode' => 'dark']))
         ->assertSee('<meta http-equiv="refresh" content="60; url=?arbeitsplatz=holz-1&amp;mode=dark">', false);
 });
+
+it('links a manifest of its own that starts where it was added, without the date', function () {
+    $this->get(agenda(['datum' => '2026-09-02', 'arbeitsplatz' => 'holz-1', 'mode' => 'dark']))
+        ->assertSee('<link rel="manifest" href="/agenda.webmanifest?arbeitsplatz=holz-1&amp;mode=dark">', false)
+        ->assertSee('<meta name="apple-mobile-web-app-capable" content="yes">', false)
+        ->assertSee('<meta name="apple-mobile-web-app-status-bar-style" content="black">', false);
+
+    $this->get('/agenda.webmanifest?arbeitsplatz=holz-1&mode=dark')
+        ->assertOk()
+        ->assertHeader('Content-Type', 'application/manifest+json')
+        ->assertJson([
+            'id' => '/agenda',
+            'scope' => '/agenda',
+            'start_url' => '/agenda?arbeitsplatz=holz-1&mode=dark',
+            'display' => 'fullscreen',
+            'background_color' => '#1a1a1c',
+        ]);
+});
+
+it('starts the manifest at the bare agenda without parameters', function () {
+    $this->get(agenda())->assertSee('<link rel="manifest" href="/agenda.webmanifest">', false);
+
+    $this->get('/agenda.webmanifest')->assertJson(['start_url' => '/agenda', 'background_color' => '#f4f4f5']);
+});
+
+it('answers a manifest for an unknown workplace or mode with 404', function () {
+    $this->get('/agenda.webmanifest?arbeitsplatz=gibt-es-nicht')->assertNotFound();
+    $this->get('/agenda.webmanifest?mode=dunkel')->assertNotFound();
+    $this->get('/agenda?mode[]=dark')->assertNotFound();
+});

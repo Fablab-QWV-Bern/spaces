@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Route;
 // paths to the Angular router.
 Route::get('/liste', BookingListWidgetController::class);
 Route::get('/agenda', AgendaWidgetController::class);
+Route::get('/agenda.webmanifest', [AgendaWidgetController::class, 'manifest']);
 
 // Everything that is not a file is answered by the Angular router. The API
 // routes are only registered in the `then` callback of bootstrap/app.php, that is

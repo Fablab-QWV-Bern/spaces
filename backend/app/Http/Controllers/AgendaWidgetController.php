@@ -9,6 +9,7 @@ use App\Models\Workplace;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
@@ -30,7 +31,7 @@ use Illuminate\Http\Request;
  * - `?datum=` shows another day. Today leaves out what has ended; any other day
  *   shows all of it, since "still coming" means nothing there. The footer pages
  *   by day and leads back to today through the date itself — plain links, as
- *   the page has no script, each carrying the other parameters along. The
+ *   the page works without script, each carrying the other parameters along. The
  *   minutely reload goes back to today, so paging is only ever a look.
  * - `?mode=dark` or `light` fixes the colours for a host page whose setting the
  *   widget cannot see; without it they follow `prefers-color-scheme`.
@@ -41,12 +42,16 @@ use Illuminate\Http\Request;
 class AgendaWidgetController extends Controller
 {
     /**
+     * The colours `?mode=` may fix, with the background each paints — the one the
+     * page itself uses, repeated for the manifest because JSON cannot read CSS.
+     */
+    private const MODES = ['light' => '#f4f4f5', 'dark' => '#1a1a1c'];
+
+    /**
      * The parts of the day, latest first so the first match walking down wins.
      * The cuts sit at noon and at five — five is when the workshop fills up with
      * whoever has finished work (see `map/agenda.ts`).
      */
-    private const MODES = ['light', 'dark'];
-
     private const PARTS = [
         ['from' => 17, 'heading' => 'Abend'],
         ['from' => 12, 'heading' => 'Nachmittag'],
@@ -61,14 +66,8 @@ class AgendaWidgetController extends Controller
             'Die Buchungen sind nicht öffentlich einsehbar.',
         );
 
-        $workplaceId = $request->query('arbeitsplatz');
-
-        $workplace = is_string($workplaceId) && $workplaceId !== ''
-            ? Workplace::findOrFail($workplaceId)
-            : null;
-
-        $mode = $request->query('mode');
-        abort_unless($mode === null || in_array($mode, self::MODES, true), 404);
+        $workplace = $this->workplace($request);
+        $mode = $this->mode($request);
 
         $timezone = GlobalSetting::current()->timezone;
         $now = CarbonImmutable::now();
@@ -92,7 +91,60 @@ class AgendaWidgetController extends Controller
             'previous' => $this->link($request, $day->subDay()->toDateString()),
             'next' => $this->link($request, $day->addDay()->toDateString()),
             'today' => $this->link($request, null),
+            'manifest' => rtrim('/agenda.webmanifest'.$this->link($request, null), '?'),
         ]);
+    }
+
+    /**
+     * The agenda as an app of its own on a home screen — for a tablet hung on
+     * the wall in full screen. Separate from the SPA's manifest, with its own
+     * `id` and `scope`: a home-screen icon for the agenda should open the agenda
+     * and nothing else, and paging must not leave it.
+     *
+     * Generated rather than a file, because the start page has to be the one it
+     * was added from: the workplace and the mode go along, the date does not —
+     * a kiosk opened tomorrow should show tomorrow. Older Safari ignores all of
+     * this and goes by the meta tags in the page instead (see there).
+     */
+    public function manifest(Request $request): JsonResponse
+    {
+        $this->workplace($request);
+        $background = self::MODES[$this->mode($request) ?? 'light'];
+
+        return response()->json([
+            'id' => '/agenda',
+            'name' => 'Belegungen QWV',
+            'short_name' => 'Belegungen',
+            'lang' => 'de-CH',
+            'start_url' => rtrim('/agenda'.$this->link($request, null), '?'),
+            'scope' => '/agenda',
+            'display' => 'fullscreen',
+            'theme_color' => $background,
+            'background_color' => $background,
+            // The SPA's icons, which the deployment puts next to this page.
+            'icons' => [
+                ['src' => '/icon-192.png', 'sizes' => '192x192', 'type' => 'image/png'],
+                ['src' => '/icon-512.png', 'sizes' => '512x512', 'type' => 'image/png'],
+            ],
+        ], options: JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
+            ->header('Content-Type', 'application/manifest+json');
+    }
+
+    /** The workplace from `?arbeitsplatz=`, null for all; an unknown id is a 404. */
+    private function workplace(Request $request): ?Workplace
+    {
+        $id = $request->query('arbeitsplatz');
+
+        return is_string($id) && $id !== '' ? Workplace::findOrFail($id) : null;
+    }
+
+    /** `light` or `dark` from `?mode=`, null to follow the system; anything else is a 404. */
+    private function mode(Request $request): ?string
+    {
+        $mode = $request->query('mode');
+        abort_unless($mode === null || (is_string($mode) && array_key_exists($mode, self::MODES)), 404);
+
+        return $mode;
     }
 
     /**
