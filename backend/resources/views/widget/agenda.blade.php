@@ -13,6 +13,13 @@
        reads it and goes by the apple- tags alone, which is why they stay even
        though newer Safari no longer needs them. The status bar cannot follow
        the system, so it is dark only when the page is told to be. --}}
+  {{-- In the head rather than with the click handler below, so the page does
+       not draw once at embed size and then jump. --}}
+  <script>
+    if (window.navigator.standalone) {
+      document.documentElement.className = 'standalone';
+    }
+  </script>
   <link rel="manifest" href="{{ $manifest }}">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -39,7 +46,9 @@
       /* Matches the site this widget is embedded in. Raleway only renders where
          the host page has already loaded it — otherwise it falls back. */
       font-family: "Raleway", sans-serif;
-      font-size: 14px;
+      /* 14px in an embed. In rem like every other size here, so that the kiosk
+         rule below scales the whole page through the root alone. */
+      font-size: 0.875rem;
       line-height: 1.5;
       /* Room for the fixed footer, so the last row can scroll out from under it. */
       padding: 0 1rem 4rem;
@@ -135,6 +144,16 @@
     .previous { float: left; }
     .next { float: right; }
 
+    /* Larger on a home screen, where the page is the whole screen and read from
+       a step away; an iframe is never in that mode, so an embed stays as it is.
+       The media query is for current browsers, the class for an older iPad that
+       does not know it (set in the head). */
+    @media (display-mode: standalone), (display-mode: fullscreen) {
+      html { font-size: 125%; }
+    }
+
+    html.standalone { font-size: 125%; }
+
     @if ($mode === null)
     /* Modern browsers only; an old Safari ignores the query and keeps the light
        default, which is also all iOS 9 ever had. */
@@ -183,7 +202,7 @@
     <a class="date" href="{{ $today }}" title="Zurück zu heute">{{ $date }}</a>
   </footer>
 
-  {{-- The one script on the page, and only for the home-screen app: an older
+  {{-- Only for the home-screen app, like the class in the head: an older
        iOS opens every followed link in Safari, so paging would leave the full
        screen. Setting the location instead keeps it in place. Written for the
        oldest Safari this might meet — no arrow functions, no closest(). --}}
