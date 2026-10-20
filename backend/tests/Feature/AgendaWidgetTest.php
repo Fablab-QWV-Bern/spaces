@@ -59,7 +59,7 @@ it('puts a booking that has started under Aktuell, and shows its local time rang
     $body = $this->get(agenda())->getContent();
 
     expect($body)->toContain('Laeuft gerade')
-        ->and($body)->toContain('07:30–10:00');
+        ->and($body)->toContain("07:30\u{202F}–\u{202F}10:00");
 });
 
 it('leaves out what has ended and what only starts tomorrow', function () {
