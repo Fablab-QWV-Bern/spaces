@@ -212,7 +212,7 @@ it('sizes up only on a home screen, through the root', function () {
     $body = $this->get(agenda())->getContent();
 
     expect($body)->toContain('@media (display-mode: standalone), (display-mode: fullscreen)')
-        ->and($body)->toContain('html.standalone { font-size: 125%; }')
+        ->and($body)->toContain('html.standalone { font-size: 137.5%; }')
         ->and($body)->toContain("document.documentElement.className = 'standalone'")
         ->and($body)->not->toMatch('/font-size:\s*\d+px/');
 });

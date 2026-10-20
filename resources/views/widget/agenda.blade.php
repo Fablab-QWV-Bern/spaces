@@ -149,10 +149,10 @@
        The media query is for current browsers, the class for an older iPad that
        does not know it (set in the head). */
     @media (display-mode: standalone), (display-mode: fullscreen) {
-      html { font-size: 125%; }
+      html { font-size: 137.5%; }
     }
 
-    html.standalone { font-size: 125%; }
+    html.standalone { font-size: 137.5%; }
 
     @if ($mode === null)
     /* Modern browsers only; an old Safari ignores the query and keeps the light
