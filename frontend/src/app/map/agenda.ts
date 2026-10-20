@@ -114,7 +114,8 @@ function toEntry(booking: Booking, nameOf: (workplaceId: string) => string): Age
   return {
     id: booking.id,
     workplaceName: nameOf(booking.workplaceId),
-    timeRange: `${formatTime(new Date(booking.startTime))}–${formatTime(new Date(booking.endTime))}`,
+    // Narrow no-break spaces around the dash, as in the /agenda widget.
+    timeRange: `${formatTime(new Date(booking.startTime))}\u202F–\u202F${formatTime(new Date(booking.endTime))}`,
     who: booking.name,
   };
 }

@@ -34,7 +34,7 @@ describe('agendaFor', () => {
     expect(groups[0].heading).toBe('Aktuell');
     expect(groups[0].entries[0]).toMatchObject({
       workplaceName: 'Holz 1',
-      timeRange: '09:00–11:00',
+      timeRange: '09:00\u202F–\u202F11:00',
       who: 'Regina Meier',
     });
   });
@@ -51,7 +51,7 @@ describe('agendaFor', () => {
     );
 
     expect(groups.map((group) => group.heading)).toEqual(['Abend']);
-    expect(groups[0].entries[0].timeRange).toBe('17:30–19:00');
+    expect(groups[0].entries[0].timeRange).toBe('17:30\u202F–\u202F19:00');
   });
 
   it('cuts the parts at noon and at five', () => {

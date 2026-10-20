@@ -50,8 +50,23 @@
          rule below scales the whole page through the root alone. */
       font-size: 0.875rem;
       line-height: 1.5;
-      /* Room for the fixed footer, so the last row can scroll out from under it. */
-      padding: 0 1rem 4rem;
+      overflow: hidden;
+    }
+
+    /* The page itself never scrolls, only the list does. Safari bounces whatever
+       scrolls past its end, and when that is the document it takes the fixed
+       footer along; scrolled in a box of its own, the list bounces alone. Placed
+       absolutely rather than through flex, for the same old Safari as the floats.
+       The bottom is the footer's height, so the last row ends above it. */
+    main {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 2.75rem;
+      left: 0;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 0 1rem 1.5rem;
     }
 
     /* Stays in view while the list scrolls, like the heading beside the map.
@@ -109,11 +124,11 @@
       color: rgba(0, 0, 0, 0.55);
     }
 
-    /* Fixed rather than sticky: sticky would ride up under a short list, and the
-       footer belongs at the bottom of the frame. The text-align centres the date;
-       the arrows float to either side of it. */
+    /* Pinned to the bottom of the frame rather than sticky, which would ride up
+       under a short list. The text-align centres the date; the arrows float to
+       either side of it. */
     footer {
-      position: fixed;
+      position: absolute;
       right: 0;
       bottom: 0;
       left: 0;
@@ -172,24 +187,26 @@
   </style>
 </head>
 <body>
-  <h1>{{ $isToday ? 'Belegungen heute' : 'Belegungen' }}</h1>
+  <main>
+    <h1>{{ $isToday ? 'Belegungen heute' : 'Belegungen' }}</h1>
 
-  @forelse ($groups as $group)
-    <h2>{{ $group['heading'] }}</h2>
-    <ul>
-      @foreach ($group['entries'] as $entry)
-        <li>
-          <span class="where">{{ $entry['where'] }}</span>
-          <span class="when">{{ $entry['when'] }}</span>
-          <span class="who">{{ $entry['who'] }}</span>
-        </li>
-      @endforeach
-    </ul>
-  @empty
-    <p class="empty">
-      {{ $isToday ? 'Für heute ist nichts mehr eingetragen.' : 'An diesem Tag ist nichts eingetragen.' }}
-    </p>
-  @endforelse
+    @forelse ($groups as $group)
+      <h2>{{ $group['heading'] }}</h2>
+      <ul>
+        @foreach ($group['entries'] as $entry)
+          <li>
+            <span class="where">{{ $entry['where'] }}</span>
+            <span class="when">{{ $entry['when'] }}</span>
+            <span class="who">{{ $entry['who'] }}</span>
+          </li>
+        @endforeach
+      </ul>
+    @empty
+      <p class="empty">
+        {{ $isToday ? 'Für heute ist nichts mehr eingetragen.' : 'An diesem Tag ist nichts eingetragen.' }}
+      </p>
+    @endforelse
+  </main>
 
   {{-- The chevrons are Lucide's, like the SPA's icons, in currentColor. --}}
   <footer>
