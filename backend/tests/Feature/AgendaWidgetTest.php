@@ -224,3 +224,13 @@ it('keeps the page from bouncing, except inside an iframe', function () {
         ->and($body)->toContain('if (window.top !== window || !touch)')
         ->and($body)->toContain("addEventListener('touchmove'");
 });
+
+it('brings its own Raleway rather than counting on the host page', function () {
+    $body = $this->get(agenda())->getContent();
+
+    foreach ([400, 600, 700] as $weight) {
+        expect($body)->toContain("/fonts/raleway/raleway-latin-{$weight}-normal.woff2")
+            ->and(public_path("fonts/raleway/raleway-latin-{$weight}-normal.woff2"))->toBeFile()
+            ->and(public_path("fonts/raleway/raleway-latin-{$weight}-normal.woff"))->toBeFile();
+    }
+});

@@ -37,14 +37,16 @@
        default. `?mode=` overrides that: the dark rules below are written once and
        only their wrapper changes — the media query, none, or left out. --}}
   <style>
+    @include('widget.raleway')
+
     :root { color-scheme: {{ $mode ?? 'light dark' }}; }
 
     body {
       margin: 0;
       background: #f4f4f5;
       color: #18181b;
-      /* Matches the site this widget is embedded in. Raleway only renders where
-         the host page has already loaded it — otherwise it falls back. */
+      /* Matches the site this widget is embedded in; served alongside, see
+         widget/raleway.blade.php. */
       font-family: "Raleway", sans-serif;
       /* 14px in an embed. In rem like every other size here, so that the kiosk
          rule below scales the whole page through the root alone. */
