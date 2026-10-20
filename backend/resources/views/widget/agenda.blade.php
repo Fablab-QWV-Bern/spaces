@@ -160,7 +160,7 @@
     @media (prefers-color-scheme: dark) {
     @endif
     @if ($mode !== 'light')
-      body { background: #1a1a1c; color: #f2f2f2; }
+      body { background: #1a1a1c; color: #fff; }
       h1, footer { background: #1a1a1c; }
       h2, .when, .empty { color: rgba(255, 255, 255, 0.55); }
       li, footer { border-top-color: rgba(255, 255, 255, 0.14); }
