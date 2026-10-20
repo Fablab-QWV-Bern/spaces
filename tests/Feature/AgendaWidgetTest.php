@@ -207,3 +207,12 @@ it('answers a manifest for an unknown workplace or mode with 404', function () {
     $this->get('/agenda.webmanifest?mode=dunkel')->assertNotFound();
     $this->get('/agenda?mode[]=dark')->assertNotFound();
 });
+
+it('sizes up only on a home screen, through the root', function () {
+    $body = $this->get(agenda())->getContent();
+
+    expect($body)->toContain('@media (display-mode: standalone), (display-mode: fullscreen)')
+        ->and($body)->toContain('html.standalone { font-size: 125%; }')
+        ->and($body)->toContain("document.documentElement.className = 'standalone'")
+        ->and($body)->not->toMatch('/font-size:\s*\d+px/');
+});
