@@ -216,3 +216,11 @@ it('sizes up only on a home screen, through the root', function () {
         ->and($body)->toContain("document.documentElement.className = 'standalone'")
         ->and($body)->not->toMatch('/font-size:\s*\d+px/');
 });
+
+it('keeps the page from bouncing, except inside an iframe', function () {
+    $body = $this->get(agenda())->getContent();
+
+    expect($body)->toContain('html, body { overscroll-behavior: none; }')
+        ->and($body)->toContain('if (window.top !== window || !touch)')
+        ->and($body)->toContain("addEventListener('touchmove'");
+});

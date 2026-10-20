@@ -53,6 +53,10 @@
       overflow: hidden;
     }
 
+    /* A newer Safari bounces neither the page nor, past the list, anything
+       beyond it; the script at the end does it for an older one. */
+    html, body { overscroll-behavior: none; }
+
     /* The page itself never scrolls, only the list does. Safari bounces whatever
        scrolls past its end, and when that is the document it takes the fixed
        footer along; scrolled in a box of its own, the list bounces alone. Placed
@@ -66,6 +70,7 @@
       left: 0;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
       padding: 0 1rem 1.5rem;
     }
 
@@ -238,6 +243,93 @@
         }
       }, false);
     }
+  </script>
+
+  {{-- Keeps the page from bouncing on a touch screen when the list is at an
+       end. Scrolling only the list is not enough for Safari on iOS: a swipe
+       past its end, or on anything outside it, is handed on to the page, and
+       the page bounces footer and all. So such a swipe is cancelled, and the
+       list is held a pixel away from either end, from where it never hands
+       anything on. After iNoBounce (Larry Davis, BSD), by way of
+       preventBodyBounce. Not in an iframe: there a swipe past the end should
+       go on to scroll the host page. `overscroll-behavior` above does the same
+       for a newer Safari; this is for the iPads that predate it. --}}
+  <script>
+    (function () {
+      var touch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+      if (window.top !== window || !touch) {
+        return;
+      }
+
+      var list = document.getElementsByTagName('main')[0];
+      // An older Safari reads the object as a truthy useCapture, which is
+      // harmless; a newer one needs passive: false to allow preventDefault.
+      var active = { passive: false };
+
+      function inList(node) {
+        while (node) {
+          if (node === list) {
+            return true;
+          }
+
+          node = node.parentNode;
+        }
+
+        return false;
+      }
+
+      function scrolls() {
+        return list.scrollHeight > list.clientHeight;
+      }
+
+      function offEdges() {
+        var bottom = list.scrollHeight - list.clientHeight;
+
+        if (list.scrollTop <= 0) {
+          list.scrollTop = 1;
+        } else if (list.scrollTop >= bottom) {
+          list.scrollTop = bottom - 1;
+        }
+      }
+
+      document.addEventListener('touchmove', function (event) {
+        if (!inList(event.target) || !scrolls()) {
+          event.preventDefault();
+        }
+      }, active);
+
+      // Checked frame by frame until the list has settled, so a fling that
+      // ends at an edge is also nudged back off it. Settled means 100 ms
+      // without movement, counted from the touch itself too — otherwise a tap
+      // that moves nothing would leave a loop running for good.
+      document.addEventListener('touchstart', function (event) {
+        if (!inList(event.target) || !scrolls()) {
+          return;
+        }
+
+        // Right away, before Safari decides who gets this swipe.
+        offEdges();
+
+        var previous = list.scrollTop;
+        var changed;
+
+        function keepOffEdges(time) {
+          if (changed === undefined || list.scrollTop !== previous) {
+            previous = list.scrollTop;
+            changed = time;
+          }
+
+          offEdges();
+
+          if (time - changed < 100) {
+            window.requestAnimationFrame(keepOffEdges);
+          }
+        }
+
+        window.requestAnimationFrame(keepOffEdges);
+      }, active);
+    })();
   </script>
 </body>
 </html>
