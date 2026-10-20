@@ -9,14 +9,16 @@
        page's light or dark setting, and the palette of the SPA is a frontend
        build concern that does not reach here. --}}
   <style>
+    @include('widget.raleway')
+
     :root { color-scheme: light dark; }
 
     body {
       margin: 0;
       background: transparent;
       color: CanvasText;
-      /* Matches the site this widget is embedded in. Raleway only renders where
-         the host page has already loaded it — otherwise it falls back. */
+      /* Matches the site this widget is embedded in; served alongside, see
+         widget/raleway.blade.php. */
       font-family: "Raleway", sans-serif;
       font-size: 14px;
       line-height: 1.5;
