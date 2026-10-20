@@ -206,7 +206,9 @@ class AgendaWidgetController extends Controller
 
             $entry = [
                 'where' => $booking->workplace?->name ?? $booking->workplace_id,
-                'when' => $start->format('H:i').'–'.$end->format('H:i'),
+                // Narrow no-break spaces around the dash: the times stay apart
+                // without the range ever breaking across two lines.
+                'when' => $start->format('H:i')."\u{202F}–\u{202F}".$end->format('H:i'),
                 'who' => $booking->name,
             ];
 
