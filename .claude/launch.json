@@ -9,6 +9,15 @@
         "cd frontend && . ~/.nvm/nvm.sh && nvm use && exec node_modules/.bin/ng serve"
       ],
       "port": 4200
+    },
+    {
+      "name": "backend",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "-lc",
+        "cd backend && exec php artisan serve --port=8000"
+      ],
+      "port": 8000
     }
   ]
 }
