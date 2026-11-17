@@ -1,2 +1,5 @@
+# Crawling stays allowed on purpose. Every response carries
+# X-Robots-Tag: noindex, and a crawler that may not fetch a page never sees it —
+# "Disallow: /" here would keep already-indexed URLs in Google's index.
 User-agent: *
 Disallow:

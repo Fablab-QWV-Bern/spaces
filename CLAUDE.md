@@ -136,6 +136,17 @@ changing the spec first.
   Positioning uses CSS Anchor Positioning, with `anchor-name: --block` on the bar.
   No reimplementation with custom pointer handlers — that was there once and is
   deliberately gone.
+- **Nothing here belongs in a search index, and crawling stays allowed
+  regardless.** The anonymous role may view bookings, so Google renders the
+  calendar as a guest sees it, and the widgets page by day through plain links —
+  an endless supply of URLs, found through the embeds on the workshop's site.
+  `KeepOutOfSearchIndex` therefore sets `X-Robots-Tag: noindex, nofollow` on
+  every response, as global middleware so that 404s carry it too; `index.html`
+  says the same as a meta tag, because the web server may hand it out for `/`
+  without Laravel. `robots.txt` deliberately does _not_ say `Disallow: /`: a
+  crawler that may not fetch a page never sees its `noindex`, and URLs already
+  indexed would stay. Faster removal goes through the Search Console, not the
+  code.
 - **The anonymous role must not be given `manageRoles`.** The spec does not
   require this, but with that permission anyone could make themselves an
   administrator without logging in. The invariant "at least one role has
