@@ -6,6 +6,11 @@
     <title>Quartierwerkstatt</title>
     <base href="/">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Says the same as the X-Robots-Tag header the backend sets on every
+         response. Twice because this file does not always pass through
+         Laravel: the web server may hand it out for / by itself, as a static
+         file, and then no header is set. -->
+    <meta name="robots" content="noindex, nofollow">
     <!-- Three forms of one mark. The SVG is the source and stays sharp at every
          size; the .ico serves whoever cannot read it, and the PNG whoever wants
          a full-bleed tile with corners of their own. `sizes` on the .ico is what
