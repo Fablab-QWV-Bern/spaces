@@ -238,7 +238,7 @@ export class SeriesForm {
 
   /** For MONTHLY beyond the 28th: months without that day drop out. */
   protected readonly warnsAboutSkippedMonths = computed(
-    () => this.model().rhythm === 'monthly' && skipsMonths(this.dayOfMonth()),
+    () => rhythmByKey(this.model().rhythm).interval === 'MONTHLY' && skipsMonths(this.dayOfMonth()),
   );
 
   protected readonly canSubmit = computed(() => !this.saving() && this.seriesForm().valid());

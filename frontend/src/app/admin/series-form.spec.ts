@@ -128,6 +128,20 @@ describe('SeriesForm', () => {
     expect(body.intervalCount).toBe(2);
   });
 
+  it('turns "alle zwei Monate" into MONTHLY with intervalCount 2', () => {
+    set('Erster Termin am', '2026-08-03');
+    set('Name', 'Kurs');
+    set('Kontakt', 'kurs@example.org');
+    set('Wiederholung', 'bimonthly');
+
+    save();
+
+    const body = http.expectOne('/api/booking-series').request.body as BookingSeriesWrite;
+
+    expect(body.interval).toBe('MONTHLY');
+    expect(body.intervalCount).toBe(2);
+  });
+
   // A duration reaching past closing time lets the end slide onto the following
   // day — without a checkbox of its own for "overnight". Whether the area is
   // allowed that is decided by the backend.

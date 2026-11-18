@@ -21,10 +21,11 @@ function series(overrides: Partial<BookingSeries> = {}): BookingSeries {
 }
 
 describe('rhythmOf', () => {
-  it('recognises the three offered rhythms', () => {
+  it('recognises the four offered rhythms', () => {
     expect(rhythmOf({ interval: 'WEEKLY', intervalCount: 1 })).toBe('weekly');
     expect(rhythmOf({ interval: 'WEEKLY', intervalCount: 2 })).toBe('biweekly');
     expect(rhythmOf({ interval: 'MONTHLY', intervalCount: 1 })).toBe('monthly');
+    expect(rhythmOf({ interval: 'MONTHLY', intervalCount: 2 })).toBe('bimonthly');
   });
 
   // Any count can be created through the API; the form offers only three.
@@ -59,6 +60,19 @@ describe('describeRhythm', () => {
         }),
       ),
     ).toBe('am 31. jedes Monats, 14:00–17:00');
+  });
+
+  it('distinguishes every second month from every month', () => {
+    expect(
+      describeRhythm(
+        series({
+          interval: 'MONTHLY',
+          intervalCount: 2,
+          firstInstanceStart: '2026-08-03T09:00',
+          firstInstanceEnd: '2026-08-03T11:00',
+        }),
+      ),
+    ).toBe('am 3. jedes zweiten Monats, 09:00–11:00');
   });
 
   // If the wall-clock time were read as UTC it would shift by two hours and the

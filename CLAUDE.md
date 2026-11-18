@@ -220,10 +220,11 @@ changing the spec first.
   to series (otherwise none would reach a year), and a start in the past is normal
   for a rhythm — generation begins from now anyway.
 - **No daily interval.** For the workshop, daily is not a series but a permanent
-  occupation. Fortnightly is `WEEKLY` with `intervalCount: 2` — that is what the
-  field is for; a separate enum value would be a second spelling of the same
-  thing. The pair does not even surface in the series form: `series-rhythm.ts`
-  translates between it and the three options on offer. There is no weekday
+  occupation. Fortnightly is `WEEKLY` with `intervalCount: 2`, every second month
+  `MONTHLY` with `intervalCount: 2` — that is what the field is for; a
+  separate enum value would be a second spelling of the same thing. The pair
+  does not even surface in the series form: `series-rhythm.ts` translates
+  between it and the four options on offer. There is no weekday
   field — it follows from the date.
 - **The series form does not pre-validate, and shows no occurrences.** Both would
   be rule knowledge in the frontend: the pre-flight check would have to know that

@@ -6,14 +6,14 @@
  * intervalCount 2". The translation between the two happens here, in one place
  * for both list and form.
  *
- * The API permits any interval count; only these three are offered. Anyone who
+ * The API permits any interval count; only these four are offered. Anyone who
  * needs a different rhythm is a case for an extension, not for a number field
  * that otherwise always reads 1.
  */
 
 import { BookingSeries } from '../api/models';
 
-export type RhythmKey = 'weekly' | 'biweekly' | 'monthly';
+export type RhythmKey = 'weekly' | 'biweekly' | 'monthly' | 'bimonthly';
 
 interface Rhythm {
   key: RhythmKey;
@@ -26,6 +26,7 @@ export const RHYTHMS: readonly Rhythm[] = [
   { key: 'weekly', label: 'jede Woche', interval: 'WEEKLY', intervalCount: 1 },
   { key: 'biweekly', label: 'alle zwei Wochen', interval: 'WEEKLY', intervalCount: 2 },
   { key: 'monthly', label: 'jeden Monat', interval: 'MONTHLY', intervalCount: 1 },
+  { key: 'bimonthly', label: 'alle zwei Monate', interval: 'MONTHLY', intervalCount: 2 },
 ];
 
 export function rhythmOf(series: {
@@ -65,12 +66,15 @@ export function describeRhythm(series: BookingSeries): string {
       return `jeden zweiten ${WEEKDAYS[start.getDay()]}, ${time}`;
     case 'monthly':
       return `am ${start.getDate()}. jedes Monats, ${time}`;
+    case 'bimonthly':
+      return `am ${start.getDate()}. jedes zweiten Monats, ${time}`;
   }
 }
 
 /**
  * Months without that day drop out — the form does not otherwise show this. The
- * 29th counts: in February it only exists every four years.
+ * 29th counts: in February it only exists every four years. The same holds for
+ * every second month.
  */
 export function skipsMonths(dayOfMonth: number): boolean {
   return dayOfMonth > 28;
