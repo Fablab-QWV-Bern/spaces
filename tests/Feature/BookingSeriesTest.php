@@ -140,6 +140,47 @@ it('takes the interval count into account', function () {
     ]);
 });
 
+it('takes the interval count into account for MONTHLY', function () {
+    $this->actingAs($this->admin)
+        ->postJson('/api/booking-series', seriesPayload([
+            'interval' => 'MONTHLY',
+            'intervalCount' => 2,
+            'endDate' => '2027-03-31',
+        ]))
+        ->assertStatus(201);
+
+    expect(instances(BookingSeries::firstOrFail()))->toBe([
+        '2026-08-03 09:00',
+        '2026-10-03 09:00',
+        '2026-12-03 09:00',
+        '2027-02-03 09:00',
+    ]);
+});
+
+// Counted from the first instance, not from the last one that took place: a
+// skipped month must not shift the beat onto the odd months.
+it('keeps the beat across a skipped month for MONTHLY every two months', function () {
+    $this->actingAs($this->admin)
+        ->postJson('/api/booking-series', seriesPayload([
+            'interval' => 'MONTHLY',
+            'intervalCount' => 2,
+            'firstInstanceStart' => '2026-08-30T09:00',
+            'firstInstanceEnd' => '2026-08-30T11:00',
+            'endDate' => '2027-06-30',
+        ]))
+        ->assertStatus(201);
+
+    // February has no 30th and drops out; the series carries on in April, not
+    // in March.
+    expect(instances(BookingSeries::firstOrFail()))->toBe([
+        '2026-08-30 09:00',
+        '2026-10-30 09:00',
+        '2026-12-30 09:00',
+        '2027-04-30 09:00',
+        '2027-06-30 09:00',
+    ]);
+});
+
 it('generates up to a year ahead when there is no end date', function () {
     $this->actingAs($this->admin)
         ->postJson('/api/booking-series', seriesPayload([
