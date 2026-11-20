@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AgendaWidgetController;
+use App\Http\Controllers\BoardController;
 use App\Http\Controllers\BookingListWidgetController;
 use App\Http\Controllers\SpaController;
 use Illuminate\Support\Facades\Route;
@@ -10,6 +11,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/liste', BookingListWidgetController::class);
 Route::get('/agenda', AgendaWidgetController::class);
 Route::get('/agenda.webmanifest', [AgendaWidgetController::class, 'manifest']);
+Route::get('/tafel', BoardController::class);
 
 // Everything that is not a file is answered by the Angular router. The API
 // routes are only registered in the `then` callback of bootstrap/app.php, that is

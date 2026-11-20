@@ -71,6 +71,69 @@ class FloorPlan
         return null;
     }
 
+    /**
+     * The plan in use as markup to drop into an HTML page, with its aspect ratio
+     * (width over height, from the `viewBox`) — for `/tafel`, which cannot fetch
+     * and graft it the way the map does. Null when there is no plan to be had.
+     *
+     * Pinned to the bottom left of whatever box it is given: left so that it
+     * stays beside the agenda column as on the map, bottom so that a box taller
+     * than the plan leaves its slack above, where the white of the box makes it
+     * read as margin rather than as a gap under the drawing.
+     *
+     * @return array{markup: string, ratio: float}|null
+     */
+    public static function inline(): ?array
+    {
+        $disk = Storage::disk('public');
+        $source = $disk->exists(self::PATH) ? $disk->get(self::PATH) : self::shipped();
+
+        if ($source === null) {
+            return null;
+        }
+
+        $document = new DOMDocument;
+        $previous = libxml_use_internal_errors(true);
+        // As in clean(): no LIBXML_NOENT, no fetching. The uploaded plan has been
+        // through clean() already; the shipped one is ours.
+        $parsed = $document->loadXML($source, LIBXML_NONET);
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+
+        $root = $document->documentElement;
+
+        if (! $parsed || $root === null || $root->localName !== 'svg') {
+            return null;
+        }
+
+        $box = preg_split('/[\s,]+/', trim($root->getAttribute('viewBox')));
+        $ratio = count($box) === 4 && (float) $box[3] > 0 ? (float) $box[2] / (float) $box[3] : 1.0;
+
+        $root->setAttribute('width', '100%');
+        $root->setAttribute('height', '100%');
+        $root->setAttribute('preserveAspectRatio', 'xMinYMax meet');
+
+        $document->encoding = 'UTF-8';
+
+        return ['markup' => (string) $document->saveXML($root), 'ratio' => $ratio];
+    }
+
+    /**
+     * The shipped plan's text. In a deployment the built SPA lies in `public/`,
+     * and the plan with it; in development it has not been built there, and the
+     * frontend's source folder is the same file.
+     */
+    private static function shipped(): ?string
+    {
+        foreach ([public_path('karte.svg'), base_path('../frontend/public/karte.svg')] as $path) {
+            if (is_file($path)) {
+                return (string) file_get_contents($path);
+            }
+        }
+
+        return null;
+    }
+
     /** Back to the shipped plan. Deleting what is not there is not an error. */
     public static function forget(): void
     {
