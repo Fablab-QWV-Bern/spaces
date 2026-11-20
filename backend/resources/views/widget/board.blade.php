@@ -64,6 +64,12 @@
        consider clickable, and the listeners here are delegated. */
     .agenda li { cursor: pointer; }
 
+    /* Feedback under the finger, before the counterpart blinks. iOS Safari
+       only applies :active once the page listens for touchstart (see the
+       script). */
+    .agenda li:active,
+    .plan [data-bench]:active { opacity: 0.5; }
+
     @keyframes flash {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.25; }
@@ -299,6 +305,7 @@
         if (shape) {
           shape.style.pointerEvents = 'auto';
           shape.style.cursor = 'pointer';
+          shape.setAttribute('data-bench', '');
         }
       });
 
@@ -333,6 +340,9 @@
           flash(figures[bench.id]);
         }
       }
+
+      // An empty listener is what makes iOS Safari honour :active.
+      document.addEventListener('touchstart', function () {}, false);
 
       document.addEventListener('animationend', unflash, false);
       document.addEventListener('webkitAnimationEnd', unflash, false);
