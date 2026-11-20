@@ -75,6 +75,21 @@ class BookingSeeder extends Seeder
 
             ['fraese-deckel', 'Daniel Gerber', 'daniel@example.org', '08:00', '09:30', false],
 
+            // A busier evening than the screenshot had, staggered across the
+            // last hours so that the agenda's "Abend" keeps a few rows still to
+            // come however late one looks, in several areas' colours.
+            ['holz-5', 'Sandra Keller', 'sandra@example.org', '18:00', '21:00', false],
+            ['naeharbeitsplatz', 'Elif Demir', 'elif@example.org', '18:00', '20:00', false],
+            ['drechselbank', 'Thomas Frei', 'thomas@example.org', '18:30', '20:30', false],
+            ['shaper-origin', 'Peter Brunner', 'peter@example.org', '19:00', '21:00', false],
+            ['drehbank-emco', 'Jonas Huber', 'jonas@example.org', '19:30', '21:00', false],
+            ['holz-7', 'Lea Wyss', 'lea@example.org', '20:00', '21:00', false],
+            ['prusa-mk3s', 'Samuel Graf', 'samuel@example.org', '20:00', '21:00', false],
+            ['parkplatz-2', 'Beat Zürcher', 'beat@example.org', '20:00', '21:00', false],
+            ['fraese-deckel', 'Nadia Rossi', 'nadia@example.org', '20:15', '21:00', false],
+            ['loeten-1', 'Kevin Baumann', 'kevin@example.org', '20:30', '21:00', false],
+            ['lasercutter-akj', 'Mira Steiner', 'mira@example.org', '20:30', '21:00', false],
+
             // A course that also blocks the metal workplaces — makes the grey
             // blocks visible in the view. The window is deliberately chosen so
             // that it collides with none of the bookings above.

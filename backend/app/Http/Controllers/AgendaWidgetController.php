@@ -17,7 +17,7 @@ use Illuminate\Http\Request;
  * column that sits beside the overview map (frontend `map/agenda.ts`), without
  * the map.
  *
- * Today's bookings that have not yet ended, grouped into "Aktuell" and the part
+ * Today's bookings that have not yet ended, grouped into "Jetzt belegt" and the part
  * of the day something starts in — Vormittag, Nachmittag, Abend, cut at noon and
  * at five within the 08:00–21:00 opening hours. One row per booking, not per
  * blocked workplace: a booking that blocks three benches is one event.

@@ -46,7 +46,14 @@ it('inlines the shipped plan and states the present moment', function () {
         ->and($body)->toContain('preserveAspectRatio="xMinYMax meet"')
         ->and($body)->not->toContain('<?xml')
         ->and($body)->not->toContain('<!DOCTYPE svg')
-        ->and($body)->toContain('<h1>Di. 1. Sep, 10:00 Uhr</h1>');
+        ->and($body)->toContain('<h1>10:00</h1>')
+        ->and($body)->toContain('<p class="date">Di, 1. September</p>');
+});
+
+it('reloads just after the next full minute', function () {
+    CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-09-01 08:00:45', 'UTC'));
+
+    expect($this->get('/tafel')->getContent())->toContain('<meta http-equiv="refresh" content="16">');
 });
 
 it('prefers an uploaded plan', function () {
@@ -94,7 +101,7 @@ it('lists what is left of today beside the plan', function () {
 
     $body = $this->get('/tafel')->getContent();
 
-    expect($body)->toContain('<h2>Aktuell</h2>')
+    expect($body)->toContain('<h2>Jetzt belegt</h2>')
         ->and($body)->toContain('<h2>Abend</h2>')
         ->and($body)->not->toContain('Morgen');
 });
@@ -104,7 +111,18 @@ it('marks each agenda row with its area colour', function () {
     ($this->book)('Laeuft', '2026-09-01 07:00:00', '2026-09-01 09:00:00');
 
     expect($this->get('/tafel')->getContent())
-        ->toContain('<li  style="background-color: rgb(168, 203, 134)" >');
+        ->toContain('style="background-color: rgb(168, 203, 134)"')
+        ->toContain('data-workplace="holz-1"');
+});
+
+it('marks only the rows that have not begun as ahead', function () {
+    ($this->book)('Laeuft', '2026-09-01 07:00:00', '2026-09-01 09:00:00');
+    ($this->book)('Am Abend', '2026-09-01 16:00:00', '2026-09-01 18:00:00', 'metall-vorne');
+
+    $body = $this->get('/tafel')->getContent();
+
+    expect(substr_count($body, 'class="ahead"'))->toBe(1)
+        ->and(strpos($body, 'class="ahead"'))->toBeGreaterThan(strpos($body, '<h2>Abend</h2>'));
 });
 
 it('leaves out an area colour that is more than a colour', function () {

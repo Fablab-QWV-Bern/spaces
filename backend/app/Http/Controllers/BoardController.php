@@ -78,9 +78,14 @@ class BoardController extends Controller
 
         return view('widget.board', [
             'plan' => FloorPlan::inline(),
-            // "Fr. 20. Nov, 17:45 Uhr" — the date as well as the time, since a
-            // wall display is also where one looks for what day it is.
-            'heading' => $now->setTimezone($timezone)->locale('de')->isoFormat('dd. D. MMM, HH:mm [Uhr]'),
+            // The time over the plan, which shows the present moment; the date
+            // over the agenda, which lists the day.
+            'time' => $now->setTimezone($timezone)->format('H:i'),
+            // Seconds to the next full minute, plus one so the reload lands
+            // after the turn rather than a hair before it — the time over the
+            // plan then changes when a clock would.
+            'refresh' => 61 - (int) $now->format('s'),
+            'date' => $now->setTimezone($timezone)->locale('de')->isoFormat('dd, D. MMMM'),
             'areaColors' => $colors->all(),
             'groups' => DayAgenda::group($remaining, $now, $today, $timezone),
             // What the script needs: every workplace with its area's colour —
