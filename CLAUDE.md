@@ -421,6 +421,23 @@ x)` hands back any CSS colour as `oklch(…)`, so a value stored as `rgb(…)`
   height and thus in vertical scrolling — and the labels are legible long before
   the plan fills a wide window. Left rather than centred, so that it stays next
   to the agenda column instead of drifting away from it.
+- **For tablets too old for the interface there is `/tafel`.** An iPad 4 stops
+  at iOS 10.3, Safari 10.1: the Angular bundle (ES2022) does not even parse
+  there, and popover, anchor positioning, `color-mix()` and `oklch()` are years
+  away. So the board is a Blade page beside `/agenda`, rendered as the
+  anonymous role and reloaded by meta refresh: the plan inlined, the agenda
+  column beside it, no card and no way into the form — a wall display is looked
+  at, not used. Unlike the map it keeps the column in portrait too: there the
+  column takes a fixed 13.5rem and the plan the rest, standing on the bottom of
+  the height it does not fill. The server decides (`Support/Occupancy`, `Support/DayAgenda`,
+  area colours converted to `rgb()` by `Support/LegacyColor`); a short ES5
+  script only writes that into the drawing, because standing the figure on a
+  bench needs `getBBox()`. That is the map's marking a second time, in PHP and
+  ES5 — accepted, like `/agenda` beside `agenda.ts`, because the alternative is
+  no map on those devices at all. Two details that only bite on the device: the
+  figure is referenced through `xlink:href` (bare `href` arrived in Safari
+  12.1), and fills are set as `!important` inline styles, since the plan writes
+  its own fills inline.
 - **The map is not a third zoom level.** It has no date but the present moment,
   and asks for it afresh every minute — which is why its button sits next to the
   view switcher rather than in it, and its header carries neither paging nor a
