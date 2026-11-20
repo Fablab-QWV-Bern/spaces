@@ -434,6 +434,15 @@
       });
     })();
 
+    // In landscape the plan scrolls, and it starts at the bottom — the UG
+    // rather than the yard. In portrait it does not overflow, and this does
+    // nothing. Run on every load, so the minutely reload lands there too.
+    (function () {
+      var box = document.querySelector('.plan');
+
+      box.scrollTop = box.scrollHeight;
+    })();
+
     // A home-screen app on iOS bounces the whole page when swiped; only the
     // agenda column, and in landscape the plan, have anything to scroll.
     document.addEventListener('touchmove', function (event) {
