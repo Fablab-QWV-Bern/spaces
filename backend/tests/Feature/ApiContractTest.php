@@ -23,7 +23,7 @@ beforeEach(function () {
         'workplace_id' => 'holz-1',
         'creator_role_id' => Role::where('name', 'Mitglied')->value('id'),
         'ip_address' => '192.0.2.42',
-        'name' => 'Hans Cramer',
+        'name' => 'Erwin Kunz',
         'contact' => 'hans@example.org',
         'start_time' => CarbonImmutable::parse('2026-08-03 09:00', 'Europe/Zurich')->utc(),
         'end_time' => CarbonImmutable::parse('2026-08-03 11:00', 'Europe/Zurich')->utc(),

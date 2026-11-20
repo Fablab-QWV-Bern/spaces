@@ -16,7 +16,7 @@ beforeEach(function () {
 
     $this->booking = Booking::create([
         'workplace_id' => 'holz-1',
-        'name' => 'Hans Cramer',
+        'name' => 'Erwin Kunz',
         'contact' => 'hans@example.org',
         'start_time' => $this->start,
         'end_time' => $this->start->addHours(2),
@@ -44,7 +44,7 @@ it('serves an iCalendar document', function () {
 
 it('names workplace and booker in the summary', function () {
     expect($this->get(feed())->getContent())
-        ->toContain('SUMMARY:Holz 1: Hans Cramer');
+        ->toContain('SUMMARY:Holz 1: Erwin Kunz');
 });
 
 it('writes the times in UTC', function () {
@@ -115,12 +115,12 @@ it('filters by workplace', function () {
     ]);
 
     expect($this->get(feed(['workplaceId' => 'holz-1']))->getContent())
-        ->toContain('Hans Cramer')
+        ->toContain('Erwin Kunz')
         ->not->toContain('Ida Roth');
 
     expect($this->get(feed(['workplaceId' => 'metall-vorne']))->getContent())
         ->toContain('Ida Roth')
-        ->not->toContain('Hans Cramer');
+        ->not->toContain('Erwin Kunz');
 });
 
 it('answers an unknown filter with 404 rather than an empty calendar', function () {
@@ -128,7 +128,7 @@ it('answers an unknown filter with 404 rather than an empty calendar', function 
 });
 
 it('filters by tag, matching any of the given tags', function () {
-    // holz-1 (Hans Cramer, from beforeEach) carries "werkstatt" but not "lärmig";
+    // holz-1 (Erwin Kunz, from beforeEach) carries "werkstatt" but not "lärmig";
     // drechselbank carries both.
     Booking::create([
         'workplace_id' => 'drechselbank',
@@ -141,20 +141,20 @@ it('filters by tag, matching any of the given tags', function () {
 
     expect($this->get(feed(['tag' => 'lärmig']))->getContent())
         ->toContain('Ida Roth')
-        ->not->toContain('Hans Cramer');
+        ->not->toContain('Erwin Kunz');
 
     expect($this->get(feed(['tag' => 'werkstatt']))->getContent())
         ->toContain('Ida Roth')
-        ->toContain('Hans Cramer');
+        ->toContain('Erwin Kunz');
 
     // A leading "#" and casing are tolerated.
     expect($this->get(feed(['tag' => '#LÄRMIG']))->getContent())
         ->toContain('Ida Roth')
-        ->not->toContain('Hans Cramer');
+        ->not->toContain('Erwin Kunz');
 
     // Several tags are a union: a workplace carrying any of them is in.
     $body = $this->get(feed(['tag' => 'lärmig,werkstatt']))->getContent();
-    expect($body)->toContain('Ida Roth')->toContain('Hans Cramer');
+    expect($body)->toContain('Ida Roth')->toContain('Erwin Kunz');
 });
 
 it('answers an unknown tag with 404 rather than an empty calendar', function () {

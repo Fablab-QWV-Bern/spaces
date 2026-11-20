@@ -13,8 +13,10 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
 
 /**
- * Bookings for today, reconstructed from the screenshot of the existing system.
- * For development only — deliberately bypasses validation so that past times of
+ * Bookings for today, reconstructed from the screenshot of the existing system —
+ * its times and workplaces, but not its people: the names there are the
+ * workshop's members, so every name and contact here is made up. Keep it that
+ * way when adding rows. For development only — deliberately bypasses validation so that past times of
  * the current day can be created too.
  */
 class BookingSeeder extends Seeder
@@ -31,49 +33,49 @@ class BookingSeeder extends Seeder
 
         // [workplace, name, contact, from, to, part of a series?]
         $rows = [
-            ['betreuung-offene-ws', 'Christoph Bettler', 'christoph@example.org', '14:00', '17:00', true],
+            ['betreuung-offene-ws', 'Felix Wenger', 'felix@example.org', '14:00', '17:00', true],
 
-            ['holz-1', 'Hans Adrian', 'hans.adrian@example.org', '10:00', '11:00', false],
-            ['holz-1', 'Larina Schenk', 'larina@example.org', '13:00', '17:00', false],
-            ['holz-1', 'Larina Schenk', 'larina@example.org', '17:00', '21:00', false],
+            ['holz-1', 'Moritz Imhof', 'moritz@example.org', '10:00', '11:00', false],
+            ['holz-1', 'Jana Studer', 'jana@example.org', '13:00', '17:00', false],
+            ['holz-1', 'Jana Studer', 'jana@example.org', '17:00', '21:00', false],
 
-            ['holz-2', 'Urs Stocker', 'urs@example.org', '08:00', '12:00', false],
-            ['holz-2', 'Urs Stocker', 'urs@example.org', '12:00', '13:00', false],
-            ['holz-2', 'Roman Meier', 'roman@example.org', '16:00', '19:30', false],
+            ['holz-2', 'Rolf Aebi', 'rolf@example.org', '08:00', '12:00', false],
+            ['holz-2', 'Rolf Aebi', 'rolf@example.org', '12:00', '13:00', false],
+            ['holz-2', 'Simon Lüthi', 'simon@example.org', '16:00', '19:30', false],
 
-            ['holz-3', 'Hans Cramer', 'cramer@example.org', '09:00', '13:00', false],
+            ['holz-3', 'Erwin Kunz', 'kunz@example.org', '09:00', '13:00', false],
             ['holz-3', 'Offene Werkstatt/Einführung', 'werkstatt@example.org', '14:00', '17:00', true],
-            ['holz-3', 'Marcel', 'marcel@example.org', '17:00', '21:00', false],
+            ['holz-3', 'Luca', 'luca@example.org', '17:00', '21:00', false],
 
-            ['holz-4', 'Regine Meier', 'regine@example.org', '09:00', '13:00', false],
-            ['holz-4', 'Regine Meier', 'regine@example.org', '13:00', '14:00', false],
+            ['holz-4', 'Brigitte Hofer', 'brigitte@example.org', '09:00', '13:00', false],
+            ['holz-4', 'Brigitte Hofer', 'brigitte@example.org', '13:00', '14:00', false],
             ['holz-4', 'Offene Werkstatt/Einführung', 'werkstatt@example.org', '14:00', '17:00', true],
-            ['holz-4', 'Regine Meier', 'regine@example.org', '17:00', '21:00', false],
+            ['holz-4', 'Brigitte Hofer', 'brigitte@example.org', '17:00', '21:00', false],
 
-            ['holz-5', 'Marco Migliavacca', 'marco@example.org', '09:00', '12:00', false],
-            ['holz-5', 'Marco Migliavacca', 'marco@example.org', '13:00', '17:00', false],
+            ['holz-5', 'Paolo Bernasconi', 'paolo@example.org', '09:00', '12:00', false],
+            ['holz-5', 'Paolo Bernasconi', 'paolo@example.org', '13:00', '17:00', false],
 
-            ['holz-6', 'Daniel Gerber', 'daniel@example.org', '08:00', '11:00', false],
-            ['holz-6', 'Roman Meier', 'roman@example.org', '13:00', '16:00', false],
+            ['holz-6', 'Martin Egli', 'martin@example.org', '08:00', '11:00', false],
+            ['holz-6', 'Simon Lüthi', 'simon@example.org', '13:00', '16:00', false],
 
-            ['metall-vorne', 'Michael Schöll', 'michael@example.org', '13:00', '17:00', false],
-            ['metall-vorne', 'Michael Schöll', 'michael@example.org', '17:00', '21:00', false],
-            ['metall-hinten', 'Christoph Bettler', 'christoph@example.org', '17:00', '21:00', false],
+            ['metall-vorne', 'Stefan Brügger', 'stefan@example.org', '13:00', '17:00', false],
+            ['metall-vorne', 'Stefan Brügger', 'stefan@example.org', '17:00', '21:00', false],
+            ['metall-hinten', 'Felix Wenger', 'felix@example.org', '17:00', '21:00', false],
 
-            ['parkplatz-1', 'Regine Meier', 'regine@example.org', '14:00', '17:00', false],
-            ['parkplatz-1', 'Regine Meier', 'regine@example.org', '17:00', '21:00', false],
-            ['parkplatz-2', 'Urs Stocker', 'urs@example.org', '08:00', '12:00', false],
-            ['parkplatz-2', 'Michael Schöll', 'michael@example.org', '13:00', '17:00', false],
+            ['parkplatz-1', 'Brigitte Hofer', 'brigitte@example.org', '14:00', '17:00', false],
+            ['parkplatz-1', 'Brigitte Hofer', 'brigitte@example.org', '17:00', '21:00', false],
+            ['parkplatz-2', 'Rolf Aebi', 'rolf@example.org', '08:00', '12:00', false],
+            ['parkplatz-2', 'Stefan Brügger', 'stefan@example.org', '13:00', '17:00', false],
 
-            ['spritzkabine', 'Urs Buetler PROact_CA', 'buetler@example.org', '09:00', '13:00', false],
-            ['spritzkabine', 'Urs Buetler PROact_CA', 'buetler@example.org', '13:00', '17:00', false],
-            ['spritzkabine', 'Urs Buetler PROact_CA', 'buetler@example.org', '17:00', '21:00', false],
+            ['spritzkabine', 'Kurt Ammann Holzbau', 'ammann@example.org', '09:00', '13:00', false],
+            ['spritzkabine', 'Kurt Ammann Holzbau', 'ammann@example.org', '13:00', '17:00', false],
+            ['spritzkabine', 'Kurt Ammann Holzbau', 'ammann@example.org', '17:00', '21:00', false],
 
-            ['prusa-xl', 'Daniel Allemann', 'allemann@example.org', '09:00', '13:00', false],
-            ['prusa-xl', 'Daniel Allemann', 'allemann@example.org', '13:00', '17:00', false],
-            ['prusa-xl', 'Annina', 'annina@example.org', '20:00', '21:00', false],
+            ['prusa-xl', 'Reto Schmid', 'reto@example.org', '09:00', '13:00', false],
+            ['prusa-xl', 'Reto Schmid', 'reto@example.org', '13:00', '17:00', false],
+            ['prusa-xl', 'Selina', 'selina@example.org', '20:00', '21:00', false],
 
-            ['fraese-deckel', 'Daniel Gerber', 'daniel@example.org', '08:00', '09:30', false],
+            ['fraese-deckel', 'Martin Egli', 'martin@example.org', '08:00', '09:30', false],
 
             // A busier evening than the screenshot had, staggered across the
             // last hours so that the agenda's "Abend" keeps a few rows still to

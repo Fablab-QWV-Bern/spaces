@@ -172,7 +172,7 @@ it('leaves bookings of the deleted role standing', function () {
     $booking = Booking::create([
         'workplace_id' => 'holz-1',
         'creator_role_id' => $this->member->id,
-        'name' => 'Hans Cramer',
+        'name' => 'Erwin Kunz',
         'contact' => 'hans@example.org',
         'start_time' => CarbonImmutable::parse('2026-08-03 09:00', 'Europe/Zurich')->utc(),
         'end_time' => CarbonImmutable::parse('2026-08-03 11:00', 'Europe/Zurich')->utc(),
