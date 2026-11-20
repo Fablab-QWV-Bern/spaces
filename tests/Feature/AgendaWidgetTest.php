@@ -46,16 +46,16 @@ it('renders the agenda with its heading', function () {
 it('groups by running and by the part of the day something starts in, in order', function () {
     $body = $this->get(agenda())->getContent();
 
-    foreach (['Aktuell', 'Vormittag', 'Nachmittag', 'Abend'] as $heading) {
+    foreach (['Jetzt belegt', 'Vormittag', 'Nachmittag', 'Abend'] as $heading) {
         expect($body)->toContain("<h2>{$heading}</h2>");
     }
 
-    expect(strpos($body, 'Aktuell'))->toBeLessThan(strpos($body, 'Vormittag'))
+    expect(strpos($body, 'Jetzt belegt'))->toBeLessThan(strpos($body, 'Vormittag'))
         ->and(strpos($body, 'Vormittag'))->toBeLessThan(strpos($body, 'Nachmittag'))
         ->and(strpos($body, 'Nachmittag'))->toBeLessThan(strpos($body, 'Abend'));
 });
 
-it('puts a booking that has started under Aktuell, and shows its local time range', function () {
+it('puts a booking that has started under Jetzt belegt, and shows its local time range', function () {
     $body = $this->get(agenda())->getContent();
 
     expect($body)->toContain('Laeuft gerade')
@@ -110,12 +110,12 @@ it('shows a logged-in admin nothing other than a visitor sees', function () {
         ->and($asAdmin)->not->toContain('x@example.org');
 });
 
-it('shows all of another day, without Aktuell', function () {
+it('shows all of another day, without Jetzt belegt', function () {
     $body = $this->get(agenda(['datum' => '2026-09-02']))->getContent();
 
     expect($body)->toContain('Erst morgen')
         ->and($body)->not->toContain('Am Morgen')
-        ->and($body)->not->toContain('<h2>Aktuell</h2>');
+        ->and($body)->not->toContain('<h2>Jetzt belegt</h2>');
 });
 
 it('keeps what has ended on a past day', function () {
@@ -125,7 +125,7 @@ it('keeps what has ended on a past day', function () {
 
     expect($body)->toContain('Schon vorbei')
         ->and($body)->toContain('Am Abend')
-        ->and($body)->not->toContain('<h2>Aktuell</h2>');
+        ->and($body)->not->toContain('<h2>Jetzt belegt</h2>');
 });
 
 it('files a booking carried over from the night before under Vormittag', function () {

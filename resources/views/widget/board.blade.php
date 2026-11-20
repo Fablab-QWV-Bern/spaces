@@ -3,10 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  {{-- Once a minute, like the map asks again who is here. A reload rather than
-       a request from script: the old Safari this page is for then has nothing
+  {{-- Once a minute, just after it turns, like the map asks again who is
+       here. A reload rather than a request from script: the old Safari this
+       page is for then has nothing
        to keep running, and a page that hung would mend itself a minute later. --}}
-  <meta http-equiv="refresh" content="60">
+  <meta http-equiv="refresh" content="{{ $refresh }}">
   {{-- For an old iPad on the wall, added to the home screen and opened full
        screen from there. It goes by these tags alone; a manifest it never reads. --}}
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -53,9 +54,30 @@
       background: #fff;
     }
 
-    .plan svg { display: block; }
+    /* The drawing takes no taps, only the benches do (the script switches
+       them back on) — the names are drawn in a layer of their own above the
+       shapes, and a tap on one should reach the bench beneath, as on the map. */
+    .plan svg { display: block; pointer-events: none; }
 
-    /* In the white above the drawing, centred over it. */
+    /* A tap on a row or a bench makes its counterpart blink. cursor: pointer
+       is not decoration: iOS Safari fires no click on an element it does not
+       consider clickable, and the listeners here are delegated. */
+    .agenda li { cursor: pointer; }
+
+    /* Feedback under the finger, before the counterpart blinks. iOS Safari
+       only applies :active once the page listens for touchstart (see the
+       script). */
+    .agenda li:active,
+    .plan [data-bench]:active { opacity: 0.5; }
+
+    @keyframes flash {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.25; }
+    }
+
+    .flash { animation: flash 0.5s ease-in-out 3; }
+
+    /* The time, in the white above the drawing. */
     h1 {
       position: absolute;
       top: 0;
@@ -64,8 +86,8 @@
       margin: 0;
       font-size: 1.8rem;
       font-weight: 600;
+      padding: 0 1rem;
       line-height: 3rem;
-      text-align: center;
       /* Half-veiled rather than solid, so that in landscape the plan scrolling
          under it stays faintly visible. */
       background: rgba(255, 255, 255, 0.7);
@@ -132,6 +154,14 @@
       .agenda { display: none; }
     }
 
+    /* The day the list is about, at the head of the column. */
+    .date {
+      margin: 0 0 0 0.6rem;
+      font-size: 1.3rem;
+      font-weight: 600;
+      line-height: 3rem;
+    }
+
     h2 {
       margin: 1rem 0 0.35rem 0.6rem;
       color: rgba(0, 0, 0, 0.55);
@@ -152,6 +182,13 @@
       padding: 0.2rem 0.5rem;
       margin-top: 0.6rem;
       border-radius: 6px;
+    }
+
+    /* What has not begun yet, paler: the area's colour at 50 %, laid as a
+       veil of the page's own grey over it — Safari 10 has no way to take an
+       alpha off a colour it is handed as text. */
+    .ahead {
+      background-image: linear-gradient(rgba(244, 244, 245, 0.5), rgba(244, 244, 245, 0.5));
     }
 
     .where { float: left; font-weight: 600; }
@@ -178,7 +215,7 @@
 </head>
 <body>
   <div class="plan">
-    <h1>{{ $heading }}</h1>
+    <h1>{{ $time }}</h1>
 
     @if ($plan)
       {!! $plan['markup'] !!}
@@ -188,11 +225,13 @@
   </div>
 
   <aside class="agenda">
+    <p class="date">{{ $date }}</p>
+
     @forelse ($groups as $group)
       <h2>{{ $group['heading'] }}</h2>
       <ul>
         @foreach ($group['entries'] as $entry)
-          <li @isset($areaColors[$entry['areaId']]) style="background-color: {{ $areaColors[$entry['areaId']] }}" @endisset>
+          <li data-workplace="{{ $entry['workplaceId'] }}" @unless ($group['running']) class="ahead" @endunless @isset($areaColors[$entry['areaId']]) style="background-color: {{ $areaColors[$entry['areaId']] }}" @endisset>
             <span class="where">{{ $entry['where'] }}</span>
             <span class="when">{{ $entry['when'] }}</span>
             <span class="who">{{ $entry['who'] }}</span>
@@ -262,7 +301,95 @@
         if (shape && marking.colors[id]) {
           paint(shape, marking.colors[id]);
         }
+
+        if (shape) {
+          shape.style.pointerEvents = 'auto';
+          shape.style.cursor = 'pointer';
+          shape.setAttribute('data-bench', '');
+        }
       });
+
+      // Tapping a row makes its bench blink, tapping a bench its rows. The
+      // class goes through the attribute rather than classList, which Safari
+      // 10 does not reliably have on SVG — and the shapes bring classes of
+      // their own. Taken off and put back with a layout in between, so that a
+      // second tap restarts the blinking instead of being swallowed.
+      function flash(element) {
+        var bare = (element.getAttribute('class') || '').replace(/(^|\s)flash(\s|$)/g, ' ');
+
+        element.setAttribute('class', bare);
+        element.getBoundingClientRect();
+        element.setAttribute('class', bare + ' flash');
+      }
+
+      function unflash(event) {
+        var element = event.target;
+
+        element.setAttribute('class', (element.getAttribute('class') || '').replace(/(^|\s)flash(\s|$)/g, ' '));
+      }
+
+      // The figures standing on benches, by workplace — filled further down,
+      // read only when someone taps.
+      var figures = {};
+
+      // A bench blinks together with the figure standing on it.
+      function flashBench(bench) {
+        flash(bench);
+
+        if (figures[bench.id]) {
+          flash(figures[bench.id]);
+        }
+      }
+
+      // An empty listener is what makes iOS Safari honour :active.
+      document.addEventListener('touchstart', function () {}, false);
+
+      document.addEventListener('animationend', unflash, false);
+      document.addEventListener('webkitAnimationEnd', unflash, false);
+
+      var agenda = document.querySelector('.agenda');
+
+      agenda.addEventListener('click', function (event) {
+        for (var node = event.target; node && node !== agenda; node = node.parentNode) {
+          if (node.nodeName === 'LI') {
+            var bench = document.getElementById(node.getAttribute('data-workplace'));
+
+            if (bench) {
+              flashBench(bench);
+            }
+
+            return;
+          }
+        }
+      }, false);
+
+      document.querySelector('.plan').addEventListener('click', function (event) {
+        for (var node = event.target; node && node !== plan; node = node.parentNode) {
+          if (node.id && marking.colors.hasOwnProperty(node.id)) {
+            var rows = agenda.querySelectorAll('li[data-workplace="' + node.id + '"]');
+
+            if (!rows.length) {
+              flashBench(node);
+
+              return;
+            }
+
+            for (var i = 0; i < rows.length; i++) {
+              flash(rows[i]);
+            }
+
+            // The first of them into view, within the column alone —
+            // scrollIntoView would move the page along with it.
+            var first = rows[0];
+
+            if (first.offsetTop < agenda.scrollTop || first.offsetTop + first.offsetHeight > agenda.scrollTop + agenda.clientHeight) {
+              agenda.scrollTop = first.offsetTop - agenda.clientHeight / 3;
+            }
+
+            return;
+          }
+        }
+      }, false);
 
       // The figure: measured while it is still drawn, then stowed in the defs
       // and its layer moved last, so the standing figures are drawn over
@@ -303,6 +430,7 @@
         use.setAttribute('transform', 'translate(' + dx.toFixed(3) + ' ' + dy.toFixed(3) + ')');
         use.setAttribute('opacity', marking.taken[id] === 'soon' ? '0.5' : '1');
         layer.appendChild(use);
+        figures[id] = use;
       });
     })();
 

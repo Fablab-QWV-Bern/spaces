@@ -7,7 +7,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 
 /**
- * A day's bookings as "Belegungen heute" lists them: a running "Aktuell" first,
+ * A day's bookings as "Belegungen heute" lists them: a running "Jetzt belegt" first,
  * then one group per part of the day something starts in — the server-side twin
  * of the frontend's `map/agenda.ts`, shared by `/agenda` and `/tafel`.
  */
@@ -28,7 +28,7 @@ class DayAgenda
      * The bookings in groups. A part with nothing in it opens no heading.
      *
      * @param  Collection<int, Booking>  $bookings
-     * @return list<array{heading: string, entries: list<array{where: string, when: string, who: string, areaId: ?string}>}>
+     * @return list<array{heading: string, running: bool, entries: list<array{where: string, when: string, who: string, areaId: ?string, workplaceId: string}>}>
      */
     public static function group(
         Collection $bookings,
@@ -52,6 +52,8 @@ class DayAgenda
                 // For a mark in the area's colour; the colour itself is the
                 // caller's business, since only /tafel shows it.
                 'areaId' => $booking->workplace?->area_id,
+                // For /tafel to find the bench a row belongs to, and back.
+                'workplaceId' => $booking->workplace_id,
             ];
 
             if ($booking->start_time <= $now && $booking->end_time > $now) {
@@ -65,11 +67,11 @@ class DayAgenda
             $ahead[self::partOfDay((int) $start->max($day)->format('G'))][] = $entry;
         }
 
-        $groups = $running === [] ? [] : [['heading' => 'Aktuell', 'entries' => $running]];
+        $groups = $running === [] ? [] : [['heading' => 'Jetzt belegt', 'running' => true, 'entries' => $running]];
 
         foreach (array_reverse(self::PARTS) as $part) {
             if (! empty($ahead[$part['heading']])) {
-                $groups[] = ['heading' => $part['heading'], 'entries' => $ahead[$part['heading']]];
+                $groups[] = ['heading' => $part['heading'], 'running' => false, 'entries' => $ahead[$part['heading']]];
             }
         }
 

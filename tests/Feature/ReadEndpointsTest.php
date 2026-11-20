@@ -24,7 +24,7 @@ beforeEach(function () {
         'workplace_id' => 'holz-1',
         'creator_role_id' => $this->member->id,
         'ip_address' => '192.0.2.42',
-        'name' => 'Hans Cramer',
+        'name' => 'Erwin Kunz',
         'contact' => 'hans@example.org',
         'start_time' => CarbonImmutable::parse('2026-08-03 09:00', 'Europe/Zurich')->utc(),
         'end_time' => CarbonImmutable::parse('2026-08-03 11:00', 'Europe/Zurich')->utc(),
@@ -138,7 +138,7 @@ it('leaves out bookings outside the window', function () {
 it('shows the name already with viewBookings but hides the contact', function () {
     $this->getJson(window())
         ->assertOk()
-        ->assertJsonPath('0.name', 'Hans Cramer')
+        ->assertJsonPath('0.name', 'Erwin Kunz')
         ->assertJsonPath('0.contact', null)
         ->assertJsonPath('0.ipAddress', null);
 });
@@ -147,7 +147,7 @@ it('additionally shows the contact with viewBookingsDetails', function () {
     $this->actingAs($this->member)
         ->getJson(window())
         ->assertOk()
-        ->assertJsonPath('0.name', 'Hans Cramer')
+        ->assertJsonPath('0.name', 'Erwin Kunz')
         ->assertJsonPath('0.contact', 'hans@example.org')
         // The IP address nevertheless stays hidden.
         ->assertJsonPath('0.ipAddress', null);
